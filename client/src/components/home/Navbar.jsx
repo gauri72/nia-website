@@ -1,0 +1,53 @@
+import { useState } from 'react';
+import { FaFacebookF, FaInstagram, FaLinkedinIn, FaBars, FaTimes, FaUserPlus } from 'react-icons/fa';
+import navbarLogo from '../../assets/home/NavbarLogo.png';
+import './Navbar.css';
+
+const NAV_LINKS = ['Home', 'About Us', 'Events', 'Membership', 'Articles', 'Gallery', 'Contact Us'];
+
+export default function Navbar() {
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  return (
+    <header className="navbar">
+      <div className="navbar__top">
+        <div className="navbar__logo">
+          <img src={navbarLogo} alt="Netherlands India Association" className="navbar__logo-img" />
+        </div>
+        <div className="navbar__socials">
+          <a href="#" aria-label="Facebook"  className="social-icon social-icon--fb"><FaFacebookF /></a>
+          <a href="#" aria-label="Instagram" className="social-icon social-icon--ig"><FaInstagram /></a>
+          <a href="#" aria-label="LinkedIn"  className="social-icon social-icon--li"><FaLinkedinIn /></a>
+        </div>
+      </div>
+
+      <div className="navbar__bottom">
+        <button
+          className="navbar__burger"
+          onClick={() => setMenuOpen(!menuOpen)}
+          aria-label="Toggle menu"
+        >
+          {menuOpen ? <FaTimes /> : <FaBars />}
+        </button>
+
+        <nav className={`navbar__links${menuOpen ? ' open' : ''}`}>
+          {NAV_LINKS.map((link) => (
+            <a
+              key={link}
+              href="#"
+              className={`nav-link${link === 'Home' ? ' active' : ''}`}
+              onClick={() => setMenuOpen(false)}
+            >
+              {link}
+            </a>
+          ))}
+        </nav>
+
+        <a href="#" className="navbar__cta">
+          <FaUserPlus />
+          <span>Register as a Member</span>
+        </a>
+      </div>
+    </header>
+  );
+}
