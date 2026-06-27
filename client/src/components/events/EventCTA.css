@@ -1,0 +1,116 @@
+.event-cta {
+  background: #faf8f4;
+  padding: 2rem 2.5rem;
+  font-family: var(--font-primary);
+}
+
+/* Card with navy bg, rounded corners, whitespace all around */
+.event-cta__inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  background: #0F1F4B;
+  border-radius: 14px;
+  padding: 1.8rem 2.8rem;
+  display: flex;
+  align-items: center;
+  gap: 1.6rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.event-cta__inner:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 48px rgba(15,31,75,0.35);
+}
+
+.event-cta__logo {
+  height: 72px;
+  width: auto;
+  object-fit: contain;
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 8px rgba(212,168,75,0.4));
+  transition: transform 0.3s ease;
+}
+.event-cta__logo:hover { transform: rotate(8deg) scale(1.1); }
+
+.event-cta__text { flex: 1; }
+
+.event-cta__title {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 0.3rem;
+}
+
+.event-cta__sub {
+  font-size: 0.92rem;
+  color: #fff;
+  line-height: 1.65;
+}
+
+.event-cta__btn {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  padding: 0.9rem 2.2rem;
+  background: var(--color-orange);
+  color: #fff;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  flex-shrink: 0;
+  transition: background 0.2s, transform 0.2s ease, box-shadow 0.2s ease;
+}
+.event-cta__btn:hover {
+  background: #c9521a;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 22px rgba(232,100,26,0.45);
+}
+.event-cta__btn:active { transform: translateY(-1px); }
+
+/* ══════════════════════════════
+   RESPONSIVE
+   ══════════════════════════════ */
+
+/* ── Tablet (≤900px) ── */
+@media (max-width: 900px) {
+  .event-cta { padding: 1.5rem 1.5rem; }
+  .event-cta__inner { padding: 1.6rem 2rem; gap: 1.2rem; }
+  .event-cta__logo { height: 58px; }
+  .event-cta__title { font-size: 1.3rem; }
+  .event-cta__sub { font-size: 0.86rem; }
+}
+
+/* ── Mobile (≤640px) — stack vertically, center everything ── */
+@media (max-width: 640px) {
+  .event-cta { padding: 1.2rem 1.2rem; }
+  .event-cta__inner {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 1.8rem 1.4rem;
+    gap: 1.2rem;
+    border-radius: 12px;
+  }
+  .event-cta__logo { height: 56px; }
+  .event-cta__title { font-size: 1.2rem; }
+  .event-cta__sub { font-size: 0.84rem; }
+  .event-cta__btn {
+    width: 100%;
+    justify-content: center;
+    font-size: 0.82rem;
+    padding: 0.85rem 1.4rem;
+  }
+}
+
+/* ── Small mobile (≤400px) ── */
+@media (max-width: 400px) {
+  .event-cta { padding: 1rem; }
+  .event-cta__inner {
+    padding: 1.4rem 1.1rem;
+    border-radius: 10px;
+  }
+  .event-cta__logo { height: 46px; }
+  .event-cta__title { font-size: 1.05rem; }
+  .event-cta__sub { font-size: 0.8rem; }
+}

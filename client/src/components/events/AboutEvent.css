@@ -1,0 +1,162 @@
+.about-event {
+  background: #fff;
+  padding: 1rem 2.5rem 3rem;
+  font-family: var(--font-primary);
+}
+
+.about-event__inner {
+  max-width: 1000px;
+  margin: 0 auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 3rem;
+}
+
+/* ── Left ── */
+.about-event__left {
+  flex: 1.1;
+}
+
+.about-event__heading {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--color-navy);
+  margin-bottom: 1rem;
+}
+
+.about-event__body {
+  font-size: 0.88rem;
+  color: #1a1a1a;
+  line-height: 1.8;
+  margin-bottom: 0.9rem;
+}
+
+.about-event__btn {
+  display: inline-block;
+  margin-top: 0.6rem;
+  padding: 0.55rem 1.3rem;
+  border: 1.5px solid var(--color-orange);
+  border-radius: 4px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--color-orange);
+  transition: background 0.2s, color 0.2s, transform 0.2s ease, box-shadow 0.2s ease;
+}
+.about-event__btn:hover {
+  background: var(--color-orange);
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(232,100,26,0.3);
+}
+
+/* ── Right — 4 cards in a row ── */
+.about-event__right {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  border: 1px solid #e4ddd0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.about-event__highlight {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.8rem 0.8rem;
+  text-align: center;
+  border-right: 1px solid #e4ddd0;
+  transition: background 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+}
+.about-event__highlight:last-child { border-right: none; }
+.about-event__highlight:hover {
+  background: #f0f5ff;
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(26,43,94,0.1);
+  z-index: 1;
+}
+
+.about-event__highlight-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 1.5px solid #c8d4e8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  color: var(--color-navy);
+  margin-bottom: 0.85rem;
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+.about-event__highlight:hover .about-event__highlight-icon {
+  transform: scale(1.12) rotate(-6deg);
+  box-shadow: 0 6px 16px rgba(26,43,94,0.15);
+}
+
+.about-event__highlight-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  line-height: 1.4;
+  transition: color 0.25s ease;
+}
+.about-event__highlight:hover .about-event__highlight-label {
+  color: var(--color-navy);
+}
+
+/* ── Tablet landscape (≤1024px) ── */
+@media (max-width: 1024px) {
+  .about-event__inner { gap: 2rem; }
+  .about-event__highlight { padding: 1.4rem 0.6rem; }
+  .about-event__heading { font-size: 1.4rem; }
+}
+
+/* ── Tablet portrait (≤768px) — stack vertically, icons stay 4-across ── */
+@media (max-width: 768px) {
+  .about-event { padding: 1.5rem 1.5rem 2.5rem; }
+  .about-event__inner {
+    flex-direction: column;
+    gap: 1.8rem;
+    align-items: center;
+    text-align: center;
+  }
+  .about-event__left {
+    width: 100%;
+    text-align: center;
+  }
+  .about-event__right {
+    width: 100%;
+  }
+  .about-event__heading { font-size: 1.35rem; }
+}
+
+/* ── Mobile (≤540px) — icons 2×2 ── */
+@media (max-width: 540px) {
+  .about-event { padding: 1.2rem 1.2rem 2rem; }
+  .about-event__heading { font-size: 1.2rem; }
+  .about-event__body { font-size: 0.83rem; }
+  .about-event__right {
+    flex-wrap: wrap;
+  }
+  .about-event__highlight {
+    flex: 0 0 50%;
+    border-bottom: 1px solid #e4ddd0;
+  }
+  .about-event__highlight:nth-child(2) { border-right: none; }
+  .about-event__highlight:nth-child(3),
+  .about-event__highlight:nth-child(4) { border-bottom: none; }
+  .about-event__highlight { padding: 1.3rem 0.6rem; }
+  .about-event__highlight-icon { width: 50px; height: 50px; font-size: 1.2rem; }
+  .about-event__highlight-label { font-size: 0.75rem; }
+}
+
+/* ── Small mobile (≤380px) ── */
+@media (max-width: 380px) {
+  .about-event__highlight-icon { width: 44px; height: 44px; font-size: 1rem; }
+}

@@ -1,11 +1,13 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import HomePage from './pages/HomePage';
+import HomePage   from './pages/HomePage';
+import EventsPage from './pages/EventsPage';
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<HomePage />} />
+        <Route path="/"       element={<HomePage />} />
+        <Route path="/events" element={<EventsPage />} />
       </Routes>
     </BrowserRouter>
   );

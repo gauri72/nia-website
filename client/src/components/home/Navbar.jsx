@@ -1,12 +1,22 @@
 import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { FaFacebookF, FaInstagram, FaLinkedinIn, FaBars, FaTimes, FaUserPlus } from 'react-icons/fa';
 import navbarLogo from '../../assets/home/NavbarLogo.png';
 import './Navbar.css';
 
-const NAV_LINKS = ['Home', 'About Us', 'Events', 'Membership', 'Articles', 'Gallery', 'Contact Us'];
+const NAV_LINKS = [
+  { label: 'Home',       href: '/' },
+  { label: 'About Us',   href: '#' },
+  { label: 'Events',     href: '/events' },
+  { label: 'Membership', href: '#' },
+  { label: 'Articles',   href: '#' },
+  { label: 'Gallery',    href: '#' },
+  { label: 'Contact Us', href: '#' },
+];
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const { pathname } = useLocation();
 
   return (
     <header className="navbar">
@@ -33,12 +43,12 @@ export default function Navbar() {
         <nav className={`navbar__links${menuOpen ? ' open' : ''}`}>
           {NAV_LINKS.map((link) => (
             <a
-              key={link}
-              href="#"
-              className={`nav-link${link === 'Home' ? ' active' : ''}`}
+              key={link.label}
+              href={link.href}
+              className={`nav-link${pathname === link.href ? ' active' : ''}`}
               onClick={() => setMenuOpen(false)}
             >
-              {link}
+              {link.label}
             </a>
           ))}
         </nav>
