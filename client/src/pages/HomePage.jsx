@@ -2,6 +2,7 @@ import Navbar from '../components/home/Navbar';
 import HeroBanner from '../components/home/HeroBanner';
 import AboutNIA from '../components/home/AboutNIA';
 import MembershipStructure from '../components/home/MembershipStructure';
+import AssociationStructure from '../components/home/AssociationStructure';
 import Activities from '../components/home/Activities';
 import Sponsors from '../components/home/Sponsors';
 import Footer from '../components/home/Footer';
@@ -14,6 +15,7 @@ export default function HomePage() {
       <HeroBanner />
       <AboutNIA />
       <MembershipStructure />
+      <AssociationStructure />
       <Activities />
       <Sponsors />
       <Footer />

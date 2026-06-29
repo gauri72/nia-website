@@ -1,0 +1,107 @@
+.don-impact {
+  background: #f7f9fc;
+  padding: 4rem 2rem;
+  font-family: var(--font-primary);
+}
+
+.don-impact__inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.don-impact__eyebrow {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  color: var(--color-orange);
+  text-transform: uppercase;
+  margin: 0 0 0.6rem;
+}
+
+.don-impact__heading {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--color-navy);
+  margin: 0 0 1rem;
+  letter-spacing: 0.02em;
+}
+
+.don-impact__intro {
+  font-size: 0.97rem;
+  color: #555;
+  line-height: 1.7;
+  max-width: 620px;
+  margin: 0 auto 2.8rem;
+}
+
+.don-impact__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+}
+
+.don-impact-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 2rem 1.4rem 1.8rem;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.don-impact-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 36px rgba(0,0,0,0.12);
+}
+
+.don-impact-card__icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: rgba(26,43,94,0.07);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  color: var(--color-navy);
+  margin-bottom: 0.4rem;
+}
+
+.don-impact-card__stat {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--color-orange);
+  margin: 0;
+  line-height: 1;
+}
+
+.don-impact-card__label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-navy);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.don-impact-card__desc {
+  font-size: 0.82rem;
+  color: #666;
+  line-height: 1.6;
+  margin: 0.3rem 0 0;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .don-impact__grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 480px) {
+  .don-impact { padding: 3rem 1.2rem; }
+  .don-impact__heading { font-size: 1.6rem; }
+  .don-impact__grid { grid-template-columns: 1fr; gap: 1.1rem; }
+  .don-impact-card { padding: 1.6rem 1.2rem; }
+}

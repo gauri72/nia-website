@@ -1,4 +1,4 @@
-import { FaUsers, FaUser, FaUserGraduate, FaStar, FaChessKing } from 'react-icons/fa';
+import { FaUsers, FaUser, FaUserGraduate } from 'react-icons/fa';
 import membershipImage from '../../assets/home/MembershipStructureImage.png';
 import './MembershipStructure.css';
 
@@ -36,7 +36,7 @@ export default function MembershipStructure() {
 
         {/* ── Left panel with border ── */}
         <div className="membership__left">
-          <h2 className="membership__heading">Membership and Structure of the Association</h2>
+          <h2 className="membership__heading">Membership</h2>
           <div className="membership__underline" />
           <p className="membership__intro">
             Individuals and families who agree with the objectives of the Association can become members
@@ -53,16 +53,6 @@ export default function MembershipStructure() {
             ))}
           </div>
 
-          <div className="membership__notes">
-            <div className="note note--orange">
-              <span className="note__icon note__icon--orange"><FaStar /></span>
-              <p>Honorary membership may be conferred upon individuals who have made an outstanding contribution to Indo-Dutch cultural cooperation.</p>
-            </div>
-            <div className="note note--green">
-              <span className="note__icon note__icon--green"><FaChessKing /></span>
-              <p>The Association is managed by an Executive Board. The General Meeting consists of members. The Executive Board comprises the office bearers: President, Vice-President, Secretary and Treasurer.</p>
-            </div>
-          </div>
         </div>
 
         {/* ── Right panel: image + card seamlessly joined, icon straddling seam ── */}

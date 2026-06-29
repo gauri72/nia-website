@@ -8,10 +8,9 @@ const NAV_LINKS = [
   { label: 'Home',       href: '/' },
   { label: 'About Us',   href: '#' },
   { label: 'Events',     href: '/events' },
-  { label: 'Membership', href: '#' },
-  { label: 'Articles',   href: '#' },
-  { label: 'Gallery',    href: '#' },
-  { label: 'Contact Us', href: '#' },
+  { label: 'Membership', href: '/membership' },
+  { label: 'Sponsorship', href: '/sponsorship' },
+  { label: 'Donation',    href: '/donation' },
 ];
 
 export default function Navbar() {

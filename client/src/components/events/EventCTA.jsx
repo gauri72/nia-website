@@ -12,8 +12,8 @@ export default function EventCTA() {
             Honouring the past, celebrating the present,<br />inspiring the future.
           </p>
         </div>
-        <a href="#tickets" className="event-cta__btn">
-          BOOK YOUR TICKETS NOW &nbsp;→
+        <a href="#membership" className="event-cta__btn">
+          BECOME A MEMBER &nbsp;→
         </a>
       </div>
     </section>

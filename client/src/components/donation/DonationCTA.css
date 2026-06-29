@@ -1,0 +1,93 @@
+.don-cta {
+  background: #faf7f2;
+  padding: 2rem 2.5rem 2.5rem;
+  font-family: var(--font-primary);
+}
+
+.don-cta__inner {
+  max-width: 1000px;
+  margin: 0 auto;
+  background: #0F1F4B;
+  border-radius: 14px;
+  padding: 1.6rem 2.4rem;
+  display: flex;
+  align-items: center;
+  gap: 1.6rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.don-cta__inner:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 48px rgba(15,31,75,0.35);
+}
+
+.don-cta__icon-wrap {
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 2px solid var(--color-orange);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.don-cta__icon {
+  font-size: 1.3rem;
+  color: var(--color-orange);
+}
+
+.don-cta__text { flex: 1; }
+
+.don-cta__body {
+  font-size: 0.95rem;
+  color: #fff;
+  font-weight: 500;
+  margin: 0 0 0.35rem;
+  line-height: 1.5;
+}
+
+.don-cta__sub {
+  font-size: 0.88rem;
+  color: var(--color-orange);
+  font-style: italic;
+  font-weight: 600;
+  margin: 0;
+  line-height: 1.5;
+}
+.don-cta__sub strong { font-style: italic; }
+
+.don-cta__logo {
+  height: 64px;
+  width: auto;
+  object-fit: contain;
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 8px rgba(212,168,75,0.4));
+  transition: transform 0.3s ease;
+}
+.don-cta__logo:hover { transform: rotate(8deg) scale(1.1); }
+
+@media (max-width: 768px) {
+  .don-cta { padding: 1.5rem 1.5rem 2rem; }
+  .don-cta__inner { padding: 1.4rem 1.6rem; gap: 1.2rem; }
+  .don-cta__logo { height: 50px; }
+  .don-cta__body { font-size: 0.88rem; }
+}
+
+@media (max-width: 580px) {
+  .don-cta { padding: 1.2rem 1.2rem 1.8rem; }
+  .don-cta__inner {
+    flex-direction: column;
+    text-align: center;
+    padding: 1.6rem 1.4rem;
+    gap: 1rem;
+    border-radius: 12px;
+  }
+  .don-cta__logo { height: 48px; }
+  .don-cta__body { font-size: 0.85rem; }
+  .don-cta__sub  { font-size: 0.82rem; }
+}
+
+@media (max-width: 400px) {
+  .don-cta { padding: 1rem; }
+  .don-cta__inner { padding: 1.3rem 1rem; border-radius: 10px; }
+}

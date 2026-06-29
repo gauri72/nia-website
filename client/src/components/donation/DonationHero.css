@@ -1,0 +1,89 @@
+.don-hero {
+  position: relative;
+  width: 100%;
+  min-height: 52vh;
+  background: linear-gradient(135deg, #0d1b4b 0%, #1A2B5E 55%, #1e3a6e 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-primary);
+  overflow: hidden;
+}
+
+/* Decorative circle accents */
+.don-hero::before,
+.don-hero::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.07;
+  background: #fff;
+  pointer-events: none;
+}
+.don-hero::before {
+  width: 520px;
+  height: 520px;
+  top: -160px;
+  right: -120px;
+}
+.don-hero::after {
+  width: 320px;
+  height: 320px;
+  bottom: -120px;
+  left: -80px;
+}
+
+.don-hero__overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 70% 50%, rgba(232,100,26,0.08) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+.don-hero__content {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 4rem 2rem;
+  max-width: 700px;
+}
+
+.don-hero__eyebrow {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  color: var(--color-orange);
+  text-transform: uppercase;
+  margin: 0 0 1rem;
+}
+
+.don-hero__heading {
+  font-size: 3rem;
+  font-weight: 800;
+  color: #fff;
+  margin: 0 0 1.2rem;
+  line-height: 1.15;
+  letter-spacing: 0.02em;
+}
+
+.don-hero__sub {
+  font-size: 1.05rem;
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.7;
+  margin: 0;
+  font-weight: 400;
+}
+
+@media (max-width: 768px) {
+  .don-hero { min-height: 44vh; }
+  .don-hero__heading { font-size: 2.1rem; }
+  .don-hero__sub { font-size: 0.95rem; }
+  .don-hero__content { padding: 3rem 1.5rem; }
+}
+
+@media (max-width: 480px) {
+  .don-hero { min-height: 38vh; }
+  .don-hero__heading { font-size: 1.7rem; }
+  .don-hero__sub { font-size: 0.88rem; }
+  .don-hero__content { padding: 2.5rem 1.2rem; }
+}

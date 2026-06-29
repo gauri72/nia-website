@@ -1,0 +1,184 @@
+.mem-plans {
+  background: #f5f0e8;
+  padding: 4rem 2.5rem;
+  font-family: var(--font-primary);
+}
+
+.mem-plans__inner {
+  max-width: 1000px;
+  margin: 0 auto;
+  display: flex;
+  gap: 2rem;
+  align-items: stretch;
+}
+
+/* ── Card shell ── */
+.mem-card {
+  flex: 1;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.13);
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.mem-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 56px rgba(0,0,0,0.18);
+}
+
+/* ── Headers ── */
+.mem-card__header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.4rem 1.8rem;
+}
+.mem-card__header--friend { background: var(--color-navy); }
+.mem-card__header--patron { background: var(--color-orange); }
+
+.mem-card__icon-wrap {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  color: #fff;
+  flex-shrink: 0;
+}
+.mem-card__icon-wrap--friend { background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.4); }
+.mem-card__icon-wrap--patron { background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.4); }
+
+.mem-card__title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 0.08em;
+  margin: 0;
+}
+
+/* ── Body ── */
+.mem-card__body {
+  padding: 1.8rem 1.8rem 2rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.mem-card__price {
+  font-size: 2.6rem;
+  font-weight: 800;
+  line-height: 1;
+  margin: 0 0 0.3rem;
+}
+.mem-card__price--friend { color: var(--color-navy); }
+.mem-card__price--patron { color: var(--color-orange); }
+
+.mem-card__price-unit {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #888;
+}
+
+.mem-card__tagline {
+  display: inline-block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  border-radius: 4px;
+  padding: 0.3rem 0.85rem;
+  margin-bottom: 1.4rem;
+  color: #fff;
+}
+.mem-card__tagline--friend { background: var(--color-navy); }
+.mem-card__tagline--patron { background: var(--color-orange); }
+
+/* ── Perks list ── */
+.mem-card__perks {
+  list-style: none;
+  margin: 0 0 1.8rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.mem-perk {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.72rem 0;
+  border-bottom: 1px solid #ede8df;
+  font-size: 0.88rem;
+  color: #222;
+  line-height: 1.4;
+}
+.mem-perk:last-child { border-bottom: none; }
+
+.mem-perk__icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+  width: 28px;
+  text-align: center;
+}
+.mem-perk__icon--friend { color: var(--color-navy); }
+.mem-perk__icon--patron { color: var(--color-orange); }
+
+.mem-perk__check {
+  font-size: 0.72rem;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #fff;
+}
+.mem-perk__check--friend { background: var(--color-navy); }
+.mem-perk__check--patron { background: var(--color-orange); }
+
+.mem-perk__text { flex: 1; }
+
+/* ── CTA buttons ── */
+.mem-card__btn {
+  display: inline-block;
+  text-align: center;
+  padding: 0.85rem 1.6rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  margin-top: auto;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s;
+  color: #fff;
+}
+.mem-card__btn:hover { transform: translateY(-3px); opacity: 0.92; }
+
+.mem-card__btn--friend {
+  background: var(--color-navy);
+  box-shadow: 0 6px 20px rgba(26,43,94,0.3);
+}
+.mem-card__btn--friend:hover { box-shadow: 0 10px 28px rgba(26,43,94,0.4); }
+
+.mem-card__btn--patron {
+  background: var(--color-orange);
+  box-shadow: 0 6px 20px rgba(232,100,26,0.3);
+}
+.mem-card__btn--patron:hover { box-shadow: 0 10px 28px rgba(232,100,26,0.4); }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .mem-plans { padding: 3rem 1.5rem; }
+  .mem-plans__inner { flex-direction: column; gap: 1.5rem; }
+}
+
+@media (max-width: 480px) {
+  .mem-plans { padding: 2.5rem 1.1rem; }
+  .mem-card__price { font-size: 2.1rem; }
+  .mem-card__title { font-size: 0.9rem; }
+  .mem-card__body { padding: 1.4rem 1.3rem 1.6rem; }
+}
