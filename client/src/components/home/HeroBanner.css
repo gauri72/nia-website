@@ -1,10 +1,37 @@
 .hero {
   width: 100%;
+  position: relative;
+  overflow: hidden;
   line-height: 0;
 }
 
+.hero__img-wrap {
+  width: 100%;
+  overflow: hidden;
+}
+
+/* Ken Burns: zooms out while sharpening */
 .hero__bg {
   width: 100%;
   height: auto;
   display: block;
+  transform: scale(1.08) translateY(0px);
+  transform-origin: center top;
+  will-change: transform;
+  animation: hero-kenburns 3s ease-out forwards;
+}
+
+@keyframes hero-kenburns {
+  from {
+    transform: scale(1.15) translateY(0px);
+    filter: blur(4px) brightness(0.92);
+  }
+  to {
+    transform: scale(1.08) translateY(0px);
+    filter: blur(0px) brightness(1) contrast(1.08) saturate(1.12);
+  }
+}
+
+@media (max-width: 768px) {
+  .hero__bg { animation-duration: 3s; }
 }

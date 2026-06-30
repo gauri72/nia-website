@@ -1,259 +1,348 @@
-import { useState, useRef, useEffect } from 'react';
-import { FaUser, FaChild, FaStar, FaShieldAlt, FaTimes, FaLock, FaTag, FaIdCard, FaRobot, FaCreditCard } from 'react-icons/fa';
+import { useState } from 'react';
+import {
+  FaUser, FaChild, FaStar, FaShieldAlt, FaTag, FaIdCard,
+  FaRobot, FaArrowRight, FaArrowLeft, FaCreditCard, FaLock,
+  FaUniversity, FaMobileAlt, FaPaypal, FaCheckCircle,
+} from 'react-icons/fa';
 import './BookTickets.css';
 
 const TICKETS = [
-  {
-    id: 'regular',
-    icon: <FaUser />,
-    type: 'Regular Entry',
-    perks: ['No drinks included', 'No food included'],
-    price: 20,
-    badge: null,
-    highlight: false,
-    color: 'navy',
-  },
-  {
-    id: 'vip',
-    icon: <FaStar />,
-    type: 'VIP Experience',
-    perks: ['2 drinks included', 'Food included'],
-    price: 45,
-    badge: 'BEST VALUE',
-    highlight: true,
-    color: 'orange',
-  },
-  {
-    id: 'child',
-    icon: <FaChild />,
-    type: 'Child (6–12 yrs)',
-    perks: ['Per child', 'Accompanied by adult'],
-    price: 5,
-    badge: null,
-    highlight: false,
-    color: 'green',
-  },
+  { id: 'regular', icon: <FaUser />,  type: 'Regular Entry',    perks: ['No drinks included', 'No food included'],   price: 20, badge: null,         highlight: false, color: 'navy'   },
+  { id: 'vip',     icon: <FaStar />,  type: 'VIP Experience',   perks: ['2 drinks included', 'Food included'],       price: 45, badge: 'BEST VALUE', highlight: true,  color: 'orange' },
+  { id: 'child',   icon: <FaChild />, type: 'Child (6–12 yrs)', perks: ['Per child', 'Accompanied by adult'],        price: 5,  badge: null,         highlight: false, color: 'green'  },
 ];
+
+const PAYMENT_METHODS = [
+  { id: 'ideal',  icon: <FaUniversity />,  label: 'iDEAL',        desc: 'Pay directly via your Dutch bank' },
+  { id: 'card',   icon: <FaCreditCard />,  label: 'Credit / Debit Card', desc: 'Visa, Mastercard, Amex accepted' },
+  { id: 'paypal', icon: <FaPaypal />,      label: 'PayPal',        desc: 'Fast and secure via PayPal' },
+  { id: 'other',  icon: <FaMobileAlt />,   label: 'Other Methods', desc: 'Apple Pay, Google Pay and more' },
+];
+
+function StepBar({ step }) {
+  const STEPS = ['Select Tickets', 'Your Details', 'Review Order', 'Payment'];
+  return (
+    <div className="bt-steps">
+      {STEPS.map((label, i) => (
+        <div key={i} className={`bt-step${step === i ? ' bt-step--active' : ''}${step > i ? ' bt-step--done' : ''}`}>
+          <div className="bt-step__circle">{step > i ? '✓' : i + 1}</div>
+          <span className="bt-step__label">{label}</span>
+          {i < STEPS.length - 1 && <div className="bt-step__line" />}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 function AIHint({ ticket, qty, discount }) {
   if (qty < 1) return null;
-  const total = ticket.price * qty;
-  const saved = discount > 0 ? Math.round(total * discount) : 0;
-  const final = total - saved;
+  const saved = discount > 0 ? Math.round(ticket.price * qty * discount) : 0;
   if (ticket.id === 'vip' && qty >= 2)
-    return <span className="bt-ai-hint"><FaRobot /> Great choice — VIP for {qty} saves you time at the bar!</span>;
+    return <span className="bt-ai-hint"><FaRobot /> Great choice — VIP for {qty} saves time at the bar!</span>;
   if (ticket.id === 'regular' && qty >= 4)
-    return <span className="bt-ai-hint"><FaRobot /> Tip: upgrading to VIP for groups of {qty} is only €{((45 - 20) * qty).toLocaleString()} more and includes food &amp; drinks.</span>;
+    return <span className="bt-ai-hint"><FaRobot /> Tip: upgrading to VIP for {qty} is only €{((45 - 20) * qty)} more and includes food &amp; drinks.</span>;
   if (saved > 0)
     return <span className="bt-ai-hint"><FaRobot /> Discount applied — you save €{saved}!</span>;
   return null;
 }
 
 export default function BookTickets() {
-  const [qtys, setQtys]           = useState({ regular: 1, vip: 1, child: 1 });
-  const [discounts, setDiscounts] = useState({ regular: '', vip: '', child: '' });
-  const [memberships, setMemberships] = useState({ regular: '', vip: '', child: '' });
-  const [discountPct, setDiscountPct] = useState({ regular: 0, vip: 0, child: 0 });
-  const [selected, setSelected]   = useState(null); // ticket id
-  const payRef = useRef(null);
+  const [step, setStep] = useState(0);
 
-  // Fake discount validation
-  function applyDiscount(id) {
-    const code = discounts[id].trim().toUpperCase();
-    if (code === 'NIA10')  setDiscountPct(p => ({ ...p, [id]: 0.10 }));
-    else if (code === 'NIA20') setDiscountPct(p => ({ ...p, [id]: 0.20 }));
-    else setDiscountPct(p => ({ ...p, [id]: 0 }));
+  // Step 0 — ticket selection
+  const [qtys, setQtys]               = useState({ regular: 0, vip: 0, child: 0 });
+  const [discountCode, setDiscountCode] = useState('');
+  const [membershipCode, setMembershipCode] = useState('');
+  const [discountPct, setDiscountPct]   = useState(0);
+
+  // Step 1 — attendee details
+  const [attendee, setAttendee] = useState({ name: '', email: '', phone: '' });
+
+  // Step 3 — payment method
+  const [payMethod, setPayMethod] = useState(null);
+  const [paid, setPaid]           = useState(false);
+
+  // ── Derived totals ──
+  const selectedTickets = TICKETS.filter(t => qtys[t.id] > 0);
+  const subtotal  = selectedTickets.reduce((sum, t) => sum + t.price * qtys[t.id], 0);
+  const totalSaved = Math.round(subtotal * discountPct);
+  const grandTotal = subtotal - totalSaved;
+  const hasTickets = selectedTickets.length > 0;
+
+  function applyDiscount() {
+    const code = discountCode.trim().toUpperCase();
+    if (code === 'NIA10')      setDiscountPct(0.10);
+    else if (code === 'NIA20') setDiscountPct(0.20);
+    else                       setDiscountPct(0);
   }
 
-  function handleSelect(id) {
-    setSelected(id);
-    // scroll to payment after short delay so section renders first
-    setTimeout(() => payRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+  function handleAttendeeField(e) {
+    setAttendee(a => ({ ...a, [e.target.name]: e.target.value }));
   }
 
-  function handleClose() {
-    setSelected(null);
-  }
+  const canProceedStep1 = attendee.name.trim() && attendee.email.trim();
 
-  const sel = TICKETS.find(t => t.id === selected);
-  const selQty = selected ? qtys[selected] : 1;
-  const selDisc = selected ? discountPct[selected] : 0;
-  const subtotal = sel ? sel.price * selQty : 0;
-  const saved    = Math.round(subtotal * selDisc);
-  const total    = subtotal - saved;
-
-  return (
-    <>
+  if (paid) {
+    return (
       <section className="book-tickets" id="tickets">
         <div className="book-tickets__inner">
-
-          <div className="book-tickets__header">
-            <h2 className="book-tickets__heading">Book Your Tickets</h2>
-            <p className="book-tickets__sub">Choose your category, set quantity, and apply any codes.</p>
+          <div className="bt-success">
+            <FaCheckCircle className="bt-success__icon" />
+            <h2 className="bt-success__heading">Booking Confirmed!</h2>
+            <p className="bt-success__body">
+              Thank you, <strong>{attendee.name}</strong>! Your tickets have been booked successfully.
+              A confirmation has been sent to <strong>{attendee.email}</strong>.
+            </p>
+            <button className="bt-continue-btn" onClick={() => { setStep(0); setQtys({ regular:0, vip:0, child:0 }); setAttendee({ name:'',email:'',phone:'' }); setPayMethod(null); setPaid(false); setDiscountPct(0); setDiscountCode(''); }}>
+              Book More Tickets
+            </button>
           </div>
+        </div>
+      </section>
+    );
+  }
 
-          <div className="book-tickets__rows">
-            {TICKETS.map((t) => {
-              const qty  = qtys[t.id];
-              const disc = discountPct[t.id];
-              const lineTotal = t.price * qty;
-              const lineSaved = Math.round(lineTotal * disc);
-              const lineFinal = lineTotal - lineSaved;
+  return (
+    <section className="book-tickets" id="tickets">
+      <div className="book-tickets__inner">
 
-              return (
-                <div
-                  key={t.id}
-                  className={`bt-row${t.highlight ? ' bt-row--highlight' : ''}${selected === t.id ? ' bt-row--active' : ''}`}
-                >
-                  {t.badge && <span className="bt-row__badge">{t.badge}</span>}
+        <div className="book-tickets__header">
+          <h2 className="book-tickets__heading">Book Your Tickets</h2>
+          <p className="book-tickets__sub">Secure your spot at our upcoming event in just a few steps.</p>
+        </div>
 
-                  {/* ── Left: icon + label + perks ── */}
-                  <div className="bt-row__identity">
-                    <div className={`bt-row__icon-wrap bt-row__icon-wrap--${t.color}`}>
-                      {t.icon}
+        <StepBar step={step} />
+
+        {/* ══════════════════════════════
+            STEP 0 — Select Tickets
+            ══════════════════════════════ */}
+        {step === 0 && (
+          <>
+            {/* Shared codes */}
+            <div className="bt-codes">
+              <div className="bt-codes__field">
+                <label className="bt-field__label"><FaTag /> Discount Code</label>
+                <div className="bt-code-wrap">
+                  <input className="bt-code-input" placeholder="e.g. NIA10" value={discountCode} onChange={e => setDiscountCode(e.target.value)} />
+                  <button className="bt-code-apply" onClick={applyDiscount}>Apply</button>
+                </div>
+                {discountPct > 0 && <span className="bt-codes__applied">✓ {discountPct * 100}% discount applied</span>}
+              </div>
+              <div className="bt-codes__field">
+                <label className="bt-field__label"><FaIdCard /> Membership Code</label>
+                <input className="bt-code-input bt-code-input--full" placeholder="Member ID" value={membershipCode} onChange={e => setMembershipCode(e.target.value)} />
+              </div>
+            </div>
+
+            {/* Ticket rows */}
+            <div className="book-tickets__rows">
+              {TICKETS.map((t) => {
+                const qty       = qtys[t.id];
+                const lineTotal = t.price * qty;
+                const lineSaved = Math.round(lineTotal * discountPct);
+                const lineFinal = lineTotal - lineSaved;
+
+                return (
+                  <div key={t.id} className={`bt-row${t.highlight ? ' bt-row--highlight' : ''}${qty > 0 ? ' bt-row--active' : ''}`}>
+                    {t.badge && <span className="bt-row__badge">{t.badge}</span>}
+
+                    <div className="bt-row__identity">
+                      <div className={`bt-row__icon-wrap bt-row__icon-wrap--${t.color}`}>{t.icon}</div>
+                      <div>
+                        <p className="bt-row__type">{t.type}</p>
+                        <ul className="bt-row__perks">{t.perks.map(p => <li key={p}>{p}</li>)}</ul>
+                      </div>
                     </div>
-                    <div>
-                      <p className="bt-row__type">{t.type}</p>
-                      <ul className="bt-row__perks">
-                        {t.perks.map(p => <li key={p}>{p}</li>)}
-                      </ul>
-                    </div>
-                  </div>
 
-                  {/* ── Middle: price + qty + codes ── */}
-                  <div className="bt-row__controls">
-                    <div className="bt-row__price-wrap">
-                      <span className={`bt-row__price bt-row__price--${t.color}`}>€{t.price}</span>
-                      <span className="bt-row__price-unit">/ person</span>
-                    </div>
-
-                    <div className="bt-row__fields">
-                      {/* Quantity */}
+                    <div className="bt-row__controls">
+                      <div className="bt-row__price-wrap">
+                        <span className={`bt-row__price bt-row__price--${t.color}`}>€{t.price}</span>
+                        <span className="bt-row__price-unit">/ person</span>
+                      </div>
                       <div className="bt-field bt-field--qty">
                         <label className="bt-field__label">Qty</label>
                         <div className="bt-qty">
-                          <button
-                            className="bt-qty__btn"
-                            onClick={() => setQtys(q => ({ ...q, [t.id]: Math.max(1, q[t.id] - 1) }))}
-                            aria-label="Decrease"
-                          >−</button>
+                          <button className="bt-qty__btn" onClick={() => setQtys(q => ({ ...q, [t.id]: Math.max(0, q[t.id] - 1) }))} aria-label="Decrease">−</button>
                           <span className="bt-qty__num">{qty}</span>
-                          <button
-                            className="bt-qty__btn"
-                            onClick={() => setQtys(q => ({ ...q, [t.id]: q[t.id] + 1 }))}
-                            aria-label="Increase"
-                          >+</button>
+                          <button className="bt-qty__btn" onClick={() => setQtys(q => ({ ...q, [t.id]: q[t.id] + 1 }))} aria-label="Increase">+</button>
                         </div>
                       </div>
-
-                      {/* Discount code */}
-                      <div className="bt-field">
-                        <label className="bt-field__label"><FaTag /> Discount Code</label>
-                        <div className="bt-code-wrap">
-                          <input
-                            className="bt-code-input"
-                            placeholder="e.g. NIA10"
-                            value={discounts[t.id]}
-                            onChange={e => setDiscounts(d => ({ ...d, [t.id]: e.target.value }))}
-                          />
-                          <button className="bt-code-apply" onClick={() => applyDiscount(t.id)}>Apply</button>
-                        </div>
-                      </div>
-
-                      {/* Membership code */}
-                      <div className="bt-field">
-                        <label className="bt-field__label"><FaIdCard /> Membership Code</label>
-                        <input
-                          className="bt-code-input"
-                          placeholder="Member ID"
-                          value={memberships[t.id]}
-                          onChange={e => setMemberships(m => ({ ...m, [t.id]: e.target.value }))}
-                        />
-                      </div>
+                      <AIHint ticket={t} qty={qty} discount={discountPct} />
                     </div>
 
-                    <AIHint ticket={t} qty={qty} discount={disc} />
-                  </div>
-
-                  {/* ── Right: total + select ── */}
-                  <div className="bt-row__action">
-                    <div className="bt-row__total-wrap">
-                      {lineSaved > 0 && <span className="bt-row__saved">−€{lineSaved}</span>}
-                      <span className={`bt-row__total bt-row__total--${t.color}`}>€{lineFinal}</span>
+                    <div className="bt-row__action">
+                      <div className="bt-row__total-wrap">
+                        {lineSaved > 0 && <span className="bt-row__saved">−€{lineSaved}</span>}
+                        <span className={`bt-row__total bt-row__total--${t.color}`}>{qty > 0 ? `€${lineFinal}` : '—'}</span>
+                      </div>
                     </div>
-                    <button
-                      className={`bt-row__select-btn bt-row__select-btn--${t.color}`}
-                      onClick={() => handleSelect(t.id)}
-                    >
-                      {selected === t.id ? 'Selected ✓' : 'Select & Pay'}
-                    </button>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-
-          <p className="book-tickets__note">
-            <FaShieldAlt className="book-tickets__note-icon" />
-            Secure Booking &nbsp;|&nbsp; Limited Seats — Book Early!
-          </p>
-        </div>
-      </section>
-
-      {/* ── Inline payment panel ── */}
-      {selected && (
-        <section className="bt-payment" ref={payRef} id="payment">
-          <div className="bt-payment__inner">
-            <div className="bt-payment__header">
-              <div>
-                <p className="bt-payment__eyebrow"><FaCreditCard /> Complete Your Booking</p>
-                <h3 className="bt-payment__title">{sel.type} × {selQty} — <span>€{total}</span></h3>
-                {saved > 0 && <p className="bt-payment__saved">You save €{saved} with your discount</p>}
-              </div>
-              <button className="bt-payment__close" onClick={handleClose} aria-label="Close payment">
-                <FaTimes />
-              </button>
+                );
+              })}
             </div>
 
-            <form className="bt-payment__form" onSubmit={e => e.preventDefault()}>
-              <div className="bt-payment__row">
-                <div className="bt-pfield">
-                  <label className="bt-pfield__label">Full Name</label>
-                  <input className="bt-pfield__input" type="text" placeholder="Your full name" required />
-                </div>
-                <div className="bt-pfield">
-                  <label className="bt-pfield__label">Email</label>
-                  <input className="bt-pfield__input" type="email" placeholder="you@email.com" required />
-                </div>
-              </div>
+            <p className="book-tickets__note">
+              <FaShieldAlt className="book-tickets__note-icon" />
+              Secure Booking &nbsp;|&nbsp; Limited Seats — Book Early!
+            </p>
 
-              <div className="bt-pfield bt-pfield--full">
-                <label className="bt-pfield__label"><FaLock /> Card Number</label>
-                <input className="bt-pfield__input" type="text" placeholder="1234 5678 9012 3456" maxLength={19} required />
-              </div>
-
-              <div className="bt-payment__row">
-                <div className="bt-pfield">
-                  <label className="bt-pfield__label">Expiry</label>
-                  <input className="bt-pfield__input" type="text" placeholder="MM / YY" maxLength={7} required />
-                </div>
-                <div className="bt-pfield">
-                  <label className="bt-pfield__label">CVV</label>
-                  <input className="bt-pfield__input" type="text" placeholder="•••" maxLength={4} required />
-                </div>
-              </div>
-
-              <button type="submit" className="bt-payment__submit">
-                <FaLock /> Pay €{total} Securely
+            <div className="bt-bottom">
+              {hasTickets && (
+                <p className="bt-bottom__summary">
+                  {selectedTickets.map(t => `${t.type} × ${qtys[t.id]}`).join(' + ')}
+                  {' '}&nbsp;=&nbsp; <strong>€{grandTotal}</strong>
+                  {totalSaved > 0 && <span className="bt-bottom__saved"> (saving €{totalSaved})</span>}
+                </p>
+              )}
+              <button
+                className="bt-continue-btn"
+                disabled={!hasTickets}
+                onClick={() => setStep(1)}
+              >
+                Continue <FaArrowRight />
               </button>
+            </div>
+          </>
+        )}
 
-              <p className="bt-payment__disclaimer">
-                <FaShieldAlt /> Your payment is encrypted and secure. Tickets will be emailed instantly.
-              </p>
-            </form>
+        {/* ══════════════════════════════
+            STEP 1 — Attendee Details
+            ══════════════════════════════ */}
+        {step === 1 && (
+          <div className="bt-form-step">
+            <h3 className="bt-form-step__heading">Your Details</h3>
+            <p className="bt-form-step__sub">We'll send your tickets to the email address below.</p>
+
+            <div className="bt-pfield bt-pfield--full">
+              <label className="bt-pfield__label">Full Name <span className="bt-required">*</span></label>
+              <input className="bt-pfield__input" name="name" type="text" placeholder="Your full name" value={attendee.name} onChange={handleAttendeeField} required />
+            </div>
+
+            <div className="bt-pfield bt-pfield--full">
+              <label className="bt-pfield__label">Email Address <span className="bt-required">*</span></label>
+              <input className="bt-pfield__input" name="email" type="email" placeholder="you@email.com" value={attendee.email} onChange={handleAttendeeField} required />
+            </div>
+
+            <div className="bt-pfield bt-pfield--full">
+              <label className="bt-pfield__label">Phone Number <span className="bt-optional">(optional)</span></label>
+              <input className="bt-pfield__input" name="phone" type="tel" placeholder="+31 6 12345678" value={attendee.phone} onChange={handleAttendeeField} />
+            </div>
+
+            <div className="bt-nav">
+              <button className="bt-back-btn" onClick={() => setStep(0)}><FaArrowLeft /> Back</button>
+              <button className="bt-continue-btn" disabled={!canProceedStep1} onClick={() => setStep(2)}>
+                Continue <FaArrowRight />
+              </button>
+            </div>
           </div>
-        </section>
-      )}
-    </>
+        )}
+
+        {/* ══════════════════════════════
+            STEP 2 — Review Order
+            ══════════════════════════════ */}
+        {step === 2 && (
+          <div className="bt-review">
+            <h3 className="bt-form-step__heading">Review Your Order</h3>
+            <p className="bt-form-step__sub">Check your tickets before proceeding to payment.</p>
+
+            <div className="bt-review__table">
+              <div className="bt-review__thead">
+                <span>Ticket</span>
+                <span>Price</span>
+                <span>Qty</span>
+                <span>Total</span>
+              </div>
+              {selectedTickets.map(t => {
+                const lineTotal = t.price * qtys[t.id];
+                const lineSaved = Math.round(lineTotal * discountPct);
+                return (
+                  <div key={t.id} className="bt-review__row">
+                    <span className="bt-review__ticket-name">
+                      <span className={`bt-review__dot bt-review__dot--${t.color}`} />
+                      {t.type}
+                    </span>
+                    <span>€{t.price}</span>
+                    <span>{qtys[t.id]}</span>
+                    <span className="bt-review__line-total">
+                      {lineSaved > 0 && <s className="bt-review__strike">€{lineTotal}</s>}
+                      €{lineTotal - lineSaved}
+                    </span>
+                  </div>
+                );
+              })}
+              {discountPct > 0 && (
+                <div className="bt-review__discount-row">
+                  <span>Discount ({discountPct * 100}%)</span>
+                  <span />
+                  <span />
+                  <span className="bt-review__saved-amt">−€{totalSaved}</span>
+                </div>
+              )}
+              <div className="bt-review__total-row">
+                <span>Total Payable</span>
+                <span />
+                <span />
+                <span className="bt-review__grand-total">€{grandTotal}</span>
+              </div>
+            </div>
+
+            <div className="bt-review__attendee">
+              <p className="bt-review__attendee-label">Tickets for</p>
+              <p className="bt-review__attendee-name">{attendee.name}</p>
+              <p className="bt-review__attendee-email">{attendee.email}</p>
+              {attendee.phone && <p className="bt-review__attendee-email">{attendee.phone}</p>}
+            </div>
+
+            <div className="bt-nav">
+              <button className="bt-back-btn" onClick={() => setStep(1)}><FaArrowLeft /> Back</button>
+              <button className="bt-continue-btn" onClick={() => setStep(3)}>
+                Pay €{grandTotal} <FaArrowRight />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ══════════════════════════════
+            STEP 3 — Payment Method
+            ══════════════════════════════ */}
+        {step === 3 && (
+          <div className="bt-payment-step">
+            <h3 className="bt-form-step__heading">Choose Payment Method</h3>
+            <p className="bt-form-step__sub">Select how you'd like to pay €{grandTotal}.</p>
+
+            <div className="bt-pay-methods">
+              {PAYMENT_METHODS.map(m => (
+                <button
+                  key={m.id}
+                  className={`bt-pay-method${payMethod === m.id ? ' bt-pay-method--active' : ''}`}
+                  onClick={() => setPayMethod(m.id)}
+                >
+                  <span className="bt-pay-method__icon">{m.icon}</span>
+                  <span className="bt-pay-method__label">{m.label}</span>
+                  <span className="bt-pay-method__desc">{m.desc}</span>
+                  {payMethod === m.id && <span className="bt-pay-method__check">✓</span>}
+                </button>
+              ))}
+            </div>
+
+            <p className="bt-payment__disclaimer">
+              <FaShieldAlt /> Your payment is encrypted and secure. Tickets will be emailed instantly.
+            </p>
+
+            <div className="bt-nav">
+              <button className="bt-back-btn" onClick={() => setStep(2)}><FaArrowLeft /> Back</button>
+              <button
+                className="bt-continue-btn bt-continue-btn--pay"
+                disabled={!payMethod}
+                onClick={() => setPaid(true)}
+              >
+                <FaLock /> Confirm &amp; Pay €{grandTotal}
+              </button>
+            </div>
+          </div>
+        )}
+
+      </div>
+    </section>
   );
 }

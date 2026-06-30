@@ -1,16 +1,16 @@
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { FaFacebookF, FaInstagram, FaLinkedinIn, FaBars, FaTimes, FaUserPlus } from 'react-icons/fa';
+import { FaBars, FaTimes, FaUserPlus, FaTicketAlt } from 'react-icons/fa';
 import navbarLogo from '../../assets/home/NavbarLogo.png';
 import './Navbar.css';
 
 const NAV_LINKS = [
-  { label: 'Home',       href: '/' },
-  { label: 'About Us',   href: '#' },
-  { label: 'Events',     href: '/events' },
-  { label: 'Membership', href: '/membership' },
+  { label: 'Home',        href: '/' },
+  { label: 'Events',      href: '/events' },
+  { label: 'Membership',  href: '/membership' },
   { label: 'Sponsorship', href: '/sponsorship' },
   { label: 'Donation',    href: '/donation' },
+  { label: 'About Us',    href: '/about' },
 ];
 
 export default function Navbar() {
@@ -22,11 +22,6 @@ export default function Navbar() {
       <div className="navbar__top">
         <div className="navbar__logo">
           <img src={navbarLogo} alt="Netherlands India Association" className="navbar__logo-img" />
-        </div>
-        <div className="navbar__socials">
-          <a href="#" aria-label="Facebook"  className="social-icon social-icon--fb"><FaFacebookF /></a>
-          <a href="#" aria-label="Instagram" className="social-icon social-icon--ig"><FaInstagram /></a>
-          <a href="#" aria-label="LinkedIn"  className="social-icon social-icon--li"><FaLinkedinIn /></a>
         </div>
       </div>
 
@@ -52,10 +47,16 @@ export default function Navbar() {
           ))}
         </nav>
 
-        <a href="#" className="navbar__cta">
-          <FaUserPlus />
-          <span>Register as a Member</span>
-        </a>
+        <div className="navbar__actions">
+          <a href="/events#tickets" className="navbar__cta">
+            <FaTicketAlt />
+            <span>Buy Tickets</span>
+          </a>
+          <a href="/membership" className="navbar__cta">
+            <FaUserPlus />
+            <span>Get NIA Membership</span>
+          </a>
+        </div>
       </div>
     </header>
   );

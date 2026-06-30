@@ -48,90 +48,124 @@
   margin-bottom: 1.4rem;
 }
 
-/* ── Tier cards ── */
+/* ── Tier cards container — sponsorship package style ── */
 .membership__tiers {
+  flex: 1;
   display: flex;
-  gap: 0.9rem;
-  margin-bottom: 1.2rem;
+  align-items: stretch;
+  background: rgba(255,255,255,0.82);
+  border-radius: 16px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.13);
+  border: 1px solid #e0e8f0;
+  overflow: hidden;
 }
 
+/* ── Each tier card ── */
 .tier-card {
   flex: 1;
-  background: #fff;
-  border-radius: 8px;
-  padding: 1.1rem 0.7rem;
-  text-align: center;
-  transition: transform 0.22s ease, box-shadow 0.22s ease;
-}
-.tier-card:hover {
-  transform: translateY(-5px) scale(1.03);
-}
-.tier-card--navy   { border: 1.5px solid var(--color-navy); }
-.tier-card--orange { border: 1.5px solid var(--color-orange); }
-.tier-card--green  { border: 1.5px solid var(--color-green); }
-.tier-card--navy:hover   { box-shadow: 0 10px 28px rgba(26,43,94,0.18); }
-.tier-card--orange:hover { box-shadow: 0 10px 28px rgba(232,100,26,0.18); }
-.tier-card--green:hover  { box-shadow: 0 10px 28px rgba(45,125,58,0.18); }
-
-.tier-icon {
-  font-size: 1.7rem;
-  display: block;
-  margin-bottom: 0.45rem;
-}
-.tier-icon--navy   { color: var(--color-navy); }
-.tier-icon--orange { color: var(--color-orange); }
-.tier-icon--green  { color: var(--color-green); }
-
-.tier-label {
-  font-size: 0.8rem;
-  color: #222;
-  margin-bottom: 0.35rem;
-  font-weight: 500;
-}
-
-.tier-price { font-size: 1.1rem; font-weight: 700; }
-.tier-price--navy   { color: var(--color-navy); }
-.tier-price--orange { color: var(--color-orange); }
-.tier-price--green  { color: var(--color-green); }
-
-/* ── Bottom notes ── */
-.membership__notes {
   display: flex;
   flex-direction: column;
-  gap: 0.7rem;
-  margin-top: auto;
+  align-items: center;
+  padding: 1.8rem 1.2rem 1.6rem;
+  gap: 0.9rem;
+  position: relative;
+  transition: background 0.2s ease;
+}
+.tier-card:hover { background: rgba(255,255,255,0.95); }
+
+/* Vertical divider between cards — same as sp-pkg__vdivider */
+.tier-card + .tier-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 12%;
+  height: 76%;
+  width: 1px;
+  background: #d0d8e4;
 }
 
-.note {
+/* ── Top row: badge + label ── */
+.tier-card__top {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 0.8rem;
-  border-radius: 8px;
-  padding: 0.85rem 1rem;
-  font-size: 0.82rem;
-  color: #333;
-  line-height: 1.6;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  width: 100%;
+  justify-content: center;
 }
-.note:hover { transform: translateX(4px); }
-.note--orange { background: #fff4ec; }
-.note--orange:hover { box-shadow: 4px 0 0 0 var(--color-orange) inset; }
-.note--green  { background: #edf7ee; }
-.note--green:hover  { box-shadow: 4px 0 0 0 var(--color-green) inset; }
 
-.note__icon {
-  flex-shrink: 0;
-  width: 34px;
-  height: 34px;
+/* Badge circle — mirrors sp-pkg__badge */
+.tier-card__badge {
+  width: 58px;
+  height: 58px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.85rem;
+  font-size: 1.5rem;
+  flex-shrink: 0;
   color: #fff;
 }
-.note__icon--orange { background: var(--color-orange); }
-.note__icon--green  { background: var(--color-green); }
+.tier-card__badge--gold {
+  background: radial-gradient(circle at 35% 35%, #ffe566, #b8860b);
+  box-shadow: 0 3px 12px rgba(184,134,11,0.5);
+  color: #7a5200;
+}
+.tier-card__badge--diamond {
+  background: radial-gradient(circle at 35% 35%, #aad4ff, #1A2B5E);
+  box-shadow: 0 3px 14px rgba(26,43,94,0.5);
+  color: #fff;
+}
+
+.tier-card__info { text-align: left; }
+
+/* Tier name — mirrors sp-pkg__tier */
+.tier-card__label {
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  margin: 0;
+  line-height: 1.1;
+}
+.tier-card--gold   .tier-card__label { color: #8a6200; }
+.tier-card--diamond .tier-card__label { color: var(--color-navy); }
+
+/* Sublabel — mirrors sp-pkg__sublabel */
+.tier-card__sublabel {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  margin: 0;
+  color: #aaa;
+}
+
+/* Price ribbon — mirrors sp-pkg__ribbon */
+.tier-card__ribbon {
+  width: 90%;
+  border-radius: 6px;
+  padding: 0.42rem 0.6rem;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.3rem;
+}
+.tier-card__ribbon--gold    { background: linear-gradient(90deg, #9a6e00, #e8c84a, #9a6e00); }
+.tier-card__ribbon--diamond { background: linear-gradient(90deg, #0d1b4b, #1A2B5E, #0d1b4b); }
+
+/* Price text — mirrors sp-pkg__price */
+.tier-card__price {
+  font-size: 1.55rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+.tier-card--gold   .tier-card__price { color: #3a2800; }
+.tier-card--diamond .tier-card__price { color: #fff; }
+
+.tier-card__unit {
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+.tier-card--gold   .tier-card__unit { color: rgba(58,40,0,0.7); }
+.tier-card--diamond .tier-card__unit { color: rgba(255,255,255,0.82); }
 
 /* ════════════════════════════
    RIGHT PANEL
@@ -163,13 +197,12 @@
 .membership__info-card {
   background: var(--color-navy);
   color: #fff;
-  padding: 1.4rem 1.4rem 1.4rem 1.8rem;
+  padding: 1.4rem 1.4rem 1.4rem 5.5rem;
   font-size: 0.88rem;
   line-height: 1.65;
   display: flex;
   flex-direction: column;
   gap: 0.7rem;
-  padding-left: 5.5rem;
 }
 
 .membership__seam-icon {
@@ -193,16 +226,16 @@
 @media (max-width: 1024px) {
   .membership { padding: 2.5rem 2rem; }
   .membership__heading { font-size: 1.2rem; }
-  .tier-price { font-size: 1rem; }
+  .tier-card__label  { font-size: 1.05rem; }
+  .tier-card__price  { font-size: 1.3rem; }
+  .tier-card__badge  { width: 52px; height: 52px; font-size: 1.3rem; }
+  .tier-card         { padding: 1.5rem 1rem 1.3rem; gap: 0.75rem; }
 }
 
-/* ── Tablet portrait (≤768px) — stack vertically ── */
+/* ── Tablet portrait (≤768px) — stack panels vertically ── */
 @media (max-width: 768px) {
   .membership { padding: 2.5rem 1.5rem; }
-  .membership__inner {
-    flex-direction: column;
-    gap: 1.2rem;
-  }
+  .membership__inner { flex-direction: column; gap: 1.2rem; }
   .membership__right { min-height: 380px; }
   .membership__seam-icon { bottom: calc(38% - 28px); }
 }
@@ -212,21 +245,10 @@
   .membership { padding: 2rem 1.2rem; }
   .membership__left { padding: 1.4rem 1.1rem; }
   .membership__heading { font-size: 1.1rem; }
-  .membership__tiers { gap: 0.6rem; }
-  .tier-card { padding: 0.9rem 0.5rem; }
-  .tier-label { font-size: 0.72rem; }
-  .tier-price { font-size: 0.95rem; }
-  .tier-icon { font-size: 1.4rem; }
+  .tier-card__label  { font-size: 1rem; }
+  .tier-card__price  { font-size: 1.15rem; }
+  .tier-card__badge  { width: 44px; height: 44px; font-size: 1.1rem; }
+  .tier-card         { padding: 1.2rem 0.8rem; gap: 0.65rem; }
   .membership__right { min-height: 320px; }
-  .membership__info-card {
-    padding: 1.2rem 1rem 1.2rem 5rem;
-    font-size: 0.82rem;
-  }
-  .note { font-size: 0.78rem; padding: 0.7rem 0.8rem; }
-}
-
-/* ── Small mobile (≤360px) — tier cards wrap ── */
-@media (max-width: 360px) {
-  .membership__tiers { flex-wrap: wrap; }
-  .tier-card { flex: 0 0 calc(50% - 0.3rem); }
+  .membership__info-card { padding: 1.2rem 1rem 1.2rem 5rem; font-size: 0.82rem; }
 }

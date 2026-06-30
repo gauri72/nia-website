@@ -10,8 +10,8 @@ export default function DonationPage() {
     <div className="donation-page">
       <Navbar />
       <DonationHero />
-      <DonationImpact />
       <DonationForm />
+      <DonationImpact />
       <DonationCTA />
       <Footer />
     </div>

@@ -1,96 +1,323 @@
+import { useState } from 'react';
 import {
-  FaHome, FaStar, FaUsers, FaCalendarAlt, FaTag,
-  FaEnvelope, FaAward, FaCrown, FaCheck, FaTicketAlt,
+  FaHome, FaStar, FaUsers, FaCalendarAlt, FaTag, FaEnvelope,
+  FaAward, FaCrown, FaCheck, FaTicketAlt, FaArrowRight, FaArrowLeft,
+  FaCreditCard, FaUniversity, FaPaypal, FaMobileAlt, FaLock,
+  FaShieldAlt, FaCheckCircle, FaIdCard,
 } from 'react-icons/fa';
 import './MembershipPlans.css';
 
-const FRIEND_PERKS = [
-  { icon: <FaUsers />,       text: 'Valid for 2 adults in the same household' },
-  { icon: <FaCalendarAlt />, text: 'Access to all NIA events throughout the year' },
-  { icon: <FaTag />,         text: '20% discount on all event tickets' },
-  { icon: <FaEnvelope />,    text: 'NIA newsletter & community updates' },
-  { icon: <FaUsers />,       text: 'Be part of a growing Dutch-Indian community' },
+/* ── Plan data ── */
+const PLANS = [
+  {
+    id: 'friend',
+    icon: <FaHome />,
+    tier: 'FRIEND',
+    sublabel: 'MEMBERSHIP',
+    price: 60,
+    unit: '/ year',
+    tagline: 'Celebrate together at a great value',
+    color: 'gold',
+    perks: [
+      { icon: <FaUsers />,       text: 'Valid for 2 adults in the same household' },
+      { icon: <FaCalendarAlt />, text: 'Access to all NIA events throughout the year' },
+      { icon: <FaTag />,         text: '20% discount on all event tickets' },
+      { icon: <FaEnvelope />,    text: 'NIA newsletter & community updates' },
+      { icon: <FaUsers />,       text: 'Be part of a growing Dutch-Indian community' },
+    ],
+  },
+  {
+    id: 'patron',
+    icon: <FaStar />,
+    tier: 'PATRON',
+    sublabel: 'MEMBERSHIP',
+    price: 150,
+    unit: '/ year',
+    tagline: 'All events included — celebrate without limits',
+    color: 'diamond',
+    perks: [
+      { icon: <FaUsers />,       text: 'Valid for 2 adults in the same household' },
+      { icon: <FaCalendarAlt />, text: 'Free entry to all NIA events throughout the year' },
+      { icon: <FaTicketAlt />,   text: 'No event ticket costs — fully included' },
+      { icon: <FaEnvelope />,    text: 'NIA newsletter & community updates' },
+      { icon: <FaAward />,       text: 'Recognition as a Patron supporter of the association' },
+      { icon: <FaCrown />,       text: 'Priority access & seating at select events' },
+    ],
+  },
 ];
 
-const PATRON_PERKS = [
-  { icon: <FaUsers />,       text: 'Valid for 2 adults in the same household' },
-  { icon: <FaCalendarAlt />, text: 'Free entry to all NIA events throughout the year' },
-  { icon: <FaTicketAlt />,   text: 'No event ticket costs — fully included' },
-  { icon: <FaEnvelope />,    text: 'NIA newsletter & community updates' },
-  { icon: <FaAward />,       text: 'Recognition as a Patron supporter of the association' },
-  { icon: <FaCrown />,       text: 'Priority access & seating at select events' },
+const PAYMENT_METHODS = [
+  { id: 'ideal',  icon: <FaUniversity />, label: 'iDEAL',              desc: 'Pay directly via your Dutch bank' },
+  { id: 'card',   icon: <FaCreditCard />, label: 'Credit / Debit Card', desc: 'Visa, Mastercard, Amex accepted' },
+  { id: 'paypal', icon: <FaPaypal />,     label: 'PayPal',              desc: 'Fast and secure via PayPal' },
+  { id: 'other',  icon: <FaMobileAlt />,  label: 'Other Methods',       desc: 'Apple Pay, Google Pay and more' },
 ];
+
+const STEPS = ['Choose Plan', 'Your Details', 'Review Order', 'Payment'];
+
+function StepBar({ step }) {
+  return (
+    <div className="mp-steps">
+      {STEPS.map((label, i) => (
+        <div key={i} className={`mp-step${step === i ? ' mp-step--active' : ''}${step > i ? ' mp-step--done' : ''}`}>
+          <div className="mp-step__circle">{step > i ? '✓' : i + 1}</div>
+          <span className="mp-step__label">{label}</span>
+          {i < STEPS.length - 1 && <div className="mp-step__line" />}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function MembershipPlans() {
+  const [step, setStep]           = useState(0);
+  const [selected, setSelected]   = useState(null);   // plan id
+  const [member, setMember]       = useState({ name: '', email: '', phone: '' });
+  const [memberCode, setMemberCode] = useState('');
+  const [payMethod, setPayMethod] = useState(null);
+  const [paid, setPaid]           = useState(false);
+
+  const plan = PLANS.find(p => p.id === selected);
+  const canProceedStep1 = member.name.trim() && member.email.trim();
+
+  function handleField(e) {
+    setMember(m => ({ ...m, [e.target.name]: e.target.value }));
+  }
+
+  function reset() {
+    setStep(0); setSelected(null);
+    setMember({ name: '', email: '', phone: '' });
+    setMemberCode(''); setPayMethod(null); setPaid(false);
+  }
+
+  /* ── Success screen ── */
+  if (paid) {
+    return (
+      <section className="mem-plans" id="plans">
+        <div className="mem-plans__flow">
+          <div className="mp-success">
+            <FaCheckCircle className="mp-success__icon" />
+            <h2 className="mp-success__heading">Membership Confirmed!</h2>
+            <p className="mp-success__body">
+              Welcome, <strong>{member.name}</strong>! Your <strong>{plan?.tier}</strong> membership
+              is now active. A confirmation has been sent to <strong>{member.email}</strong>.
+            </p>
+            <button className="mp-continue-btn" onClick={reset}>Start Again</button>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
-    <section className="mem-plans">
-      <div className="mem-plans__inner">
+    <section className="mem-plans" id="plans">
+      <div className="mem-plans__flow">
 
-        {/* ── Friend card ── */}
-        <div className="mem-card mem-card--friend">
-          <div className="mem-card__header mem-card__header--friend">
-            <div className="mem-card__icon-wrap mem-card__icon-wrap--friend">
-              <FaHome />
-            </div>
-            <h2 className="mem-card__title">FRIEND MEMBERSHIP</h2>
-          </div>
-
-          <div className="mem-card__body">
-            <p className="mem-card__price mem-card__price--friend">
-              €60 <span className="mem-card__price-unit">/ year</span>
-            </p>
-            <p className="mem-card__tagline mem-card__tagline--friend">
-              Celebrate together at a great value
-            </p>
-
-            <ul className="mem-card__perks">
-              {FRIEND_PERKS.map((p, i) => (
-                <li key={i} className="mem-perk">
-                  <span className="mem-perk__icon mem-perk__icon--friend">{p.icon}</span>
-                  <span className="mem-perk__check mem-perk__check--friend"><FaCheck /></span>
-                  <span className="mem-perk__text">{p.text}</span>
-                </li>
-              ))}
-            </ul>
-
-            <a href="#join" className="mem-card__btn mem-card__btn--friend">
-              JOIN AS FRIEND &nbsp;→
-            </a>
-          </div>
+        <div className="mem-plans__header">
+          <h2 className="mem-plans__heading">Membership Plans</h2>
+          <p className="mem-plans__sub">Choose the plan that suits you and complete your registration in minutes.</p>
         </div>
 
-        {/* ── Patron card ── */}
-        <div className="mem-card mem-card--patron">
-          <div className="mem-card__header mem-card__header--patron">
-            <div className="mem-card__icon-wrap mem-card__icon-wrap--patron">
-              <FaStar />
+        <StepBar step={step} />
+
+        {/* ══════════════════════════════
+            STEP 0 — Choose Plan
+            ══════════════════════════════ */}
+        {step === 0 && (
+          <>
+            {/* Membership code */}
+            <div className="mp-code-row">
+              <label className="mp-field__label"><FaIdCard /> Existing Member Code (optional)</label>
+              <div className="mp-code-wrap">
+                <input
+                  className="mp-code-input"
+                  placeholder="Member ID"
+                  value={memberCode}
+                  onChange={e => setMemberCode(e.target.value)}
+                />
+              </div>
             </div>
-            <h2 className="mem-card__title">PATRON MEMBERSHIP</h2>
-          </div>
 
-          <div className="mem-card__body">
-            <p className="mem-card__price mem-card__price--patron">
-              €150 <span className="mem-card__price-unit">/ year</span>
-            </p>
-            <p className="mem-card__tagline mem-card__tagline--patron">
-              All events included — celebrate without limits
-            </p>
+            {/* Plan cards — sponsorship style */}
+            <div className="mp-plans-container">
+              {PLANS.map((p, i) => (
+                <div
+                  key={p.id}
+                  className={`mp-pkg mp-pkg--${p.color}${selected === p.id ? ' mp-pkg--selected' : ''}`}
+                  onClick={() => setSelected(p.id)}
+                >
+                  {i > 0 && <div className="mp-pkg__vdivider" />}
 
-            <ul className="mem-card__perks">
-              {PATRON_PERKS.map((p, i) => (
-                <li key={i} className="mem-perk">
-                  <span className="mem-perk__icon mem-perk__icon--patron">{p.icon}</span>
-                  <span className="mem-perk__check mem-perk__check--patron"><FaCheck /></span>
-                  <span className="mem-perk__text">{p.text}</span>
-                </li>
+                  <div className="mp-pkg__top">
+                    <div className={`mp-pkg__badge mp-pkg__badge--${p.color}`}>
+                      <span className="mp-pkg__badge-icon">{p.icon}</span>
+                    </div>
+                    <div className="mp-pkg__info">
+                      <p className="mp-pkg__tier">{p.tier}</p>
+                      <p className="mp-pkg__sublabel">{p.sublabel}</p>
+                    </div>
+                  </div>
+
+                  <div className={`mp-pkg__ribbon mp-pkg__ribbon--${p.color}`}>
+                    <span className="mp-pkg__price">€{p.price}</span>
+                    <span className="mp-pkg__unit">{p.unit}</span>
+                  </div>
+
+                  <p className="mp-pkg__tagline">{p.tagline}</p>
+
+                  <ul className="mp-pkg__perks">
+                    {p.perks.map((pk, j) => (
+                      <li key={j} className="mp-pkg__perk">
+                        <span className={`mp-pkg__perk-check mp-pkg__perk-check--${p.color}`}><FaCheck /></span>
+                        <span className="mp-pkg__perk-text">{pk.text}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  {selected === p.id && (
+                    <span className="mp-pkg__selected-badge">✓ Selected</span>
+                  )}
+                </div>
               ))}
-            </ul>
+            </div>
 
-            <a href="#join" className="mem-card__btn mem-card__btn--patron">
-              JOIN AS PATRON &nbsp;→
-            </a>
+            <div className="mp-bottom">
+              {selected && (
+                <p className="mp-bottom__summary">
+                  <strong>{plan?.tier} Membership</strong> — €{plan?.price}/year
+                </p>
+              )}
+              <button
+                className="mp-continue-btn mp-continue-btn--light"
+                disabled={!selected}
+                onClick={() => setStep(1)}
+              >
+                Continue <FaArrowRight />
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* ══════════════════════════════
+            STEPS 1-3 — dark payment card
+            ══════════════════════════════ */}
+        {step >= 1 && (
+          <div className="mp-payment-wrap">
+
+        {step === 1 && (
+          <div className="mp-form-step">
+            <h3 className="mp-form-step__heading">Your Details</h3>
+            <p className="mp-form-step__sub">We'll send your membership confirmation to the email below.</p>
+
+            <div className="mp-pfield">
+              <label className="mp-pfield__label">Full Name <span className="mp-required">*</span></label>
+              <input className="mp-pfield__input" name="name" type="text" placeholder="Your full name" value={member.name} onChange={handleField} />
+            </div>
+            <div className="mp-pfield">
+              <label className="mp-pfield__label">Email Address <span className="mp-required">*</span></label>
+              <input className="mp-pfield__input" name="email" type="email" placeholder="you@email.com" value={member.email} onChange={handleField} />
+            </div>
+            <div className="mp-pfield">
+              <label className="mp-pfield__label">Phone Number <span className="mp-optional">(optional)</span></label>
+              <input className="mp-pfield__input" name="phone" type="tel" placeholder="+31 6 12345678" value={member.phone} onChange={handleField} />
+            </div>
+
+            <div className="mp-nav">
+              <button className="mp-back-btn" onClick={() => setStep(0)}><FaArrowLeft /> Back</button>
+              <button className="mp-continue-btn" disabled={!canProceedStep1} onClick={() => setStep(2)}>
+                Continue <FaArrowRight />
+              </button>
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* ══════════════════════════════
+            STEP 2 — Review Order
+            ══════════════════════════════ */}
+        {step === 2 && (
+          <div className="mp-review">
+            <h3 className="mp-form-step__heading">Review Your Order</h3>
+            <p className="mp-form-step__sub">Confirm your membership before proceeding to payment.</p>
+
+            <div className="mp-review__table">
+              <div className="mp-review__thead">
+                <span>Plan</span>
+                <span>Duration</span>
+                <span>Total</span>
+              </div>
+              <div className="mp-review__row">
+                <span className="mp-review__plan-name">
+                  <span className={`mp-review__dot mp-review__dot--${plan?.color}`} />
+                  {plan?.tier} Membership
+                </span>
+                <span>1 year</span>
+                <span className="mp-review__line-total">€{plan?.price}</span>
+              </div>
+              <div className="mp-review__total-row">
+                <span>Total Payable</span>
+                <span />
+                <span className="mp-review__grand-total">€{plan?.price}</span>
+              </div>
+            </div>
+
+            <div className="mp-review__attendee">
+              <p className="mp-review__attendee-label">Membership for</p>
+              <p className="mp-review__attendee-name">{member.name}</p>
+              <p className="mp-review__attendee-email">{member.email}</p>
+              {member.phone && <p className="mp-review__attendee-email">{member.phone}</p>}
+            </div>
+
+            <div className="mp-nav">
+              <button className="mp-back-btn" onClick={() => setStep(1)}><FaArrowLeft /> Back</button>
+              <button className="mp-continue-btn" onClick={() => setStep(3)}>
+                Pay €{plan?.price} <FaArrowRight />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ══════════════════════════════
+            STEP 3 — Payment
+            ══════════════════════════════ */}
+        {step === 3 && (
+          <div className="mp-payment-step">
+            <h3 className="mp-form-step__heading">Choose Payment Method</h3>
+            <p className="mp-form-step__sub">Select how you'd like to pay €{plan?.price}.</p>
+
+            <div className="mp-pay-methods">
+              {PAYMENT_METHODS.map(m => (
+                <button
+                  key={m.id}
+                  className={`mp-pay-method${payMethod === m.id ? ' mp-pay-method--active' : ''}`}
+                  onClick={() => setPayMethod(m.id)}
+                >
+                  <span className="mp-pay-method__icon">{m.icon}</span>
+                  <span className="mp-pay-method__label">{m.label}</span>
+                  <span className="mp-pay-method__desc">{m.desc}</span>
+                  {payMethod === m.id && <span className="mp-pay-method__check">✓</span>}
+                </button>
+              ))}
+            </div>
+
+            <p className="mp-payment__disclaimer">
+              <FaShieldAlt /> Your payment is encrypted and secure. Membership will be activated instantly.
+            </p>
+
+            <div className="mp-nav">
+              <button className="mp-back-btn" onClick={() => setStep(2)}><FaArrowLeft /> Back</button>
+              <button
+                className="mp-continue-btn mp-continue-btn--pay"
+                disabled={!payMethod}
+                onClick={() => setPaid(true)}
+              >
+                <FaLock /> Confirm &amp; Pay €{plan?.price}
+              </button>
+            </div>
+          </div>
+        )}
+
+          </div>
+        )}
 
       </div>
     </section>

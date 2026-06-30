@@ -1,31 +1,25 @@
-import { FaUsers, FaUser, FaUserGraduate } from 'react-icons/fa';
+import { FaHome, FaStar, FaUsers } from 'react-icons/fa';
 import membershipImage from '../../assets/home/MembershipStructureImage.png';
 import './MembershipStructure.css';
 
 const TIERS = [
   {
-    icon: <FaUsers />,
-    label: 'Family Member',
-    price: '€ 50,-',
-    iconColor: 'navy',
-    priceColor: 'navy',
-    borderColor: 'navy',
+    id: 'friend',
+    icon: <FaHome />,
+    label: 'FRIEND',
+    sublabel: 'MEMBERSHIP',
+    price: '€60',
+    unit: '/ year',
+    color: 'gold',
   },
   {
-    icon: <FaUser />,
-    label: 'Single member',
-    price: '€ 30,-',
-    iconColor: 'orange',
-    priceColor: 'orange',
-    borderColor: 'orange',
-  },
-  {
-    icon: <FaUserGraduate />,
-    label: 'Students',
-    price: '€ 20,-',
-    iconColor: 'green',
-    priceColor: 'green',
-    borderColor: 'green',
+    id: 'patron',
+    icon: <FaStar />,
+    label: 'PATRON',
+    sublabel: 'MEMBERSHIP',
+    price: '€150',
+    unit: '/ year',
+    color: 'diamond',
   },
 ];
 
@@ -45,14 +39,26 @@ export default function MembershipStructure() {
 
           <div className="membership__tiers">
             {TIERS.map((tier) => (
-              <div key={tier.label} className={`tier-card tier-card--${tier.borderColor}`}>
-                <span className={`tier-icon tier-icon--${tier.iconColor}`}>{tier.icon}</span>
-                <p className="tier-label">{tier.label}</p>
-                <p className={`tier-price tier-price--${tier.priceColor}`}>{tier.price}</p>
+              <div key={tier.id} className={`tier-card tier-card--${tier.color}`}>
+
+                <div className="tier-card__top">
+                  <div className={`tier-card__badge tier-card__badge--${tier.color}`}>
+                    {tier.icon}
+                  </div>
+                  <div className="tier-card__info">
+                    <p className="tier-card__label">{tier.label}</p>
+                    <p className="tier-card__sublabel">{tier.sublabel}</p>
+                  </div>
+                </div>
+
+                <div className={`tier-card__ribbon tier-card__ribbon--${tier.color}`}>
+                  <span className="tier-card__price">{tier.price}</span>
+                  <span className="tier-card__unit">{tier.unit}</span>
+                </div>
+
               </div>
             ))}
           </div>
-
         </div>
 
         {/* ── Right panel: image + card seamlessly joined, icon straddling seam ── */}
@@ -63,7 +69,6 @@ export default function MembershipStructure() {
               alt="Amsterdam canal"
               className="membership__canal-img"
             />
-            {/* Icon sits exactly at the seam — half on image, half on card */}
             <div className="membership__seam-icon">
               <FaUsers />
             </div>
