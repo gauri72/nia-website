@@ -24,6 +24,28 @@
   object-fit: contain;
 }
 
+.navbar__tagline {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.15rem;
+}
+
+.navbar__tagline-main {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-navy);
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+}
+
+.navbar__tagline-sub {
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: var(--color-orange);
+  letter-spacing: 0.03em;
+}
+
 
 /* ── Bottom nav bar ── */
 .navbar__bottom {
@@ -94,12 +116,16 @@
   .navbar__bottom { padding: 0 1.8rem; }
   .nav-link { padding: 0.9rem 0.8rem; font-size: 0.82rem; }
   .navbar__logo-img { height: 60px; }
+  .navbar__tagline-main { font-size: 0.85rem; }
+  .navbar__tagline-sub  { font-size: 0.68rem; }
 }
 
 /* ── Small tablet / large mobile (≤768px) ── */
 @media (max-width: 768px) {
   .navbar__top { padding: 0.6rem 1.2rem; }
   .navbar__logo-img { height: 52px; }
+  .navbar__tagline-main { font-size: 0.78rem; }
+  .navbar__tagline-sub  { font-size: 0.62rem; }
 
   /* Second row: burger left, CTA right, nav full-width below */
   .navbar__bottom {
@@ -158,4 +184,6 @@
   .navbar__top { padding: 0.5rem 1rem; }
   .navbar__logo-img { height: 44px; }
   .navbar__actions .navbar__cta { font-size: 0.72rem; padding: 0.4rem 0.65rem; }
+  .navbar__tagline-main { font-size: 0.7rem; }
+  .navbar__tagline-sub  { font-size: 0.58rem; }
 }

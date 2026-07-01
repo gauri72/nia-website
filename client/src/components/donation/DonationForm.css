@@ -497,7 +497,7 @@
 
 .dn-review__thead {
   display: grid;
-  grid-template-columns: 1fr 110px 90px;
+  grid-template-columns: 1fr 90px;
   padding: 0.7rem 1.2rem;
   background: rgba(255,255,255,0.08);
   font-size: 0.72rem;
@@ -509,7 +509,7 @@
 
 .dn-review__row {
   display: grid;
-  grid-template-columns: 1fr 110px 90px;
+  grid-template-columns: 1fr 90px;
   padding: 0.95rem 1.2rem;
   border-top: 1px solid rgba(255,255,255,0.07);
   font-size: 0.88rem;
@@ -529,7 +529,7 @@
 
 .dn-review__total-row {
   display: grid;
-  grid-template-columns: 1fr 110px 90px;
+  grid-template-columns: 1fr 90px;
   padding: 1rem 1.2rem;
   border-top: 2px solid rgba(255,255,255,0.15);
   background: rgba(255,255,255,0.06);
@@ -614,8 +614,14 @@
    RESPONSIVE — Tablet (≤900px)
    ══════════════════════════════ */
 @media (max-width: 900px) {
-  .dn-cards { flex-wrap: wrap; }
-  .dn-card  { min-width: calc(50% - 0.6rem); }
+  .dn-cards {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .dn-card {
+    flex: 0 0 calc(50% - 0.6rem);
+    min-width: unset;
+  }
 }
 
 @media (max-width: 768px) {
@@ -626,9 +632,7 @@
   .dn-pay-methods  { grid-template-columns: 1fr; }
   .dn-review__thead,
   .dn-review__row,
-  .dn-review__total-row { grid-template-columns: 1fr auto; font-size: 0.82rem; }
-  .dn-review__row > span:nth-child(2),
-  .dn-review__total-row > span:nth-child(2) { display: none; }
+  .dn-review__total-row { font-size: 0.82rem; }
   .dn-payment-wrap { padding: 1.6rem 1.2rem; }
 }
 
@@ -640,19 +644,52 @@
   .dn-heading { font-size: 1.45rem; }
   .dn-step__line   { width: 18px; margin: 0 0.2rem; }
   .dn-step__circle { width: 26px; height: 26px; font-size: 0.68rem; }
-  .dn-cards        { flex-direction: column; gap: 1rem; }
-  .dn-card         { min-width: unset; padding: 1.3rem 1rem; }
-  .dn-card__badge  { width: 44px; height: 44px; font-size: 1.1rem; }
-  .dn-card__label  { font-size: 0.9rem; }
-  .dn-card__price  { font-size: 1.2rem; }
-  .dn-custom-row   { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
-  .dn-cause-row    { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
-  .dn-cause-select { width: 100%; box-sizing: border-box; }
+
+  /* 1 — Tier cards: left-aligned */
+  .dn-cards       { flex-direction: column; gap: 1rem; align-items: center; }
+  .dn-card        { width: 100%; max-width: 420px; min-width: unset; padding: 1.3rem 1rem; box-sizing: border-box; align-items: flex-start; text-align: left; }
+  .dn-card__top   { justify-content: flex-start; }
+  .dn-card__perks { align-items: flex-start; }
+  .dn-card__perk  { justify-content: flex-start; }
+  .dn-card__badge { width: 44px; height: 44px; font-size: 1.1rem; }
+  .dn-card__label { font-size: 0.9rem; }
+  .dn-card__price { font-size: 1.2rem; }
+  .dn-card__tagline { text-align: left; }
+
+  /* Custom amount & cause rows */
+  .dn-custom-row   { flex-direction: column; align-items: center; gap: 0.5rem; }
+  .dn-custom-wrap  { width: 100%; max-width: 420px; box-sizing: border-box; }
+  .dn-custom-input { flex: 1; width: auto; }
+  .dn-cause-row    { flex-direction: column; align-items: center; gap: 0.5rem; }
+  .dn-cause-select { width: 100%; max-width: 420px; box-sizing: border-box; }
   .dn-bottom { flex-direction: column; align-items: stretch; }
   .dn-bottom__summary { text-align: center; font-size: 0.82rem; }
   .dn-continue-btn { justify-content: center; width: 100%; box-sizing: border-box; }
   .dn-nav { flex-direction: column; gap: 0.7rem; }
   .dn-back-btn { justify-content: center; width: 100%; box-sizing: border-box; }
-  .dn-pay-method { padding: 1rem 1.1rem; }
+
+  /* 2 — Your Details: heading, sub and form centred */
+  .dn-form-step { align-items: center; }
+  .dn-form-step__heading { text-align: center; }
+  .dn-form-step__sub     { text-align: center; }
+  .dn-pfield { width: 100%; }
+
+  /* 3 — Review: heading/sub centred, table content left-aligned, donor box left-aligned */
+  .dn-review { align-items: center; }
+  .dn-review__table    { width: 100%; }
+  .dn-review__attendee { width: 100%; text-align: left; box-sizing: border-box; }
+  .dn-review__plan-name { justify-content: flex-start; }
+  .dn-review__thead span,
+  .dn-review__row span,
+  .dn-review__total-row span { text-align: left; }
+  .dn-review__line-total,
+  .dn-review__grand-total    { text-align: right; }
+
+  /* 4 — Payment: heading, sub, methods and disclaimer centred */
+  .dn-payment-step   { align-items: center; }
+  .dn-pay-method     { padding: 1rem 1.1rem; width: 100%; box-sizing: border-box; align-items: center; text-align: center; }
+  .dn-pay-method__check { top: 0.8rem; right: 0.9rem; }
+  .dn-payment__disclaimer { justify-content: center; text-align: center; }
+
   .dn-payment-wrap { padding: 1.4rem 1rem; border-radius: 14px; }
 }

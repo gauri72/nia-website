@@ -1,4 +1,5 @@
 import { FaHome, FaStar, FaUsers } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 import membershipImage from '../../assets/home/MembershipStructureImage.png';
 import './MembershipStructure.css';
 
@@ -24,6 +25,15 @@ const TIERS = [
 ];
 
 export default function MembershipStructure() {
+  const navigate = useNavigate();
+
+  const handleTierClick = (tierId) => {
+    navigate('/membership');
+    setTimeout(() => {
+      document.getElementById('plans')?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+  };
+
   return (
     <section className="membership" id="membership">
       <div className="membership__inner">
@@ -39,7 +49,7 @@ export default function MembershipStructure() {
 
           <div className="membership__tiers">
             {TIERS.map((tier) => (
-              <div key={tier.id} className={`tier-card tier-card--${tier.color}`}>
+              <div key={tier.id} className={`tier-card tier-card--${tier.color}`} onClick={() => handleTierClick(tier.id)} style={{ cursor: 'pointer' }}>
 
                 <div className="tier-card__top">
                   <div className={`tier-card__badge tier-card__badge--${tier.color}`}>

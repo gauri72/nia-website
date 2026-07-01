@@ -97,5 +97,9 @@
   .au-mission { padding: 3rem 1.2rem; }
   .au-mission__heading { font-size: 1.6rem; }
   .au-mission__grid { grid-template-columns: 1fr; gap: 1.1rem; }
-  .au-value-card { padding: 1.6rem 1.2rem; }
+  .au-value-card {
+    padding: 1.6rem 1.2rem;
+    align-items: center;
+    text-align: center;
+  }
 }

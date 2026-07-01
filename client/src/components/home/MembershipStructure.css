@@ -245,6 +245,13 @@
   .membership { padding: 2rem 1.2rem; }
   .membership__left { padding: 1.4rem 1.1rem; }
   .membership__heading { font-size: 1.1rem; }
+  .membership__tiers { flex-direction: column; }
+  .tier-card + .tier-card::before {
+    top: 0;
+    left: 12%;
+    width: 76%;
+    height: 1px;
+  }
   .tier-card__label  { font-size: 1rem; }
   .tier-card__price  { font-size: 1.15rem; }
   .tier-card__badge  { width: 44px; height: 44px; font-size: 1.1rem; }

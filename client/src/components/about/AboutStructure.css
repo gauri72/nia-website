@@ -170,4 +170,11 @@
   .au-struct { padding: 2.5rem 1.2rem; }
   .au-struct__roles-grid { grid-template-columns: 1fr; }
   .au-struct__heading { font-size: 1.4rem; }
+  .au-role-card {
+    align-items: center;
+    text-align: center;
+  }
+  .au-struct__roles-header {
+    justify-content: center;
+  }
 }

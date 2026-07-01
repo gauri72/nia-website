@@ -23,6 +23,10 @@ export default function Navbar() {
         <div className="navbar__logo">
           <img src={navbarLogo} alt="Netherlands India Association" className="navbar__logo-img" />
         </div>
+        <div className="navbar__tagline">
+          <span className="navbar__tagline-main">Bridging Two Great Cultures</span>
+          <span className="navbar__tagline-sub">Netherlands &amp; India — Together Since 1950</span>
+        </div>
       </div>
 
       <div className="navbar__bottom">

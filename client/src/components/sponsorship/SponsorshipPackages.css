@@ -535,8 +535,14 @@
    RESPONSIVE — Tablet (≤900px)
    ══════════════════════════════ */
 @media (max-width: 900px) {
-  .spp-cards { flex-wrap: wrap; }
-  .spp-card  { min-width: calc(50% - 0.6rem); }
+  .spp-cards {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .spp-card {
+    flex: 0 0 calc(50% - 0.6rem);
+    min-width: unset;
+  }
 }
 
 @media (max-width: 768px) {
@@ -561,8 +567,8 @@
   .sp-packages__heading { font-size: 1.45rem; }
   .spp-step__line   { width: 18px; margin: 0 0.2rem; }
   .spp-step__circle { width: 26px; height: 26px; font-size: 0.68rem; }
-  .spp-cards        { flex-direction: column; gap: 1rem; }
-  .spp-card         { min-width: unset; padding: 1.3rem 1rem; }
+  .spp-cards        { flex-direction: column; gap: 1rem; align-items: center; }
+  .spp-card         { width: 100%; max-width: 420px; min-width: unset; padding: 1.3rem 1rem; box-sizing: border-box; }
   .spp-card__badge  { width: 44px; height: 44px; font-size: 1.1rem; }
   .spp-card__tier   { font-size: 0.95rem; }
   .spp-card__price  { font-size: 1.2rem; }

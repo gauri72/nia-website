@@ -443,6 +443,7 @@
   .sp-dark__benefit-row {
     flex-direction: column;
     gap: 1.2rem;
+    align-items: center;
   }
   .sp-benefit-item {
     justify-content: center;
@@ -454,7 +455,16 @@
     width: 100%;
     max-width: 300px;
     margin: 0 auto;
-    justify-content: flex-start;
+    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .sp-benefit-item__text {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
   .sp-benefit-item__vline { display: none; }
 
@@ -480,12 +490,12 @@
 
 /* ── Mobile (≤480px) ── */
 @media (max-width: 480px) {
-  .sp-dark__eyebrow { font-size: 0.7rem; }
-  .sp-dark__benefits-col { padding: 1.2rem 1rem; gap: 0.9rem; }
+  .sp-dark__eyebrow { font-size: 0.7rem; text-align: center; }
+  .sp-dark__benefits-col { padding: 1.2rem 1rem; gap: 0.9rem; align-items: center; }
 
   .sp-benefit-item__icon-wrap { width: 44px; height: 44px; font-size: 1rem; }
   .sp-benefit-item__title { font-size: 0.74rem; }
-  .sp-benefit-item__text { text-align: left; }
+  .sp-benefit-item__text { text-align: center; }
 
   .sp-dark__flagship-box { padding: 0.9rem 1.2rem; gap: 0.5rem; }
   .sp-dark__flagship-heading { font-size: 0.62rem; }

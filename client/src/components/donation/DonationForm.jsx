@@ -171,20 +171,6 @@ export default function DonationForm() {
             ══════════════════════════════ */}
         {step === 0 && (
           <>
-            {/* Frequency toggle */}
-            <div className="dn-freq">
-              {['once', 'monthly'].map(f => (
-                <button
-                  key={f}
-                  type="button"
-                  className={`dn-freq__btn${frequency === f ? ' dn-freq__btn--active' : ''}`}
-                  onClick={() => setFreq(f)}
-                >
-                  {f === 'once' ? 'One-Time' : 'Monthly'}
-                </button>
-              ))}
-            </div>
-
             {/* Tier cards */}
             <div className="dn-cards">
               {TIERS.map(t => (
@@ -259,7 +245,7 @@ export default function DonationForm() {
             <div className="dn-bottom">
               {displayAmount && (
                 <p className="dn-bottom__summary">
-                  <strong>{frequency === 'monthly' ? 'Monthly' : 'One-time'} donation</strong> — {displayAmount}
+                  <strong>Donation</strong> — {displayAmount}
                 </p>
               )}
               <button
@@ -316,7 +302,6 @@ export default function DonationForm() {
                 <div className="dn-review__table">
                   <div className="dn-review__thead">
                     <span>Cause</span>
-                    <span>Frequency</span>
                     <span>Amount</span>
                   </div>
                   <div className="dn-review__row">
@@ -324,12 +309,10 @@ export default function DonationForm() {
                       <span className={`dn-review__dot dn-review__dot--${tier?.color ?? 'amber'}`} />
                       {CAUSES.find(c => c.value === cause)?.label}
                     </span>
-                    <span>{frequency === 'monthly' ? 'Monthly' : 'One-time'}</span>
                     <span className="dn-review__line-total">{displayAmount}</span>
                   </div>
                   <div className="dn-review__total-row">
                     <span>Total Payable</span>
-                    <span />
                     <span className="dn-review__grand-total">{displayAmount}</span>
                   </div>
                 </div>
