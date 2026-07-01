@@ -78,7 +78,7 @@ export default function Footer() {
         <div className="footer__credit">
           <span>Designed &amp; Developed by</span>
           <img src={voiceLogo} alt="Voice Venture Studio" className="footer__credit-logo" />
-          <span>Voice Venture Studio</span>
+          <span>V.O.I.C.E. Venture Studio</span>
         </div>
       </div>
     </footer>
