@@ -2,9 +2,9 @@ import { useState } from 'react';
 import {
   FaHeart, FaStar, FaCrown, FaGem,
   FaCheck, FaArrowRight, FaArrowLeft,
-  FaCreditCard, FaUniversity, FaPaypal, FaMobileAlt,
   FaLock, FaShieldAlt, FaCheckCircle,
 } from 'react-icons/fa';
+import { startDonationPayment } from '../../services/paymentService';
 import './DonationForm.css';
 
 const TIERS = [
@@ -75,12 +75,6 @@ const CAUSES = [
   { value: 'welfare', label: 'Community Welfare Initiatives' },
 ];
 
-const PAYMENT_METHODS = [
-  { id: 'ideal',  icon: <FaUniversity />, label: 'iDEAL',              desc: 'Pay directly via your Dutch bank' },
-  { id: 'card',   icon: <FaCreditCard />, label: 'Credit / Debit Card', desc: 'Visa, Mastercard, Amex accepted' },
-  { id: 'paypal', icon: <FaPaypal />,     label: 'PayPal',              desc: 'Fast and secure via PayPal' },
-  { id: 'other',  icon: <FaMobileAlt />,  label: 'Other Methods',       desc: 'Apple Pay, Google Pay and more' },
-];
 
 const STEPS = ['Choose Amount', 'Your Details', 'Review', 'Payment'];
 
@@ -108,8 +102,8 @@ export default function DonationForm() {
   const [cause, setCause]       = useState('general');
   const [frequency, setFreq]    = useState('once');
   const [donor, setDonor]       = useState({ name: '', email: '', phone: '' });
-  const [payMethod, setPayMethod] = useState(null);
-  const [paid, setPaid]         = useState(false);
+  const [paying, setPaying]   = useState(false);
+  const [payError, setPayError] = useState('');
 
   const tier = TIERS.find(t => t.id === selected);
   const amount = selected === 'custom'
@@ -132,27 +126,27 @@ export default function DonationForm() {
   function reset() {
     setStep(0); setSelected(null); setCustom(''); setCause('general');
     setFreq('once'); setDonor({ name: '', email: '', phone: '' });
-    setPayMethod(null); setPaid(false);
+    setPaying(false); setPayError('');
   }
 
-  /* ── Success ── */
-  if (paid) {
-    return (
-      <section className="dn-section" id="donate">
-        <div className="dn-flow">
-          <div className="dn-success">
-            <FaCheckCircle className="dn-success__icon" />
-            <h2 className="dn-success__heading">Thank You!</h2>
-            <p className="dn-success__body">
-              Your donation of <strong>{displayAmount}</strong> to{' '}
-              <strong>{CAUSES.find(c => c.value === cause)?.label}</strong> has been received.
-              A confirmation has been sent to <strong>{donor.email}</strong>.
-            </p>
-            <button className="dn-continue-btn" onClick={reset}>Donate Again</button>
-          </div>
-        </div>
-      </section>
-    );
+  async function handlePay() {
+    setPayError('');
+    setPaying(true);
+    const causeMap = { general: 'general', events: 'cultural_events', youth: 'youth_education', welfare: 'community_welfare' };
+    try {
+      await startDonationPayment({
+        name: donor.name.trim(),
+        email: donor.email.trim(),
+        phone: donor.phone.trim() || undefined,
+        amount,
+        cause: causeMap[cause] || 'general',
+        tier: selected || 'custom',
+      });
+      // redirects to Mollie — code below only runs on error
+    } catch (err) {
+      setPayError(err?.response?.data?.error || 'Payment failed. Please try again.');
+      setPaying(false);
+    }
   }
 
   return (
@@ -333,39 +327,31 @@ export default function DonationForm() {
               </div>
             )}
 
-            {/* STEP 3 — Payment */}
+            {/* STEP 3 — Confirm & Pay */}
             {step === 3 && (
               <div className="dn-payment-step">
-                <h3 className="dn-form-step__heading">Choose Payment Method</h3>
-                <p className="dn-form-step__sub">Select how you'd like to donate {displayAmount}.</p>
-
-                <div className="dn-pay-methods">
-                  {PAYMENT_METHODS.map(m => (
-                    <button
-                      key={m.id}
-                      className={`dn-pay-method${payMethod === m.id ? ' dn-pay-method--active' : ''}`}
-                      onClick={() => setPayMethod(m.id)}
-                    >
-                      <span className="dn-pay-method__icon">{m.icon}</span>
-                      <span className="dn-pay-method__label">{m.label}</span>
-                      <span className="dn-pay-method__desc">{m.desc}</span>
-                      {payMethod === m.id && <span className="dn-pay-method__check">✓</span>}
-                    </button>
-                  ))}
-                </div>
+                <h3 className="dn-form-step__heading">Confirm &amp; Donate</h3>
+                <p className="dn-form-step__sub">
+                  You will be redirected to Mollie's secure checkout to complete your donation of <strong>{displayAmount}</strong>.
+                  All major payment methods are accepted (iDEAL, card, PayPal and more).
+                </p>
 
                 <p className="dn-payment__disclaimer">
                   <FaShieldAlt /> Your payment is encrypted and secure.
                 </p>
 
+                {payError && (
+                  <p style={{ color: '#e74c3c', fontSize: '0.88rem', marginTop: '0.5rem' }}>{payError}</p>
+                )}
+
                 <div className="dn-nav">
-                  <button className="dn-back-btn" onClick={() => setStep(2)}><FaArrowLeft /> Back</button>
+                  <button className="dn-back-btn" onClick={() => setStep(2)} disabled={paying}><FaArrowLeft /> Back</button>
                   <button
                     className="dn-continue-btn dn-continue-btn--pay"
-                    disabled={!payMethod}
-                    onClick={() => setPaid(true)}
+                    disabled={paying}
+                    onClick={handlePay}
                   >
-                    <FaLock /> Confirm &amp; Donate {displayAmount}
+                    {paying ? 'Redirecting…' : <><FaLock /> Donate {displayAmount} securely</>}
                   </button>
                 </div>
               </div>

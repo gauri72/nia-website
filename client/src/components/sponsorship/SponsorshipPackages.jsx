@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { FaStar, FaCrown, FaInfinity, FaUsers, FaBuilding, FaEnvelope, FaBullhorn, FaHandshake, FaCheck, FaArrowRight, FaArrowLeft, FaCreditCard, FaUniversity, FaPaypal, FaMobileAlt, FaLock, FaShieldAlt, FaCheckCircle } from 'react-icons/fa';
+import { FaStar, FaCrown, FaInfinity, FaUsers, FaBuilding, FaEnvelope, FaBullhorn, FaHandshake, FaCheck, FaArrowRight, FaArrowLeft, FaLock, FaShieldAlt, FaCheckCircle } from 'react-icons/fa';
+import { startSponsorshipPayment } from '../../services/paymentService';
 import { GiDiamondHard } from 'react-icons/gi';
 import './SponsorshipPackages.css';
 
@@ -75,12 +76,6 @@ const PACKAGES = [
   },
 ];
 
-const PAYMENT_METHODS = [
-  { id: 'ideal',  icon: <FaUniversity />, label: 'iDEAL',               desc: 'Pay directly via your Dutch bank' },
-  { id: 'card',   icon: <FaCreditCard />, label: 'Credit / Debit Card',  desc: 'Visa, Mastercard, Amex accepted' },
-  { id: 'paypal', icon: <FaPaypal />,     label: 'PayPal',               desc: 'Fast and secure via PayPal' },
-  { id: 'other',  icon: <FaMobileAlt />,  label: 'Other Methods',        desc: 'Apple Pay, Google Pay and more' },
-];
 
 const STEPS = ['Choose Package', 'Your Details', 'Review Order', 'Payment'];
 
@@ -102,8 +97,8 @@ export default function SponsorshipPackages() {
   const [step, setStep]         = useState(0);
   const [selected, setSelected] = useState(null);
   const [sponsor, setSponsor]   = useState({ name: '', email: '', org: '', phone: '' });
-  const [payMethod, setPayMethod] = useState(null);
-  const [paid, setPaid]         = useState(false);
+  const [paying, setPaying]   = useState(false);
+  const [payError, setPayError] = useState('');
 
   const pkg = PACKAGES.find(p => p.id === selected);
   const canProceedStep1 = sponsor.name.trim() && sponsor.email.trim();
@@ -115,26 +110,26 @@ export default function SponsorshipPackages() {
   function reset() {
     setStep(0); setSelected(null);
     setSponsor({ name: '', email: '', org: '', phone: '' });
-    setPayMethod(null); setPaid(false);
+    setPaying(false); setPayError('');
   }
 
-  /* ── Success screen ── */
-  if (paid) {
-    return (
-      <section className="sp-packages" id="packages">
-        <div className="sp-packages__flow">
-          <div className="spp-success">
-            <FaCheckCircle className="spp-success__icon" />
-            <h2 className="spp-success__heading">Sponsorship Confirmed!</h2>
-            <p className="spp-success__body">
-              Thank you, <strong>{sponsor.name}</strong>! Your <strong>{pkg?.tier}</strong> sponsorship
-              is confirmed. A confirmation has been sent to <strong>{sponsor.email}</strong>.
-            </p>
-            <button className="spp-continue-btn" onClick={reset}>Start Again</button>
-          </div>
-        </div>
-      </section>
-    );
+  async function handlePay() {
+    setPayError('');
+    setPaying(true);
+    try {
+      await startSponsorshipPayment({
+        sponsorName: sponsor.name.trim(),
+        contactPerson: sponsor.name.trim(),
+        companyName: sponsor.org.trim() || undefined,
+        email: sponsor.email.trim(),
+        phone: sponsor.phone.trim() || undefined,
+        packageName: selected,
+      });
+      // redirects to Mollie — code below only runs on error
+    } catch (err) {
+      setPayError(err?.response?.data?.error || 'Payment failed. Please try again.');
+      setPaying(false);
+    }
   }
 
   return (
@@ -294,39 +289,31 @@ export default function SponsorshipPackages() {
               </div>
             )}
 
-            {/* STEP 3 — Payment */}
+            {/* STEP 3 — Confirm & Pay */}
             {step === 3 && (
               <div className="spp-payment-step">
-                <h3 className="spp-form-step__heading">Choose Payment Method</h3>
-                <p className="spp-form-step__sub">Select how you'd like to pay €{pkg?.price.toLocaleString()}.</p>
-
-                <div className="spp-pay-methods">
-                  {PAYMENT_METHODS.map(m => (
-                    <button
-                      key={m.id}
-                      className={`spp-pay-method${payMethod === m.id ? ' spp-pay-method--active' : ''}`}
-                      onClick={() => setPayMethod(m.id)}
-                    >
-                      <span className="spp-pay-method__icon">{m.icon}</span>
-                      <span className="spp-pay-method__label">{m.label}</span>
-                      <span className="spp-pay-method__desc">{m.desc}</span>
-                      {payMethod === m.id && <span className="spp-pay-method__check">✓</span>}
-                    </button>
-                  ))}
-                </div>
-
-                <p className="spp-payment__disclaimer">
-                  <FaShieldAlt /> Your payment is encrypted and secure. Sponsorship will be activated instantly.
+                <h3 className="spp-form-step__heading">Confirm &amp; Pay</h3>
+                <p className="spp-form-step__sub">
+                  You will be redirected to Mollie's secure checkout to complete your <strong>{pkg?.tier}</strong> sponsorship payment of <strong>€{pkg?.price.toLocaleString()}</strong>.
+                  All major payment methods are accepted.
                 </p>
 
+                <p className="spp-payment__disclaimer">
+                  <FaShieldAlt /> Your payment is encrypted and secure. Our team will contact you after confirmation.
+                </p>
+
+                {payError && (
+                  <p style={{ color: '#e74c3c', fontSize: '0.88rem', marginTop: '0.5rem' }}>{payError}</p>
+                )}
+
                 <div className="spp-nav">
-                  <button className="spp-back-btn" onClick={() => setStep(2)}><FaArrowLeft /> Back</button>
+                  <button className="spp-back-btn" onClick={() => setStep(2)} disabled={paying}><FaArrowLeft /> Back</button>
                   <button
                     className="spp-continue-btn spp-continue-btn--pay"
-                    disabled={!payMethod}
-                    onClick={() => setPaid(true)}
+                    disabled={paying}
+                    onClick={handlePay}
                   >
-                    <FaLock /> Confirm &amp; Pay €{pkg?.price.toLocaleString()}
+                    {paying ? 'Redirecting…' : <><FaLock /> Pay €{pkg?.price.toLocaleString()} securely</>}
                   </button>
                 </div>
               </div>

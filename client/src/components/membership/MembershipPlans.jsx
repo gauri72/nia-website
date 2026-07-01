@@ -2,9 +2,9 @@ import { useState } from 'react';
 import {
   FaHome, FaStar, FaUsers, FaCalendarAlt, FaTag, FaEnvelope,
   FaAward, FaCrown, FaCheck, FaTicketAlt, FaArrowRight, FaArrowLeft,
-  FaCreditCard, FaUniversity, FaPaypal, FaMobileAlt, FaLock,
-  FaShieldAlt, FaCheckCircle, FaIdCard,
+  FaLock, FaShieldAlt, FaCheckCircle, FaIdCard,
 } from 'react-icons/fa';
+import { startMembershipPayment } from '../../services/paymentService';
 import './MembershipPlans.css';
 
 /* ── Plan data ── */
@@ -46,12 +46,6 @@ const PLANS = [
   },
 ];
 
-const PAYMENT_METHODS = [
-  { id: 'ideal',  icon: <FaUniversity />, label: 'iDEAL',              desc: 'Pay directly via your Dutch bank' },
-  { id: 'card',   icon: <FaCreditCard />, label: 'Credit / Debit Card', desc: 'Visa, Mastercard, Amex accepted' },
-  { id: 'paypal', icon: <FaPaypal />,     label: 'PayPal',              desc: 'Fast and secure via PayPal' },
-  { id: 'other',  icon: <FaMobileAlt />,  label: 'Other Methods',       desc: 'Apple Pay, Google Pay and more' },
-];
 
 const STEPS = ['Choose Plan', 'Your Details', 'Review Order', 'Payment'];
 
@@ -74,8 +68,8 @@ export default function MembershipPlans() {
   const [selected, setSelected]   = useState(null);   // plan id
   const [member, setMember]       = useState({ name: '', email: '', phone: '' });
   const [memberCode, setMemberCode] = useState('');
-  const [payMethod, setPayMethod] = useState(null);
-  const [paid, setPaid]           = useState(false);
+  const [paying, setPaying]   = useState(false);
+  const [payError, setPayError] = useState('');
 
   const plan = PLANS.find(p => p.id === selected);
   const canProceedStep1 = member.name.trim() && member.email.trim();
@@ -87,26 +81,24 @@ export default function MembershipPlans() {
   function reset() {
     setStep(0); setSelected(null);
     setMember({ name: '', email: '', phone: '' });
-    setMemberCode(''); setPayMethod(null); setPaid(false);
+    setMemberCode(''); setPaying(false); setPayError('');
   }
 
-  /* ── Success screen ── */
-  if (paid) {
-    return (
-      <section className="mem-plans" id="plans">
-        <div className="mem-plans__flow">
-          <div className="mp-success">
-            <FaCheckCircle className="mp-success__icon" />
-            <h2 className="mp-success__heading">Membership Confirmed!</h2>
-            <p className="mp-success__body">
-              Welcome, <strong>{member.name}</strong>! Your <strong>{plan?.tier}</strong> membership
-              is now active. A confirmation has been sent to <strong>{member.email}</strong>.
-            </p>
-            <button className="mp-continue-btn" onClick={reset}>Start Again</button>
-          </div>
-        </div>
-      </section>
-    );
+  async function handlePay() {
+    setPayError('');
+    setPaying(true);
+    try {
+      await startMembershipPayment({
+        plan: selected,
+        name: member.name.trim(),
+        email: member.email.trim(),
+        phone: member.phone.trim() || undefined,
+      });
+      // redirects to Mollie — code below only runs on error
+    } catch (err) {
+      setPayError(err?.response?.data?.error || 'Payment failed. Please try again.');
+      setPaying(false);
+    }
   }
 
   return (
@@ -277,40 +269,32 @@ export default function MembershipPlans() {
         )}
 
         {/* ══════════════════════════════
-            STEP 3 — Payment
+            STEP 3 — Confirm & Pay
             ══════════════════════════════ */}
         {step === 3 && (
           <div className="mp-payment-step">
-            <h3 className="mp-form-step__heading">Choose Payment Method</h3>
-            <p className="mp-form-step__sub">Select how you'd like to pay €{plan?.price}.</p>
-
-            <div className="mp-pay-methods">
-              {PAYMENT_METHODS.map(m => (
-                <button
-                  key={m.id}
-                  className={`mp-pay-method${payMethod === m.id ? ' mp-pay-method--active' : ''}`}
-                  onClick={() => setPayMethod(m.id)}
-                >
-                  <span className="mp-pay-method__icon">{m.icon}</span>
-                  <span className="mp-pay-method__label">{m.label}</span>
-                  <span className="mp-pay-method__desc">{m.desc}</span>
-                  {payMethod === m.id && <span className="mp-pay-method__check">✓</span>}
-                </button>
-              ))}
-            </div>
-
-            <p className="mp-payment__disclaimer">
-              <FaShieldAlt /> Your payment is encrypted and secure. Membership will be activated instantly.
+            <h3 className="mp-form-step__heading">Confirm &amp; Pay</h3>
+            <p className="mp-form-step__sub">
+              You will be redirected to Mollie's secure checkout to pay <strong>€{plan?.price}</strong>.
+              All major payment methods are accepted (iDEAL, card, PayPal and more).
             </p>
 
+            <p className="mp-payment__disclaimer">
+              <FaShieldAlt /> Your payment is encrypted and secure. Membership will be activated after payment.
+            </p>
+
+            {payError && (
+              <p style={{ color: '#e74c3c', fontSize: '0.88rem', marginTop: '0.5rem' }}>{payError}</p>
+            )}
+
             <div className="mp-nav">
-              <button className="mp-back-btn" onClick={() => setStep(2)}><FaArrowLeft /> Back</button>
+              <button className="mp-back-btn" onClick={() => setStep(2)} disabled={paying}><FaArrowLeft /> Back</button>
               <button
                 className="mp-continue-btn mp-continue-btn--pay"
-                disabled={!payMethod}
-                onClick={() => setPaid(true)}
+                disabled={paying}
+                onClick={handlePay}
               >
-                <FaLock /> Confirm &amp; Pay €{plan?.price}
+                {paying ? 'Redirecting…' : <><FaLock /> Pay €{plan?.price} securely</>}
               </button>
             </div>
           </div>

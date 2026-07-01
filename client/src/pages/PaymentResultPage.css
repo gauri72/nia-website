@@ -1,0 +1,120 @@
+.prp {
+  min-height: 100vh;
+  background: #f0f4ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  font-family: var(--font-primary, Arial, sans-serif);
+}
+
+.prp__card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 40px rgba(26,43,94,0.12);
+  padding: 3rem 2.5rem;
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.prp__card--success { border-top: 4px solid #2ecc71; }
+.prp__card--error   { border-top: 4px solid #e74c3c; }
+.prp__card--cancel  { border-top: 4px solid #f39c12; }
+
+.prp__icon { font-size: 3rem; line-height: 1; }
+
+.prp__check {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #2ecc71;
+  color: #fff;
+  font-size: 1.6rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.prp__title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #0F1F4B;
+  margin: 0;
+}
+
+.prp__sub {
+  font-size: 0.95rem;
+  color: #4a6080;
+  line-height: 1.6;
+  margin: 0;
+  max-width: 360px;
+}
+
+.prp__ref {
+  font-size: 0.8rem;
+  color: #888;
+  margin: 0;
+}
+.prp__ref code {
+  background: #f0f4ff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  color: #0F1F4B;
+}
+
+.prp__spinner {
+  width: 44px;
+  height: 44px;
+  border: 4px solid #e8edf5;
+  border-top-color: #E8641A;
+  border-radius: 50%;
+  animation: prp-spin 0.8s linear infinite;
+}
+@keyframes prp-spin { to { transform: rotate(360deg); } }
+
+.prp__actions {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 0.5rem;
+}
+
+.prp__btn {
+  padding: 0.75rem 1.6rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: background 0.18s, transform 0.15s;
+  font-family: inherit;
+}
+.prp__btn:hover { transform: translateY(-1px); }
+
+.prp__btn--primary {
+  background: #E8641A;
+  color: #fff;
+}
+.prp__btn--primary:hover { background: #d0561a; }
+
+.prp__btn--secondary {
+  background: #f0f4ff;
+  color: #0F1F4B;
+  border: 1px solid #d0d8ee;
+}
+.prp__btn--secondary:hover { background: #e2e8f8; }
+
+@media (max-width: 480px) {
+  .prp__card { padding: 2rem 1.2rem; }
+  .prp__title { font-size: 1.3rem; }
+  .prp__actions { flex-direction: column; width: 100%; }
+  .prp__btn { width: 100%; }
+}

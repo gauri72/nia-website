@@ -1,23 +1,17 @@
 import { useState } from 'react';
 import {
   FaUser, FaChild, FaStar, FaShieldAlt, FaTag, FaIdCard,
-  FaRobot, FaArrowRight, FaArrowLeft, FaCreditCard, FaLock,
-  FaUniversity, FaMobileAlt, FaPaypal, FaCheckCircle,
+  FaRobot, FaArrowRight, FaArrowLeft, FaLock, FaCheckCircle,
 } from 'react-icons/fa';
+import { startTicketPayment } from '../../services/paymentService';
 import './BookTickets.css';
 
 const TICKETS = [
   { id: 'regular', icon: <FaUser />,  type: 'Regular Entry',    perks: ['No drinks included', 'No food included'],   price: 20, badge: null,         highlight: false, color: 'navy'   },
   { id: 'vip',     icon: <FaStar />,  type: 'VIP Experience',   perks: ['2 drinks included', 'Food included'],       price: 45, badge: 'BEST VALUE', highlight: true,  color: 'orange' },
-  { id: 'child',   icon: <FaChild />, type: 'Child (6–12 yrs)', perks: ['Per child', 'Accompanied by adult'],        price: 5,  badge: null,         highlight: false, color: 'green'  },
+  { id: 'child',   icon: <FaChild />, type: 'Child (6–12 yrs)', perks: ['Per child', 'Accompanied by adult'],        price: 1,  badge: null,         highlight: false, color: 'green'  },
 ];
 
-const PAYMENT_METHODS = [
-  { id: 'ideal',  icon: <FaUniversity />,  label: 'iDEAL',        desc: 'Pay directly via your Dutch bank' },
-  { id: 'card',   icon: <FaCreditCard />,  label: 'Credit / Debit Card', desc: 'Visa, Mastercard, Amex accepted' },
-  { id: 'paypal', icon: <FaPaypal />,      label: 'PayPal',        desc: 'Fast and secure via PayPal' },
-  { id: 'other',  icon: <FaMobileAlt />,   label: 'Other Methods', desc: 'Apple Pay, Google Pay and more' },
-];
 
 function StepBar({ step }) {
   const STEPS = ['Select Tickets', 'Your Details', 'Review Order', 'Payment'];
@@ -58,9 +52,8 @@ export default function BookTickets() {
   // Step 1 — attendee details
   const [attendee, setAttendee] = useState({ name: '', email: '', phone: '' });
 
-  // Step 3 — payment method
-  const [payMethod, setPayMethod] = useState(null);
-  const [paid, setPaid]           = useState(false);
+  const [paying, setPaying]   = useState(false);
+  const [payError, setPayError] = useState('');
 
   // ── Derived totals ──
   const selectedTickets = TICKETS.filter(t => qtys[t.id] > 0);
@@ -82,24 +75,26 @@ export default function BookTickets() {
 
   const canProceedStep1 = attendee.name.trim() && attendee.email.trim();
 
-  if (paid) {
-    return (
-      <section className="book-tickets" id="tickets">
-        <div className="book-tickets__inner">
-          <div className="bt-success">
-            <FaCheckCircle className="bt-success__icon" />
-            <h2 className="bt-success__heading">Booking Confirmed!</h2>
-            <p className="bt-success__body">
-              Thank you, <strong>{attendee.name}</strong>! Your tickets have been booked successfully.
-              A confirmation has been sent to <strong>{attendee.email}</strong>.
-            </p>
-            <button className="bt-continue-btn" onClick={() => { setStep(0); setQtys({ regular:0, vip:0, child:0 }); setAttendee({ name:'',email:'',phone:'' }); setPayMethod(null); setPaid(false); setDiscountPct(0); setDiscountCode(''); }}>
-              Book More Tickets
-            </button>
-          </div>
-        </div>
-      </section>
-    );
+  async function handlePay() {
+    setPayError('');
+    setPaying(true);
+    try {
+      const ticketLines = selectedTickets.map(t => ({
+        ticket_type: t.id,
+        quantity: qtys[t.id],
+      }));
+      await startTicketPayment({
+        name: attendee.name.trim(),
+        email: attendee.email.trim(),
+        phone: attendee.phone.trim() || undefined,
+        tickets: ticketLines,
+        discountCode: discountCode.trim() || undefined,
+      });
+      // startTicketPayment redirects the browser — code below only runs on error
+    } catch (err) {
+      setPayError(err?.response?.data?.error || 'Payment failed. Please try again.');
+      setPaying(false);
+    }
   }
 
   return (
@@ -303,40 +298,32 @@ export default function BookTickets() {
         )}
 
         {/* ══════════════════════════════
-            STEP 3 — Payment Method
+            STEP 3 — Confirm & Pay
             ══════════════════════════════ */}
         {step === 3 && (
           <div className="bt-payment-step">
-            <h3 className="bt-form-step__heading">Choose Payment Method</h3>
-            <p className="bt-form-step__sub">Select how you'd like to pay €{grandTotal}.</p>
-
-            <div className="bt-pay-methods">
-              {PAYMENT_METHODS.map(m => (
-                <button
-                  key={m.id}
-                  className={`bt-pay-method${payMethod === m.id ? ' bt-pay-method--active' : ''}`}
-                  onClick={() => setPayMethod(m.id)}
-                >
-                  <span className="bt-pay-method__icon">{m.icon}</span>
-                  <span className="bt-pay-method__label">{m.label}</span>
-                  <span className="bt-pay-method__desc">{m.desc}</span>
-                  {payMethod === m.id && <span className="bt-pay-method__check">✓</span>}
-                </button>
-              ))}
-            </div>
-
-            <p className="bt-payment__disclaimer">
-              <FaShieldAlt /> Your payment is encrypted and secure. Tickets will be emailed instantly.
+            <h3 className="bt-form-step__heading">Confirm &amp; Pay</h3>
+            <p className="bt-form-step__sub">
+              You will be redirected to Mollie's secure checkout to complete payment of <strong>€{grandTotal}</strong>.
+              All major payment methods are accepted (iDEAL, card, PayPal and more).
             </p>
 
+            <p className="bt-payment__disclaimer">
+              <FaShieldAlt /> Your payment is encrypted and secure. Tickets will be emailed instantly after payment.
+            </p>
+
+            {payError && (
+              <p style={{ color: '#e74c3c', fontSize: '0.88rem', marginTop: '0.5rem' }}>{payError}</p>
+            )}
+
             <div className="bt-nav">
-              <button className="bt-back-btn" onClick={() => setStep(2)}><FaArrowLeft /> Back</button>
+              <button className="bt-back-btn" onClick={() => setStep(2)} disabled={paying}><FaArrowLeft /> Back</button>
               <button
                 className="bt-continue-btn bt-continue-btn--pay"
-                disabled={!payMethod}
-                onClick={() => setPaid(true)}
+                disabled={paying}
+                onClick={handlePay}
               >
-                <FaLock /> Confirm &amp; Pay €{grandTotal}
+                {paying ? 'Redirecting…' : <><FaLock /> Pay €{grandTotal} securely</>}
               </button>
             </div>
           </div>
