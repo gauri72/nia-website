@@ -1,7 +1,7 @@
 const Ticket = require('../models/Ticket');
 const { createPayment } = require('../services/mollieService');
 
-const TICKET_PRICES = { regular: 20, vip: 45, child: 1 };
+const TICKET_PRICES = { regular: 20, vip: 45, child: 5 };
 const DISCOUNT_CODES = { NIA10: 0.10, NIA20: 0.20 };
 
 // ── POST /api/tickets/create ──────────────────────────────────

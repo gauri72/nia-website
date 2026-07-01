@@ -9,7 +9,7 @@ import './BookTickets.css';
 const TICKETS = [
   { id: 'regular', icon: <FaUser />,  type: 'Regular Entry',    perks: ['No drinks included', 'No food included'],   price: 20, badge: null,         highlight: false, color: 'navy'   },
   { id: 'vip',     icon: <FaStar />,  type: 'VIP Experience',   perks: ['2 drinks included', 'Food included'],       price: 45, badge: 'BEST VALUE', highlight: true,  color: 'orange' },
-  { id: 'child',   icon: <FaChild />, type: 'Child (6–12 yrs)', perks: ['Per child', 'Accompanied by adult'],        price: 1,  badge: null,         highlight: false, color: 'green'  },
+  { id: 'child',   icon: <FaChild />, type: 'Child (6–12 yrs)', perks: ['Per child', 'Accompanied by adult'],        price: 5,  badge: null,         highlight: false, color: 'green'  },
 ];
 
 
