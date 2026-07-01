@@ -1,5 +1,6 @@
 import { FaFacebookF, FaInstagram, FaLinkedinIn, FaTwitter, FaWhatsapp, FaMapMarkerAlt, FaPhone, FaUserPlus, FaArrowRight } from 'react-icons/fa';
 import footerLogo from '../../assets/home/FooterLogo.png';
+import voiceLogo from '../../assets/footer/voice-logo.png';
 import './Footer.css';
 
 const USEFUL_LINKS = ['Home', 'About NIA', 'What we do', 'Upcoming Events', 'News & Activities', 'Policy'];
@@ -73,7 +74,12 @@ export default function Footer() {
       </div>
 
       <div className="footer__bottom">
-        <p>© 2025 – The Netherlands India Association – All rights reserved | Powered by Neksoft Consultancy Services</p>
+        <p>© 2026 – The Netherlands India Association – All rights reserved</p>
+        <div className="footer__credit">
+          <span>Designed &amp; Developed by</span>
+          <img src={voiceLogo} alt="Voice Venture Studio" className="footer__credit-logo" />
+          <span>Voice Venture Studio</span>
+        </div>
       </div>
     </footer>
   );

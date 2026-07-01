@@ -157,6 +157,25 @@
   padding: 1rem 2.5rem;
   font-size: 0.78rem;
   color: #8a96a8;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.footer__credit {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  color: #6b7685;
+}
+
+.footer__credit-logo {
+  height: 18px;
+  width: auto;
+  object-fit: contain;
+  filter: brightness(0) invert(0.5);
 }
 
 /* ── Tablet (≤900px) — single column, centred ── */
