@@ -33,19 +33,16 @@ export default function EventInfo() {
     <section className="event-info">
       <div className="event-info__inner">
         {INFO.map((item, i) => (
-          <>
-            {i > 0 && <div key={`div-${i}`} className="event-info__divider" />}
-            <div key={i} className="event-info__item">
-              <span className="event-info__icon">{item.icon}</span>
-              <div className="event-info__text">
-                <p className="event-info__label">{item.label}</p>
-                <p className="event-info__primary">{item.primary}</p>
-                <p className="event-info__secondary" style={{ whiteSpace: 'pre-line' }}>
-                  {item.secondary}
-                </p>
-              </div>
+          <div key={i} className="event-info__item">
+            <span className="event-info__icon">{item.icon}</span>
+            <div className="event-info__text">
+              <p className="event-info__label">{item.label}</p>
+              <p className="event-info__primary">{item.primary}</p>
+              <p className="event-info__secondary" style={{ whiteSpace: 'pre-line' }}>
+                {item.secondary}
+              </p>
             </div>
-          </>
+          </div>
         ))}
       </div>
     </section>
