@@ -10,10 +10,10 @@ import './AboutStructure.css';
 
 const BOARD = [
   { role: 'President',                        name: 'Shivam Joshi',          photo: imgPresident,           color: '#e8641a', linkedin: 'https://www.linkedin.com/in/shivam-joshi-2a22659b/' },
-  { role: 'Vice President / Acting Treasurer', name: 'Shanti Pahladsingh',   photo: imgVicePresident,       color: '#1a2b5e', linkedin: 'https://www.linkedin.com/in/shanti-pahladsingh-942b9830/' },
+  { role: 'Vice President / Acting Treasurer', name: 'Shanti Pahladsingh',   photo: imgVicePresident,       color: '#5b8dd9', linkedin: 'https://www.linkedin.com/in/shanti-pahladsingh-942b9830/' },
   { role: 'Secretary',                        name: 'Victor van Bijlert',    photo: imgSecretary,           color: '#2d7d3a', linkedin: 'https://www.linkedin.com/in/victor-van-bijlert-38a6a529/' },
   { role: 'Director Marketing',               name: 'Remy van Nieuwenhoven', photo: imgDirectorMarketing,   color: '#7B2D8B', linkedin: 'https://www.linkedin.com/in/remy-van-nieuwenhoven/' },
-  { role: 'Director Sponsorships',            name: 'Jaydev',                photo: imgDirectorSponsorship, color: '#c89a2e', linkedin: null },
+  { role: 'Director Sponsorships',            name: 'Jayadev Sukumaran',     photo: imgDirectorSponsorship, color: '#c89a2e', linkedin: 'https://www.linkedin.com/in/jayadev-sukumaran-38801b138/' },
   { role: 'Director Public Relations',        name: 'Radha Nikhade',         photo: imgDirectorPR,          color: '#1a7fa8', linkedin: 'https://www.linkedin.com/in/radha-nikhade-2a2548a/' },
 ];
 
@@ -63,9 +63,12 @@ function OfficeBearersCarousel() {
 
       <div className="ob-carousel__stage">
         <div key={animKey} className={`ob-carousel__slide ob-carousel__slide--${dir}`}>
-          <div className="ob-avatar" style={{ '--member-color': member.color }}>
-            <img src={member.photo} alt={member.name} className="ob-avatar__photo" />
-          </div>
+          <div
+            className="ob-avatar"
+            role="img"
+            aria-label={member.name}
+            style={{ backgroundImage: `url(${member.photo})` }}
+          />
           <p className="ob-carousel__name">{member.name}</p>
           <p className="ob-carousel__role" style={{ color: member.color }}>{member.role}</p>
           {member.linkedin && (
