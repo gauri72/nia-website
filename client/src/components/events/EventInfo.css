@@ -81,6 +81,26 @@
   line-height: 1.5;
 }
 
+.event-info__map-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--color-orange);
+  text-decoration: none;
+  border: 1.5px solid var(--color-orange);
+  border-radius: 4px;
+  padding: 0.25rem 0.6rem;
+  transition: background 0.2s, color 0.2s;
+}
+.event-info__map-btn:hover {
+  background: var(--color-orange);
+  color: #fff;
+}
+
 /* ── Tablet (≤900px) — 2×2 grid ── */
 @media (max-width: 900px) {
   .event-info { padding: 0 1.5rem 1rem; margin-top: -60px; }

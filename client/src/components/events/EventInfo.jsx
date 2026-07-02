@@ -19,6 +19,7 @@ const INFO = [
     label: 'VENUE',
     primary: 'DE DUINPAN',
     secondary: 'Sportlaan 34, 2191 XH De Zilk\nGemeente Noordwijk',
+    mapUrl: 'https://maps.app.goo.gl/qSfRXG5iMBcR6exs8',
   },
   {
     icon: <FaUsers />,
@@ -41,6 +42,11 @@ export default function EventInfo() {
               <p className="event-info__secondary" style={{ whiteSpace: 'pre-line' }}>
                 {item.secondary}
               </p>
+              {item.mapUrl && (
+                <a href={item.mapUrl} target="_blank" rel="noopener noreferrer" className="event-info__map-btn">
+                  <FaMapMarkerAlt /> View on Map
+                </a>
+              )}
             </div>
           </div>
         ))}
