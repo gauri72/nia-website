@@ -38,10 +38,10 @@
   margin: 0 auto;
 }
 
-/* ── Two highlight cards ── */
+/* ── Highlight cards ── */
 .au-struct__highlight-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 1.5rem;
   margin-bottom: 3rem;
 }
@@ -156,25 +156,347 @@
   margin: 0;
 }
 
+/* ══════════════════════════════════════
+   Office Bearers — dark navy carousel
+   ══════════════════════════════════════ */
+.au-ob-dark {
+  background: var(--color-navy);
+  border-radius: 16px;
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+
+.au-ob-dark__row {
+  display: grid;
+  grid-template-columns: 220px 1fr 200px;
+  align-items: center;
+  padding: 2.2rem 2rem 2.6rem;
+  gap: 2rem;
+}
+
+/* ── Left: tagline ── */
+.au-ob-dark__tagline-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.au-ob-dark__eyebrow {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: var(--color-orange);
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.au-ob-dark__tagline {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.3;
+  letter-spacing: 0.03em;
+  margin: 0;
+}
+.au-ob-dark__tagline--gold { color: var(--color-orange); }
+
+.au-ob-dark__rule {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.au-ob-dark__rule-line {
+  flex: 1;
+  height: 1px;
+  background: rgba(255,255,255,0.2);
+}
+.au-ob-dark__rule-diamond {
+  color: var(--color-orange);
+  font-size: 0.7rem;
+}
+
+.au-ob-dark__script {
+  font-family: 'Dancing Script', cursive;
+  font-size: 1.2rem;
+  color: var(--color-orange);
+  margin: 0;
+}
+
+/* ── Centre: Netflix carousel ── */
+.ob-carousel {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+.ob-carousel__arrow {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.7);
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  align-self: center;
+  transition: border-color 0.2s, background 0.2s, transform 0.15s;
+}
+.ob-carousel__arrow:hover {
+  border-color: var(--color-orange);
+  background: rgba(232,100,26,0.15);
+  color: var(--color-orange);
+  transform: scale(1.12);
+}
+
+.ob-carousel__stage {
+  width: 220px;
+  height: 220px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@keyframes obSlideInNext {
+  from { opacity: 0; transform: translateX(50px) scale(0.88); }
+  to   { opacity: 1; transform: translateX(0)    scale(1);    }
+}
+@keyframes obSlideInPrev {
+  from { opacity: 0; transform: translateX(-50px) scale(0.88); }
+  to   { opacity: 1; transform: translateX(0)     scale(1);    }
+}
+
+.ob-carousel__slide {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
+  position: absolute;
+  width: 100%;
+  padding: 0 0.5rem;
+}
+.ob-carousel__slide--next { animation: obSlideInNext 0.42s cubic-bezier(0.22, 0.61, 0.36, 1) both; }
+.ob-carousel__slide--prev { animation: obSlideInPrev 0.42s cubic-bezier(0.22, 0.61, 0.36, 1) both; }
+
+/* Avatar circle */
+.ob-avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 3px solid var(--member-color, rgba(255,255,255,0.3));
+  background: rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 0 4px rgba(255,255,255,0.07);
+}
+
+.ob-avatar__photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  border-radius: 50%;
+  position: relative;
+  z-index: 1;
+}
+
+.ob-carousel__name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+  text-align: center;
+}
+
+.ob-carousel__role {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 0;
+  text-align: center;
+}
+
+.ob-carousel__linkedin {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #fff;
+  background: #0a66c2;
+  border-radius: 4px;
+  padding: 0.3rem 0.7rem;
+  text-decoration: none;
+  letter-spacing: 0.04em;
+  margin-top: 0.2rem;
+  transition: background 0.2s, transform 0.15s;
+}
+.ob-carousel__linkedin:hover {
+  background: #004182;
+  transform: translateY(-1px);
+}
+
+/* Dots */
+.ob-carousel__dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.45rem;
+  width: 100%;
+  flex-basis: 100%;
+}
+
+.ob-carousel__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.2);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.25s, transform 0.2s;
+}
+.ob-carousel__dot--active {
+  background: var(--member-color, var(--color-orange));
+  transform: scale(1.4);
+}
+
+/* Progress bar */
+.ob-carousel__progress {
+  height: 2px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 2px;
+  overflow: hidden;
+  width: 120px;
+  flex-basis: 100%;
+  margin: 0 auto;
+}
+
+@keyframes obProgressFill {
+  from { width: 0%; }
+  to   { width: 100%; }
+}
+
+.ob-carousel__progress-fill {
+  height: 100%;
+  background: var(--member-color, var(--color-orange));
+  border-radius: 2px;
+  animation: obProgressFill 4s linear both;
+}
+
+/* ── Right: info column ── */
+.au-ob-dark__info-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.au-ob-dark__info-label {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: rgba(255,255,255,0.4);
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.au-ob-dark__roles-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-bottom: 0.6rem;
+}
+
+.au-ob-dark__role-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.au-ob-dark__role-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.au-ob-dark__role-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.75);
+  letter-spacing: 0.03em;
+}
+
+.au-ob-dark__contact-label {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: rgba(255,255,255,0.4);
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.au-ob-dark__contact-email {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-orange);
+  text-decoration: none;
+  letter-spacing: 0.02em;
+  transition: opacity 0.2s;
+}
+.au-ob-dark__contact-email:hover { opacity: 0.75; }
+
+/* ══════════════════════════════════════
+   RESPONSIVE
+   ══════════════════════════════════════ */
+@media (max-width: 1100px) {
+  .au-ob-dark__row {
+    grid-template-columns: 180px 1fr 180px;
+    gap: 1.5rem;
+    padding: 2rem 1.8rem 2.4rem;
+  }
+  .au-ob-dark__tagline { font-size: 1.2rem; }
+}
+
 @media (max-width: 900px) {
   .au-struct__roles-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 768px) {
   .au-struct { padding: 3rem 1.5rem; }
-  .au-struct__highlight-row { grid-template-columns: 1fr; gap: 1.1rem; }
+  .au-struct__highlight-row { gap: 1.1rem; }
   .au-struct__heading { font-size: 1.6rem; }
+
+  .au-ob-dark__row {
+    grid-template-columns: 1fr;
+    padding: 2rem 1.4rem;
+    gap: 1.8rem;
+    text-align: center;
+  }
+  .au-ob-dark__tagline-col { align-items: center; }
+  .au-ob-dark__rule { max-width: 200px; margin: 0 auto; }
+  .au-ob-dark__info-col { align-items: center; }
+  .au-ob-dark__roles-list { align-items: center; }
+  .ob-carousel__stage { width: 240px; height: 220px; }
 }
 
 @media (max-width: 480px) {
   .au-struct { padding: 2.5rem 1.2rem; }
-  .au-struct__roles-grid { grid-template-columns: 1fr; }
   .au-struct__heading { font-size: 1.4rem; }
-  .au-role-card {
-    align-items: center;
-    text-align: center;
-  }
-  .au-struct__roles-header {
-    justify-content: center;
-  }
+  .au-struct__roles-header { justify-content: center; }
+  .au-ob-dark__row { padding: 1.6rem 1.2rem; gap: 1.4rem; }
+  .au-ob-dark__tagline { font-size: 1.2rem; }
+  .ob-carousel__stage { width: 200px; height: 210px; }
 }

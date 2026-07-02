@@ -1,6 +1,6 @@
 const PLACEHOLDER_EVENTS = [
-  { id: 1, title: 'Diwali Celebration 2025', date: 'October 2025', location: 'Amsterdam' },
-  { id: 2, title: 'Indo-Dutch Business Forum', date: 'November 2025', location: 'The Hague' },
+  { id: 1, title: 'Diwali Celebration 2026', date: 'October 2026', location: 'Amsterdam' },
+  { id: 2, title: 'Indo-Dutch Business Forum', date: 'November 2026', location: 'The Hague' },
   { id: 3, title: 'Holi Festival', date: 'March 2026', location: 'Rotterdam' },
 ];
 

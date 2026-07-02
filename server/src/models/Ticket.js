@@ -18,6 +18,7 @@ const TicketSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   email: { type: String, required: true, trim: true, lowercase: true },
   phone: { type: String, trim: true },
+  attendee_names: { type: String, trim: true },
   tickets: [TicketLineSchema],
   discount_code: { type: String },
   discount_pct: { type: Number, default: 0 },

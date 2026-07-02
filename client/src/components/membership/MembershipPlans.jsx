@@ -65,22 +65,28 @@ function StepBar({ step }) {
 
 export default function MembershipPlans() {
   const [step, setStep]           = useState(0);
-  const [selected, setSelected]   = useState(null);   // plan id
+  const [selected, setSelected]   = useState(null);
   const [member, setMember]       = useState({ name: '', email: '', phone: '' });
+  const [partner, setPartner]     = useState({ name: '', email: '', phone: '' });
   const [memberCode, setMemberCode] = useState('');
   const [paying, setPaying]   = useState(false);
   const [payError, setPayError] = useState('');
 
   const plan = PLANS.find(p => p.id === selected);
-  const canProceedStep1 = member.name.trim() && member.email.trim();
+  const canProceedStep1 = member.name.trim() && member.email.trim() && partner.name.trim();
 
   function handleField(e) {
     setMember(m => ({ ...m, [e.target.name]: e.target.value }));
   }
 
+  function handlePartnerField(e) {
+    setPartner(p => ({ ...p, [e.target.name]: e.target.value }));
+  }
+
   function reset() {
     setStep(0); setSelected(null);
     setMember({ name: '', email: '', phone: '' });
+    setPartner({ name: '', email: '', phone: '' });
     setMemberCode(''); setPaying(false); setPayError('');
   }
 
@@ -93,6 +99,9 @@ export default function MembershipPlans() {
         name: member.name.trim(),
         email: member.email.trim(),
         phone: member.phone.trim() || undefined,
+        partnerName: partner.name.trim() || undefined,
+        partnerEmail: partner.email.trim() || undefined,
+        partnerPhone: partner.phone.trim() || undefined,
       });
       // redirects to Mollie — code below only runs on error
     } catch (err) {
@@ -214,6 +223,25 @@ export default function MembershipPlans() {
               <input className="mp-pfield__input" name="phone" type="tel" placeholder="+31 6 12345678" value={member.phone} onChange={handleField} />
             </div>
 
+            <div className="mp-section-divider">
+              <span className="mp-section-divider__line" />
+              <span className="mp-section-divider__label">Partner Details <span className="mp-optional">(optional)</span></span>
+              <span className="mp-section-divider__line" />
+            </div>
+
+            <div className="mp-pfield">
+              <label className="mp-pfield__label">Partner's Full Name <span className="mp-required">*</span></label>
+              <input className="mp-pfield__input" name="name" type="text" placeholder="Partner's full name" value={partner.name} onChange={handlePartnerField} />
+            </div>
+            <div className="mp-pfield">
+              <label className="mp-pfield__label">Partner's Email Address <span className="mp-optional">(optional)</span></label>
+              <input className="mp-pfield__input" name="email" type="email" placeholder="partner@email.com" value={partner.email} onChange={handlePartnerField} />
+            </div>
+            <div className="mp-pfield">
+              <label className="mp-pfield__label">Partner's Phone Number <span className="mp-optional">(optional)</span></label>
+              <input className="mp-pfield__input" name="phone" type="tel" placeholder="+31 6 12345678" value={partner.phone} onChange={handlePartnerField} />
+            </div>
+
             <div className="mp-nav">
               <button className="mp-back-btn" onClick={() => setStep(0)}><FaArrowLeft /> Back</button>
               <button className="mp-continue-btn" disabled={!canProceedStep1} onClick={() => setStep(2)}>
@@ -253,11 +281,20 @@ export default function MembershipPlans() {
             </div>
 
             <div className="mp-review__attendee">
-              <p className="mp-review__attendee-label">Membership for</p>
+              <p className="mp-review__attendee-label">Primary Member</p>
               <p className="mp-review__attendee-name">{member.name}</p>
               <p className="mp-review__attendee-email">{member.email}</p>
               {member.phone && <p className="mp-review__attendee-email">{member.phone}</p>}
             </div>
+
+            {partner.name && (
+              <div className="mp-review__attendee">
+                <p className="mp-review__attendee-label">Partner</p>
+                <p className="mp-review__attendee-name">{partner.name}</p>
+                {partner.email && <p className="mp-review__attendee-email">{partner.email}</p>}
+                {partner.phone && <p className="mp-review__attendee-email">{partner.phone}</p>}
+              </div>
+            )}
 
             <div className="mp-nav">
               <button className="mp-back-btn" onClick={() => setStep(1)}><FaArrowLeft /> Back</button>

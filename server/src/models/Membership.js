@@ -15,6 +15,9 @@ const MembershipSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   email: { type: String, required: true, trim: true, lowercase: true },
   phone: { type: String, trim: true },
+  partnerName: { type: String, trim: true },
+  partnerEmail: { type: String, trim: true, lowercase: true },
+  partnerPhone: { type: String, trim: true },
   amount: { type: Number, required: true },
   status: {
     type: String,

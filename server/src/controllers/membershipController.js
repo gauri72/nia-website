@@ -6,13 +6,16 @@ const PLAN_AMOUNTS = { friend: 60, patron: 150 };
 // ── POST /api/membership/create ───────────────────────────────
 async function create(req, res, next) {
   try {
-    const { plan, name, email, phone } = req.body;
+    const { plan, name, email, phone, partnerName, partnerEmail, partnerPhone } = req.body;
 
     if (!plan || !PLAN_AMOUNTS[plan]) {
       return res.status(400).json({ error: 'Invalid plan. Must be "friend" or "patron"' });
     }
     if (!name?.trim() || !email?.trim()) {
       return res.status(400).json({ error: 'name and email are required' });
+    }
+    if (!partnerName?.trim()) {
+      return res.status(400).json({ error: 'partnerName is required' });
     }
 
     const amount = PLAN_AMOUNTS[plan];
@@ -22,6 +25,9 @@ async function create(req, res, next) {
       name: name.trim(),
       email: email.trim().toLowerCase(),
       phone: phone?.trim(),
+      partnerName: partnerName?.trim() || undefined,
+      partnerEmail: partnerEmail?.trim().toLowerCase() || undefined,
+      partnerPhone: partnerPhone?.trim() || undefined,
       amount,
       status: 'pending_payment',
       payment_status: 'pending',

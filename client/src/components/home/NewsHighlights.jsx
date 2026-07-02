@@ -1,7 +1,7 @@
 const PLACEHOLDER_NEWS = [
-  { id: 1, title: 'NIA Launches New Mentorship Programme', date: 'June 2025' },
-  { id: 2, title: 'Annual Gala Raises Record Funds for Scholarships', date: 'May 2025' },
-  { id: 3, title: 'Partnership Announced with Indian Chamber of Commerce', date: 'April 2025' },
+  { id: 1, title: 'NIA Launches New Mentorship Programme', date: 'June 2026' },
+  { id: 2, title: 'Annual Gala Raises Record Funds for Scholarships', date: 'May 2026' },
+  { id: 3, title: 'Partnership Announced with Indian Chamber of Commerce', date: 'April 2026' },
 ];
 
 export default function NewsHighlights() {

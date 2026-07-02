@@ -1,61 +1,130 @@
-import { FaUsers, FaHandshake } from 'react-icons/fa';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { FaChevronLeft, FaChevronRight, FaHandshake } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
 import './Sponsors.css';
 
-const BADGES = [
-  { number: 21, color: 'var(--color-navy)',   ringColor: 'rgba(26,43,94,0.18)'  },
-  { number: 16, color: 'var(--color-orange)',  ringColor: 'rgba(232,100,26,0.18)' },
-  { number: 17, color: 'var(--color-green)',   ringColor: 'rgba(45,125,58,0.18)'  },
-  { number: 18, color: '#7B2D8B',              ringColor: 'rgba(123,45,139,0.18)' },
+const SPONSORS = [
+  { name: 'SPONSOR 1', tier: 'PLATINUM', initials: 'S1', color: '#4a90d9' },
+  { name: 'SPONSOR 2', tier: 'GOLD',     initials: 'S2', color: '#c89a2e' },
+  { name: 'SPONSOR 3', tier: 'SILVER',   initials: 'S3', color: '#8a9bb0' },
+  { name: 'SPONSOR 4', tier: 'BRONZE',   initials: 'S4', color: '#b07340' },
 ];
+
+const INTERVAL = 4000;
+
+function SponsorCarousel() {
+  const [active, setActive]   = useState(0);
+  const [dir, setDir]         = useState('next');
+  const [animKey, setAnimKey] = useState(0);
+  const timerRef              = useRef(null);
+
+  const go = useCallback((index, direction) => {
+    setDir(direction);
+    setAnimKey(k => k + 1);
+    setActive(index);
+  }, []);
+
+  const next = useCallback(() => {
+    go((active + 1) % SPONSORS.length, 'next');
+  }, [active, go]);
+
+  const prev = useCallback(() => {
+    go((active - 1 + SPONSORS.length) % SPONSORS.length, 'prev');
+  }, [active, go]);
+
+  const resetTimer = useCallback(() => {
+    clearInterval(timerRef.current);
+    timerRef.current = setInterval(next, INTERVAL);
+  }, [next]);
+
+  useEffect(() => {
+    timerRef.current = setInterval(next, INTERVAL);
+    return () => clearInterval(timerRef.current);
+  }, [next]);
+
+  const sponsor = SPONSORS[active];
+
+  return (
+    <div
+      className="sp-logo-carousel"
+      onMouseEnter={() => clearInterval(timerRef.current)}
+      onMouseLeave={resetTimer}
+    >
+      <button className="sp-lc__arrow sp-lc__arrow--prev" onClick={() => { prev(); resetTimer(); }} aria-label="Previous">
+        <FaChevronLeft />
+      </button>
+
+      <div className="sp-lc__stage">
+        <div key={animKey} className={`sp-lc__slide sp-lc__slide--${dir}`}>
+          <div className="sp-logo-card" style={{ '--sponsor-color': sponsor.color }}>
+            <div className="sp-logo-card__inner">
+              <div className="sp-logo-card__initials">{sponsor.initials}</div>
+            </div>
+          </div>
+          <p className="sp-logo-card__name">{sponsor.name}</p>
+          <p className="sp-logo-card__tier">{sponsor.tier}</p>
+        </div>
+      </div>
+
+      <button className="sp-lc__arrow sp-lc__arrow--next" onClick={() => { next(); resetTimer(); }} aria-label="Next">
+        <FaChevronRight />
+      </button>
+
+      <div className="sp-lc__dots">
+        {SPONSORS.map((s, i) => (
+          <button
+            key={i}
+            className={`sp-lc__dot${i === active ? ' sp-lc__dot--active' : ''}`}
+            style={{ '--sponsor-color': s.color }}
+            onClick={() => { go(i, i > active ? 'next' : 'prev'); resetTimer(); }}
+            aria-label={`Sponsor ${i + 1}`}
+          />
+        ))}
+      </div>
+
+      <div className="sp-lc__progress">
+        <div key={animKey} className="sp-lc__progress-fill" />
+      </div>
+    </div>
+  );
+}
 
 export default function Sponsors() {
   return (
-    <section className="sponsors">
-      <div className="sponsors__inner">
-        <h2 className="sponsors__heading">Sponsors</h2>
-        <div className="sponsors__underline" />
+    <section className="hs-sponsors">
+      <div className="hs-sp__row">
 
-        <div className="sponsors__badges">
-          {BADGES.map((badge, i) => (
-            <div key={badge.number} className="sponsors__badge-wrap">
-              {/* outer light-shade ring */}
-              <div
-                className="sponsor-ring"
-                style={{ borderColor: badge.ringColor }}
-              >
-                {/* inner solid circle */}
-                <div
-                  className="sponsor-badge"
-                  style={{ borderColor: badge.color, color: badge.color }}
-                >
-                  {badge.number}
-                </div>
-              </div>
-
-              {/* divider after every badge except the last */}
-              {i < BADGES.length - 1 && (
-                <div className="sponsors__divider" />
-              )}
-            </div>
-          ))}
-        </div>
-
-        <div className="sponsors__banner">
-          {/* white circle around left icon */}
-          <div className="sponsors__icon-circle">
-            <FaUsers className="sponsors__banner-icon" />
-          </div>
-
-          <p className="sponsors__banner-text">
-            NIA is a networking organization where Dutch and Indians can come to know each other
-            and can share each others knowledge and make friends.
+        {/* Left: tagline */}
+        <div className="hs-sp__tagline-col">
+          <p className="hs-sp__eyebrow">PROUDLY SUPPORTED BY</p>
+          <p className="hs-sp__tagline">
+            OUR<br />VALUED<br />
+            <span className="hs-sp__tagline--gold">SPONSORS.</span>
           </p>
-
-          {/* white circle around right icon */}
-          <div className="sponsors__icon-circle">
-            <FaHandshake className="sponsors__banner-icon" />
+          <div className="hs-sp__rule">
+            <span className="hs-sp__rule-line" />
+            <span className="hs-sp__rule-diamond">✦</span>
+            <span className="hs-sp__rule-line" />
           </div>
+          <p className="hs-sp__script">Thank you for your support!</p>
         </div>
+
+        {/* Centre: logo carousel */}
+        <div className="hs-sp__carousel-col">
+          <p className="hs-sp__section-label">OUR SPONSORS</p>
+          <SponsorCarousel />
+        </div>
+
+        {/* Right: CTA */}
+        <div className="hs-sp__cta-col">
+          <div className="hs-sp__cta-icon-wrap">
+            <FaHandshake className="hs-sp__cta-icon" />
+          </div>
+          <p className="hs-sp__cta-title">BECOME A SPONSOR</p>
+          <p className="hs-sp__cta-sub">MAKE A LASTING IMPACT!</p>
+          <Link to="/sponsorship" className="hs-sp__cta-btn">VIEW PACKAGES →</Link>
+        </div>
+
       </div>
     </section>
   );

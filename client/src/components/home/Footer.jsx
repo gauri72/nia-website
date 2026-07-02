@@ -17,8 +17,8 @@ export default function Footer() {
           </div>
           <p className="footer__socials-heading">Follow us</p>
           <div className="footer__socials">
-            <a href="#" aria-label="Facebook"  className="footer-social"><span className="footer-social__icon footer-social__icon--fb"><FaFacebookF /></span></a>
-            <a href="#" aria-label="Instagram" className="footer-social"><span className="footer-social__icon footer-social__icon--ig"><FaInstagram /></span></a>
+            <a href="https://www.facebook.com/thenetherlandindia/" target="_blank" rel="noopener noreferrer" aria-label="Facebook"  className="footer-social"><span className="footer-social__icon footer-social__icon--fb"><FaFacebookF /></span></a>
+            <a href="https://www.instagram.com/thenetherlandindia/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="footer-social"><span className="footer-social__icon footer-social__icon--ig"><FaInstagram /></span></a>
             <a href="#" aria-label="LinkedIn"  className="footer-social"><span className="footer-social__icon footer-social__icon--li"><FaLinkedinIn /></span></a>
             <a href="#" aria-label="Twitter"   className="footer-social"><span className="footer-social__icon footer-social__icon--tw"><FaTwitter /></span></a>
             <a href="#" aria-label="WhatsApp"  className="footer-social"><span className="footer-social__icon footer-social__icon--wa"><FaWhatsapp /></span></a>

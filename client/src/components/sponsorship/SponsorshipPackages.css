@@ -149,10 +149,10 @@
   font-size: 1.3rem;
   flex-shrink: 0;
 }
+.spp-card__badge--bronze   { background: radial-gradient(circle at 35% 35%, #f5c98a, #b5651d); box-shadow: 0 3px 10px rgba(181,101,29,0.45); color: #6b3510; }
 .spp-card__badge--silver   { background: radial-gradient(circle at 35% 35%, #f0f0f0, #9e9e9e); box-shadow: 0 3px 10px rgba(120,120,120,0.4); color: #555; }
 .spp-card__badge--gold     { background: radial-gradient(circle at 35% 35%, #ffe566, #b8860b); box-shadow: 0 3px 12px rgba(184,134,11,0.5);  color: #7a5200; }
 .spp-card__badge--platinum { background: radial-gradient(circle at 35% 35%, #dceeff, #6a9fcc); box-shadow: 0 3px 12px rgba(80,130,175,0.4);  color: #1a4060; }
-.spp-card__badge--diamond  { background: radial-gradient(circle at 35% 35%, #aad4ff, #1A2B5E); box-shadow: 0 3px 14px rgba(26,43,94,0.5);    color: #fff; }
 
 .spp-card__badge-icon { display: flex; align-items: center; }
 
@@ -165,10 +165,10 @@
   margin: 0;
   line-height: 1.1;
 }
+.spp-card--bronze   .spp-card__tier { color: #8b4513; }
 .spp-card--silver   .spp-card__tier { color: #555; }
 .spp-card--gold     .spp-card__tier { color: #8a6200; }
 .spp-card--platinum .spp-card__tier { color: #1a4060; }
-.spp-card--diamond  .spp-card__tier { color: var(--color-navy); }
 
 .spp-card__sublabel {
   font-size: 0.62rem;
@@ -187,20 +187,20 @@
   align-items: baseline;
   justify-content: center;
 }
+.spp-card__ribbon--bronze   { background: linear-gradient(90deg, #8b4513, #d4894a, #8b4513); }
 .spp-card__ribbon--silver   { background: linear-gradient(90deg, #999, #d8d8d8, #999); }
 .spp-card__ribbon--gold     { background: linear-gradient(90deg, #9a6e00, #e8c84a, #9a6e00); }
 .spp-card__ribbon--platinum { background: linear-gradient(90deg, #3a6a8a, #a8cce0, #3a6a8a); }
-.spp-card__ribbon--diamond  { background: linear-gradient(90deg, #0d1b4b, #1A2B5E, #0d1b4b); }
 
 .spp-card__price {
   font-size: 1.4rem;
   font-weight: 800;
   letter-spacing: 0.02em;
 }
+.spp-card--bronze   .spp-card__price { color: #fff; }
 .spp-card--silver   .spp-card__price { color: #333; }
 .spp-card--gold     .spp-card__price { color: #3a2800; }
 .spp-card--platinum .spp-card__price { color: #0a2035; }
-.spp-card--diamond  .spp-card__price { color: #fff; }
 
 /* Guest row */
 .spp-card__guests {
@@ -251,10 +251,10 @@
   color: #fff;
   margin-top: 2px;
 }
+.spp-card__perk-check--bronze   { background: #b5651d; }
 .spp-card__perk-check--silver   { background: #9e9e9e; }
 .spp-card__perk-check--gold     { background: #b8860b; }
 .spp-card__perk-check--platinum { background: #4a7fa0; }
-.spp-card__perk-check--diamond  { background: var(--color-navy); }
 
 .spp-card__selected-badge {
   font-size: 0.7rem;
@@ -425,10 +425,10 @@
 .spp-review__plan-name { display: flex; align-items: center; gap: 0.6rem; font-weight: 600; }
 
 .spp-review__dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.spp-review__dot--bronze   { background: #d4894a; }
 .spp-review__dot--silver   { background: #c0c0c0; }
 .spp-review__dot--gold     { background: #e8c84a; }
 .spp-review__dot--platinum { background: #a8cce0; }
-.spp-review__dot--diamond  { background: #a8c4ff; }
 
 .spp-review__line-total { font-weight: 700; text-align: right; }
 

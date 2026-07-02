@@ -1,7 +1,7 @@
 const Sponsorship = require('../models/Sponsorship');
 const { createPayment } = require('../services/mollieService');
 
-const PACKAGE_AMOUNTS = { silver: 250, gold: 500, platinum: 1000, diamond: 1500 };
+const PACKAGE_AMOUNTS = { bronze: 250, silver: 500, gold: 1000, platinum: 2500 };
 
 // ── POST /api/sponsorships/create ────────────────────────────
 async function create(req, res, next) {
@@ -13,7 +13,7 @@ async function create(req, res, next) {
     }
     const pkg = packageName?.toLowerCase();
     if (!PACKAGE_AMOUNTS[pkg]) {
-      return res.status(400).json({ error: 'Invalid package. Must be silver, gold, platinum, or diamond' });
+      return res.status(400).json({ error: 'Invalid package. Must be bronze, silver, gold, or platinum' });
     }
 
     const amount = PACKAGE_AMOUNTS[pkg];

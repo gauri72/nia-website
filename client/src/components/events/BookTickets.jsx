@@ -51,16 +51,18 @@ export default function BookTickets() {
 
   // Step 1 — attendee details
   const [attendee, setAttendee] = useState({ name: '', email: '', phone: '' });
+  const [attendeeNames, setAttendeeNames] = useState('');
 
   const [paying, setPaying]   = useState(false);
   const [payError, setPayError] = useState('');
 
   // ── Derived totals ──
   const selectedTickets = TICKETS.filter(t => qtys[t.id] > 0);
-  const subtotal  = selectedTickets.reduce((sum, t) => sum + t.price * qtys[t.id], 0);
-  const totalSaved = Math.round(subtotal * discountPct);
-  const grandTotal = subtotal - totalSaved;
-  const hasTickets = selectedTickets.length > 0;
+  const subtotal    = selectedTickets.reduce((sum, t) => sum + t.price * qtys[t.id], 0);
+  const totalSaved  = Math.round(subtotal * discountPct);
+  const grandTotal  = subtotal - totalSaved;
+  const hasTickets  = selectedTickets.length > 0;
+  const totalTickets = selectedTickets.reduce((sum, t) => sum + qtys[t.id], 0);
 
   function applyDiscount() {
     const code = discountCode.trim().toUpperCase();
@@ -73,7 +75,8 @@ export default function BookTickets() {
     setAttendee(a => ({ ...a, [e.target.name]: e.target.value }));
   }
 
-  const canProceedStep1 = attendee.name.trim() && attendee.email.trim();
+  const canProceedStep1 = attendee.name.trim() && attendee.email.trim()
+    && (totalTickets <= 1 || attendeeNames.trim());
 
   async function handlePay() {
     setPayError('');
@@ -87,6 +90,7 @@ export default function BookTickets() {
         name: attendee.name.trim(),
         email: attendee.email.trim(),
         phone: attendee.phone.trim() || undefined,
+        attendeeNames: totalTickets > 1 ? attendeeNames.trim() : undefined,
         tickets: ticketLines,
         discountCode: discountCode.trim() || undefined,
       });
@@ -223,6 +227,22 @@ export default function BookTickets() {
               <input className="bt-pfield__input" name="phone" type="tel" placeholder="+31 6 12345678" value={attendee.phone} onChange={handleAttendeeField} />
             </div>
 
+            {totalTickets > 1 && (
+              <div className="bt-pfield bt-pfield--full">
+                <label className="bt-pfield__label">
+                  Names of All Attendees ({totalTickets} people) <span className="bt-required">*</span>
+                </label>
+                <textarea
+                  className="bt-pfield__input bt-pfield__textarea"
+                  placeholder={`Enter each attendee's full name on a separate line:\n1. Full Name\n2. Full Name${totalTickets > 2 ? `\n3. Full Name` : ''}`}
+                  value={attendeeNames}
+                  onChange={e => setAttendeeNames(e.target.value)}
+                  rows={totalTickets + 1}
+                />
+                <span className="bt-pfield__hint">Please list all {totalTickets} attendees, one name per line.</span>
+              </div>
+            )}
+
             <div className="bt-nav">
               <button className="bt-back-btn" onClick={() => setStep(0)}><FaArrowLeft /> Back</button>
               <button className="bt-continue-btn" disabled={!canProceedStep1} onClick={() => setStep(2)}>
@@ -287,6 +307,15 @@ export default function BookTickets() {
               <p className="bt-review__attendee-email">{attendee.email}</p>
               {attendee.phone && <p className="bt-review__attendee-email">{attendee.phone}</p>}
             </div>
+
+            {totalTickets > 1 && attendeeNames.trim() && (
+              <div className="bt-review__attendee">
+                <p className="bt-review__attendee-label">Attendees ({totalTickets})</p>
+                {attendeeNames.trim().split('\n').filter(n => n.trim()).map((n, i) => (
+                  <p key={i} className="bt-review__attendee-email">{n.trim()}</p>
+                ))}
+              </div>
+            )}
 
             <div className="bt-nav">
               <button className="bt-back-btn" onClick={() => setStep(1)}><FaArrowLeft /> Back</button>

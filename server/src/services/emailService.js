@@ -67,25 +67,27 @@ async function generateTicketPDF(ticket) {
       const qrDataUrl = await generateQRDataURL(ticket.ticketNumber);
       const qrBuffer  = Buffer.from(qrDataUrl.replace(/^data:image\/png;base64,/, ''), 'base64');
 
+      const W = doc.page.width;
+
       // Header bar
-      doc.rect(0, 0, doc.page.width, 70).fill('#0F1F4B');
+      doc.rect(0, 0, W, 70).fill('#0F1F4B');
       doc.fillColor('#ffffff').fontSize(16).font('Helvetica-Bold')
         .text('Netherlands India Association', 40, 18);
       doc.fontSize(10).font('Helvetica')
         .text('India Independence Day — 15 August 2026', 40, 40);
 
       // Orange accent bar
-      doc.rect(0, 70, doc.page.width, 5).fill('#E8641A');
+      doc.rect(0, 70, W, 5).fill('#E8641A');
 
-      // Ticket number
+      // Ticket number block
       doc.fillColor('#0F1F4B').fontSize(13).font('Helvetica-Bold')
         .text('EVENT TICKET', 40, 95);
       doc.fontSize(20).text(ticket.ticketNumber, 40, 114);
 
       // Divider
-      doc.moveTo(40, 148).lineTo(doc.page.width - 40, 148).strokeColor('#e0e0e0').stroke();
+      doc.moveTo(40, 150).lineTo(W - 40, 150).strokeColor('#e0e0e0').stroke();
 
-      // Ticket details
+      // Ticket details — full width, no QR alongside
       const details = [
         ['Name',       ticket.name],
         ['Email',      ticket.email],
@@ -95,24 +97,29 @@ async function generateTicketPDF(ticket) {
         ['Date',       new Date(ticket.paid_at).toLocaleDateString('nl-NL')],
       ];
 
-      let y = 162;
-      doc.fontSize(10).font('Helvetica');
+      let y = 166;
+      doc.fontSize(10);
       for (const [label, value] of details) {
-        doc.fillColor('#888888').text(label, 40, y);
-        doc.fillColor('#0F1F4B').font('Helvetica-Bold').text(value, 160, y);
-        doc.font('Helvetica');
-        y += 22;
+        doc.font('Helvetica').fillColor('#888888').text(label, 40, y);
+        doc.font('Helvetica-Bold').fillColor('#0F1F4B').text(value, 160, y);
+        y += 24;
       }
 
-      // QR code
-      const qrX = doc.page.width - 160;
-      doc.image(qrBuffer, qrX, 95, { width: 120, height: 120 });
-      doc.fillColor('#888888').fontSize(8)
-        .text('Scan at entry', qrX, 220, { width: 120, align: 'center' });
+      // Divider before QR
+      y += 8;
+      doc.moveTo(40, y).lineTo(W - 40, y).strokeColor('#e0e0e0').stroke();
+      y += 16;
+
+      // QR code — centred below details
+      const qrSize = 130;
+      const qrX = (W - qrSize) / 2;
+      doc.image(qrBuffer, qrX, y, { width: qrSize, height: qrSize });
+      doc.font('Helvetica').fillColor('#888888').fontSize(8)
+        .text('Scan at event entry', 0, y + qrSize + 6, { width: W, align: 'center' });
 
       // Footer bar
-      doc.rect(0, doc.page.height - 40, doc.page.width, 40).fill('#f5f5f5');
-      doc.fillColor('#999999').fontSize(8).font('Helvetica')
+      doc.rect(0, doc.page.height - 40, W, 40).fill('#f5f5f5');
+      doc.fillColor('#999999').fontSize(8)
         .text('Please present this ticket (print or digital) at the event entrance.', 40, doc.page.height - 28);
 
       doc.end();
@@ -181,10 +188,14 @@ async function sendTicketConfirmation(ticket) {
     `<div class="detail-row"><span class="label">${t.ticket_type} × ${t.quantity}</span><span class="value">€${t.line_total.toFixed(2)}</span></div>`
   ).join('');
 
+  // Generate QR as a buffer and embed as CID — data: URIs are blocked by most email clients
   const qrDataUrl = await generateQRDataURL(ticket.ticketNumber);
+  const qrBuffer  = Buffer.from(qrDataUrl.replace(/^data:image\/png;base64,/, ''), 'base64');
+  const qrCid     = `qr-${ticket.ticketNumber}@nia`;
+
   const qrBlock = `
     <div class="qr-block">
-      <img src="${qrDataUrl}" alt="QR Code" />
+      <img src="cid:${qrCid}" alt="QR Code" width="160" height="160" style="display:block;margin:0 auto;" />
       <p>Scan at event entry — ${ticket.ticketNumber}</p>
     </div>`;
 
@@ -212,6 +223,12 @@ async function sendTicketConfirmation(ticket) {
         filename: `NIA-Ticket-${ticket.ticketNumber}.pdf`,
         content: pdfBuffer,
         contentType: 'application/pdf',
+      },
+      {
+        filename: 'ticket-qr.png',
+        content: qrBuffer,
+        contentType: 'image/png',
+        cid: qrCid,
       },
     ],
   });
@@ -334,6 +351,83 @@ async function sendSponsorshipReceipt(sponsorship) {
   console.log(`[Email] Sponsorship receipt sent to ${sponsorship.email}`);
 }
 
+async function notifyAdminMembership(membership) {
+  if (!ADMIN_EMAIL) return;
+  const transporter = createTransporter();
+  const planLabel = membership.plan === 'patron' ? 'PATRON (€150/year)' : 'FRIEND (€60/year)';
+  const body = `
+    <p>A new membership payment has been received.</p>
+    <div class="detail-row"><span class="label">Membership ID</span><span class="value">${membership.membershipId}</span></div>
+    <div class="detail-row"><span class="label">Name</span><span class="value">${membership.name}</span></div>
+    <div class="detail-row"><span class="label">Email</span><span class="value">${membership.email}</span></div>
+    <div class="detail-row"><span class="label">Plan</span><span class="value">${planLabel}</span></div>
+    <div class="detail-row"><span class="label">Amount</span><span class="value amount">€${membership.amount.toFixed(2)}</span></div>
+    <div class="detail-row"><span class="label">Mollie ID</span><span class="value">${membership.mollie_payment_id}</span></div>
+    <div class="detail-row"><span class="label">Date</span><span class="value">${new Date(membership.paid_at).toLocaleDateString('nl-NL')}</span></div>`;
+
+  await transporter.sendMail({
+    from: FROM,
+    to: ADMIN_EMAIL,
+    subject: `🆕 New Membership — ${planLabel} — ${membership.name}`,
+    html: htmlWrap('New Membership Payment Received', body),
+  });
+  console.log(`[Email] Admin membership notification sent to ${ADMIN_EMAIL}`);
+}
+
+async function notifyAdminTicket(ticket) {
+  if (!ADMIN_EMAIL) return;
+  const transporter = createTransporter();
+  const ticketLines = ticket.tickets.map(t =>
+    `<div class="detail-row"><span class="label">${t.ticket_type} × ${t.quantity}</span><span class="value">€${t.line_total.toFixed(2)}</span></div>`
+  ).join('');
+  const body = `
+    <p>A new event ticket purchase has been received.</p>
+    <div class="detail-row"><span class="label">Ticket Number</span><span class="value">${ticket.ticketNumber}</span></div>
+    <div class="detail-row"><span class="label">Name</span><span class="value">${ticket.name}</span></div>
+    <div class="detail-row"><span class="label">Email</span><span class="value">${ticket.email}</span></div>
+    ${ticketLines}
+    ${ticket.discount_amount > 0 ? `<div class="detail-row"><span class="label">Discount</span><span class="value" style="color:green;">−€${ticket.discount_amount.toFixed(2)}</span></div>` : ''}
+    <div class="detail-row"><span class="label">Total Paid</span><span class="value amount">€${ticket.amount.toFixed(2)}</span></div>
+    <div class="detail-row"><span class="label">Mollie ID</span><span class="value">${ticket.mollie_payment_id}</span></div>
+    <div class="detail-row"><span class="label">Date</span><span class="value">${new Date(ticket.paid_at).toLocaleDateString('nl-NL')}</span></div>`;
+
+  await transporter.sendMail({
+    from: FROM,
+    to: ADMIN_EMAIL,
+    subject: `🎟️ New Ticket Purchase — ${ticket.ticketNumber} — ${ticket.name}`,
+    html: htmlWrap('New Event Ticket Purchase', body),
+  });
+  console.log(`[Email] Admin ticket notification sent to ${ADMIN_EMAIL}`);
+}
+
+async function notifyAdminDonation(donation) {
+  if (!ADMIN_EMAIL) return;
+  const transporter = createTransporter();
+  const causeLabel = {
+    general: 'General Community Fund',
+    cultural_events: 'Cultural Events & Festivals',
+    youth_education: 'Youth & Education Programmes',
+    community_welfare: 'Community Welfare Initiatives',
+  }[donation.cause] || donation.cause;
+  const body = `
+    <p>A new donation has been received.</p>
+    <div class="detail-row"><span class="label">Reference</span><span class="value">${donation.referenceNumber}</span></div>
+    <div class="detail-row"><span class="label">Name</span><span class="value">${donation.name}</span></div>
+    <div class="detail-row"><span class="label">Email</span><span class="value">${donation.email}</span></div>
+    <div class="detail-row"><span class="label">Cause</span><span class="value">${causeLabel}</span></div>
+    <div class="detail-row"><span class="label">Amount</span><span class="value amount">€${donation.amount.toFixed(2)}</span></div>
+    <div class="detail-row"><span class="label">Mollie ID</span><span class="value">${donation.mollie_payment_id}</span></div>
+    <div class="detail-row"><span class="label">Date</span><span class="value">${new Date(donation.paid_at).toLocaleDateString('nl-NL')}</span></div>`;
+
+  await transporter.sendMail({
+    from: FROM,
+    to: ADMIN_EMAIL,
+    subject: `💛 New Donation — €${donation.amount.toFixed(2)} — ${donation.name}`,
+    html: htmlWrap('New Donation Received', body),
+  });
+  console.log(`[Email] Admin donation notification sent to ${ADMIN_EMAIL}`);
+}
+
 async function notifyAdminSponsorship(sponsorship) {
   if (!ADMIN_EMAIL) return;
   const transporter = createTransporter();
@@ -364,14 +458,17 @@ async function sendPostPaymentEmails(type, record) {
       case 'membership':
         await sendMembershipConfirmation(record);
         await sendMembershipReceipt(record);
+        await notifyAdminMembership(record);
         break;
       case 'event_ticket':
         await sendTicketConfirmation(record);
         await sendTicketReceipt(record);
+        await notifyAdminTicket(record);
         break;
       case 'donation':
         await sendDonationThankYou(record);
         await sendDonationReceipt(record);
+        await notifyAdminDonation(record);
         break;
       case 'sponsorship':
         await sendSponsorshipConfirmation(record);

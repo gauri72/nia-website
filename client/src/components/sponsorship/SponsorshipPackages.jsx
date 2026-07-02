@@ -1,81 +1,42 @@
 import { useState } from 'react';
-import { FaStar, FaCrown, FaInfinity, FaUsers, FaBuilding, FaEnvelope, FaBullhorn, FaHandshake, FaCheck, FaArrowRight, FaArrowLeft, FaLock, FaShieldAlt, FaCheckCircle } from 'react-icons/fa';
+import { FaMedal, FaStar, FaCrown, FaGem, FaUsers, FaArrowRight, FaArrowLeft, FaLock, FaShieldAlt } from 'react-icons/fa';
 import { startSponsorshipPayment } from '../../services/paymentService';
-import { GiDiamondHard } from 'react-icons/gi';
 import './SponsorshipPackages.css';
 
 const PACKAGES = [
   {
+    id: 'bronze',
+    tier: 'BRONZE',
+    price: 250,
+    icon: <FaMedal />,
+    color: 'bronze',
+    tickets: 2,
+  },
+  {
     id: 'silver',
     tier: 'SILVER',
-    sublabel: 'SPONSORSHIP',
-    price: 250,
-    guests: '2 Guests',
-    guestIcon: <><FaUsers /><FaUsers /></>,
+    price: 500,
     icon: <FaStar />,
     color: 'silver',
-    perks: [
-      { text: 'Logo on event materials' },
-      { text: 'Social media mention' },
-      { text: '2 guest tickets included' },
-      { text: 'Certificate of appreciation' },
-    ],
+    tickets: 4,
   },
   {
     id: 'gold',
     tier: 'GOLD',
-    sublabel: 'SPONSORSHIP',
-    price: 500,
-    guests: '5 Guests',
-    guestIcon: <><FaUsers /><FaUsers /><FaUsers /></>,
-    icon: <FaStar />,
+    price: 1000,
+    icon: <FaCrown />,
     color: 'gold',
-    perks: [
-      { text: 'Logo on event materials & banner' },
-      { text: 'Dedicated social media post' },
-      { text: '5 guest tickets included' },
-      { text: 'Brand mention in press releases' },
-      { text: 'Certificate of appreciation' },
-    ],
+    tickets: 8,
   },
   {
     id: 'platinum',
     tier: 'PLATINUM',
-    sublabel: 'SPONSORSHIP',
-    price: 1000,
-    guests: '10 Guests',
-    guestIcon: <><FaUsers /><FaUsers /><FaUsers /><FaUsers /><FaUsers /></>,
-    icon: <FaCrown />,
+    price: 2500,
+    icon: <FaGem />,
     color: 'platinum',
-    perks: [
-      { text: 'Premium logo placement on all materials' },
-      { text: 'Multiple social media features' },
-      { text: '10 guest tickets included' },
-      { text: 'Speaking opportunity at event' },
-      { text: 'Brand mention in press releases' },
-      { text: 'VIP table at the event' },
-    ],
-  },
-  {
-    id: 'diamond',
-    tier: 'DIAMOND',
-    sublabel: 'SPONSORSHIP',
-    price: 1500,
-    guests: 'Unlimited Guests',
-    guestIcon: <FaInfinity />,
-    icon: <GiDiamondHard />,
-    color: 'diamond',
-    perks: [
-      { text: 'Exclusive title sponsorship rights' },
-      { text: 'Full branding across all event assets' },
-      { text: 'Unlimited guest tickets' },
-      { text: 'Keynote speaking slot' },
-      { text: 'Dedicated feature article & press coverage' },
-      { text: 'VIP table + private networking session' },
-    ],
+    tickets: 12,
   },
 ];
-
 
 const STEPS = ['Choose Package', 'Your Details', 'Review Order', 'Payment'];
 
@@ -97,7 +58,7 @@ export default function SponsorshipPackages() {
   const [step, setStep]         = useState(0);
   const [selected, setSelected] = useState(null);
   const [sponsor, setSponsor]   = useState({ name: '', email: '', org: '', phone: '' });
-  const [paying, setPaying]   = useState(false);
+  const [paying, setPaying]     = useState(false);
   const [payError, setPayError] = useState('');
 
   const pkg = PACKAGES.find(p => p.id === selected);
@@ -118,14 +79,13 @@ export default function SponsorshipPackages() {
     setPaying(true);
     try {
       await startSponsorshipPayment({
-        sponsorName: sponsor.name.trim(),
+        sponsorName:   sponsor.name.trim(),
         contactPerson: sponsor.name.trim(),
-        companyName: sponsor.org.trim() || undefined,
-        email: sponsor.email.trim(),
-        phone: sponsor.phone.trim() || undefined,
-        packageName: selected,
+        companyName:   sponsor.org.trim() || undefined,
+        email:         sponsor.email.trim(),
+        phone:         sponsor.phone.trim() || undefined,
+        packageName:   selected,
       });
-      // redirects to Mollie — code below only runs on error
     } catch (err) {
       setPayError(err?.response?.data?.error || 'Payment failed. Please try again.');
       setPaying(false);
@@ -138,7 +98,7 @@ export default function SponsorshipPackages() {
 
         <div className="sp-packages__header">
           <h2 className="sp-packages__heading">Sponsorship Packages</h2>
-          <p className="sp-packages__sub">Choose a package and complete your sponsorship in a few simple steps.</p>
+          <p className="sp-packages__sub">Support the Netherlands India Association and gain visibility across our events and community.</p>
         </div>
 
         <StepBar step={step} />
@@ -161,7 +121,7 @@ export default function SponsorshipPackages() {
                     </div>
                     <div className="spp-card__info">
                       <p className="spp-card__tier">{p.tier}</p>
-                      <p className="spp-card__sublabel">{p.sublabel}</p>
+                      <p className="spp-card__sublabel">SPONSORSHIP</p>
                     </div>
                   </div>
 
@@ -170,18 +130,9 @@ export default function SponsorshipPackages() {
                   </div>
 
                   <div className="spp-card__guests">
-                    <span className="spp-card__guest-icons">{p.guestIcon}</span>
-                    <span className="spp-card__guest-label">{p.guests}</span>
+                    <FaUsers />
+                    <span className="spp-card__guest-label">{p.tickets} complimentary tickets</span>
                   </div>
-
-                  <ul className="spp-card__perks">
-                    {p.perks.map((pk, j) => (
-                      <li key={j} className="spp-card__perk">
-                        <span className={`spp-card__perk-check spp-card__perk-check--${p.color}`}><FaCheck /></span>
-                        <span className="spp-card__perk-text">{pk.text}</span>
-                      </li>
-                    ))}
-                  </ul>
 
                   {selected === p.id && (
                     <span className="spp-card__selected-badge">✓ Selected</span>
@@ -254,7 +205,7 @@ export default function SponsorshipPackages() {
                 <div className="spp-review__table">
                   <div className="spp-review__thead">
                     <span>Package</span>
-                    <span>Guests</span>
+                    <span>Tickets</span>
                     <span>Total</span>
                   </div>
                   <div className="spp-review__row">
@@ -262,7 +213,7 @@ export default function SponsorshipPackages() {
                       <span className={`spp-review__dot spp-review__dot--${pkg?.color}`} />
                       {pkg?.tier} Sponsorship
                     </span>
-                    <span>{pkg?.guests}</span>
+                    <span>{pkg?.tickets} tickets</span>
                     <span className="spp-review__line-total">€{pkg?.price.toLocaleString()}</span>
                   </div>
                   <div className="spp-review__total-row">

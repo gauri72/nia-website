@@ -5,8 +5,8 @@ const INFO = [
   {
     icon: <FaCalendarAlt />,
     label: 'DATE',
-    primary: '15TH AUGUST 2025',
-    secondary: 'FRIDAY',
+    primary: '15TH AUGUST 2026',
+    secondary: 'SATURDAY',
   },
   {
     icon: <FaClock />,

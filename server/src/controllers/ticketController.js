@@ -7,7 +7,7 @@ const DISCOUNT_CODES = { NIA10: 0.10, NIA20: 0.20 };
 // ── POST /api/tickets/create ──────────────────────────────────
 async function create(req, res, next) {
   try {
-    const { name, email, phone, tickets, discountCode } = req.body;
+    const { name, email, phone, attendeeNames, tickets, discountCode } = req.body;
 
     if (!name?.trim() || !email?.trim()) {
       return res.status(400).json({ error: 'name and email are required' });
@@ -41,10 +41,16 @@ async function create(req, res, next) {
     const discountAmount = Math.round(subtotal * discountPct * 100) / 100;
     const total = Math.round((subtotal - discountAmount) * 100) / 100;
 
+    const totalQty = ticketLines.reduce((s, t) => s + t.quantity, 0);
+    if (totalQty > 1 && !attendeeNames?.trim()) {
+      return res.status(400).json({ error: 'attendeeNames is required when booking more than one ticket' });
+    }
+
     const ticket = await Ticket.create({
       name: name.trim(),
       email: email.trim().toLowerCase(),
       phone: phone?.trim(),
+      attendee_names: totalQty > 1 ? attendeeNames.trim() : undefined,
       tickets: ticketLines,
       discount_code: discountPct > 0 ? upperCode : undefined,
       discount_pct: discountPct,
