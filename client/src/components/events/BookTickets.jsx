@@ -230,16 +230,16 @@ export default function BookTickets() {
             {totalTickets > 1 && (
               <div className="bt-pfield bt-pfield--full">
                 <label className="bt-pfield__label">
-                  Names of All Attendees ({totalTickets} people) <span className="bt-required">*</span>
+                  Names of Other Attendees ({totalTickets - 1} {totalTickets - 1 === 1 ? 'person' : 'people'}) <span className="bt-required">*</span>
                 </label>
                 <textarea
                   className="bt-pfield__input bt-pfield__textarea"
-                  placeholder={`Enter each attendee's full name on a separate line:\n1. Full Name\n2. Full Name${totalTickets > 2 ? `\n3. Full Name` : ''}`}
+                  placeholder={Array.from({ length: totalTickets - 1 }, (_, i) => `${i + 1}. Full Name`).join('\n')}
                   value={attendeeNames}
                   onChange={e => setAttendeeNames(e.target.value)}
-                  rows={totalTickets + 1}
+                  rows={totalTickets}
                 />
-                <span className="bt-pfield__hint">Please list all {totalTickets} attendees, one name per line.</span>
+                <span className="bt-pfield__hint">Please list the other {totalTickets - 1} {totalTickets - 1 === 1 ? 'attendee' : 'attendees'}, one name per line.</span>
               </div>
             )}
 
@@ -310,9 +310,10 @@ export default function BookTickets() {
 
             {totalTickets > 1 && attendeeNames.trim() && (
               <div className="bt-review__attendee">
-                <p className="bt-review__attendee-label">Attendees ({totalTickets})</p>
+                <p className="bt-review__attendee-label">All Attendees ({totalTickets})</p>
+                <p className="bt-review__attendee-email">1. {attendee.name} (you)</p>
                 {attendeeNames.trim().split('\n').filter(n => n.trim()).map((n, i) => (
-                  <p key={i} className="bt-review__attendee-email">{n.trim()}</p>
+                  <p key={i} className="bt-review__attendee-email">{i + 2}. {n.trim()}</p>
                 ))}
               </div>
             )}
