@@ -70,7 +70,7 @@ function OfficeBearersCarousel() {
             style={{ backgroundImage: `url(${member.photo})` }}
           />
           <p className="ob-carousel__name">{member.name}</p>
-          <p className="ob-carousel__role" style={{ color: member.color }}>{member.role}</p>
+          <p className="ob-carousel__role">{member.role}</p>
           {member.linkedin && (
             <a
               href={member.linkedin}
