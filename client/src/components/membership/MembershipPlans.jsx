@@ -225,7 +225,7 @@ export default function MembershipPlans() {
 
             <div className="mp-section-divider">
               <span className="mp-section-divider__line" />
-              <span className="mp-section-divider__label">Partner Details <span className="mp-optional">(optional)</span></span>
+              <span className="mp-section-divider__label">Partner Details</span>
               <span className="mp-section-divider__line" />
             </div>
 
