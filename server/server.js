@@ -8,6 +8,9 @@ const { apiLimiter } = require('./src/middleware/rateLimiter');
 
 const app = express();
 
+// Trust Render/proxy's forwarded headers so rate-limiting uses real client IPs
+app.set('trust proxy', 1);
+
 // ── Database ──────────────────────────────────────────────────
 connectDB();
 

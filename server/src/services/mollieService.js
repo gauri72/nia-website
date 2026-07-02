@@ -22,10 +22,10 @@ async function createPayment({ amount, description, type, referenceId, metadata 
 
   const amountStr = Number(amount).toFixed(2);
 
-  // Only include webhookUrl when running in production — Mollie requires a
-  // publicly reachable URL and will reject localhost addresses.
-  const isProduction = process.env.NODE_ENV === 'production' ||
-    (process.env.BACKEND_URL && !process.env.BACKEND_URL.includes('localhost'));
+  // Only include webhookUrl when BACKEND_URL is a public (non-localhost) address.
+  // Mollie requires a publicly reachable URL and will reject localhost addresses.
+  const isProduction = process.env.BACKEND_URL &&
+    !process.env.BACKEND_URL.includes('localhost');
 
   const paymentPayload = {
     amount: {
