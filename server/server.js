@@ -16,6 +16,8 @@ connectDB();
 
 // ── CORS ──────────────────────────────────────────────────────
 const allowedOrigins = [
+  'https://www.niaonline.org',
+  'https://niaonline.org',
   process.env.FRONTEND_URL,
   'http://localhost:5173',
   'http://localhost:5174',
