@@ -293,7 +293,7 @@
   border-radius: 50%;
   flex-shrink: 0;
   background-size: cover;
-  background-position: center top;
+  background-position: center 15%;
   background-repeat: no-repeat;
 }
 
