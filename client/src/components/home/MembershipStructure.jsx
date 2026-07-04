@@ -12,6 +12,7 @@ const TIERS = [
     price: '€60',
     unit: '/ year',
     color: 'gold',
+    perk: '🎟️ 20% OFF on All NIA Events',
   },
   {
     id: 'patron',
@@ -21,6 +22,7 @@ const TIERS = [
     price: '€150',
     unit: '/ year',
     color: 'diamond',
+    perk: '🎟️ Free Entry to All NIA Events',
   },
 ];
 
@@ -65,6 +67,8 @@ export default function MembershipStructure() {
                   <span className="tier-card__price">{tier.price}</span>
                   <span className="tier-card__unit">{tier.unit}</span>
                 </div>
+
+                <p className="tier-card__perk">{tier.perk}</p>
 
               </div>
             ))}
