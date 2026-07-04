@@ -171,8 +171,12 @@
   color: #6b7685;
 }
 
+.footer__credit-text {
+  font-weight: 700;
+}
+
 .footer__credit-logo {
-  height: 28px;
+  height: 42px;
   width: auto;
   object-fit: contain;
   border-radius: 4px;

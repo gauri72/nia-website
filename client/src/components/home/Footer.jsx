@@ -76,9 +76,11 @@ export default function Footer() {
       <div className="footer__bottom">
         <p>© 2026 – The Netherlands India Association – All rights reserved</p>
         <div className="footer__credit">
-          <span>Designed &amp; Developed by</span>
-          <img src={voiceLogo} alt="Voice Venture Studio" className="footer__credit-logo" />
-          <span>V.O.I.C.E. Venture Studio</span>
+          <span className="footer__credit-text">Designed &amp; Developed by</span>
+          <a href="https://stichtingthevoice.nl/voice-venture-studio" target="_blank" rel="noopener noreferrer" aria-label="V.O.I.C.E. Venture Studio">
+            <img src={voiceLogo} alt="Voice Venture Studio" className="footer__credit-logo" />
+          </a>
+          <span className="footer__credit-text">V.O.I.C.E. Venture Studio</span>
         </div>
       </div>
     </footer>
