@@ -18,6 +18,7 @@ const PLANS = [
     unit: '/ year',
     tagline: 'Celebrate together at a great value',
     color: 'gold',
+    perkBadge: '🎟️ 20% OFF on All NIA Events',
     perks: [
       { icon: <FaUsers />,       text: 'Valid for 2 adults in the same household' },
       { icon: <FaCalendarAlt />, text: 'Access to all NIA events throughout the year' },
@@ -35,6 +36,7 @@ const PLANS = [
     unit: '/ year',
     tagline: 'All events included — celebrate without limits',
     color: 'diamond',
+    perkBadge: '🎟️ Free Entry to All NIA Events',
     perks: [
       { icon: <FaUsers />,       text: 'Valid for 2 adults in the same household' },
       { icon: <FaCalendarAlt />, text: 'Free entry to all NIA events throughout the year' },
@@ -163,6 +165,8 @@ export default function MembershipPlans() {
                     <span className="mp-pkg__price">€{p.price}</span>
                     <span className="mp-pkg__unit">{p.unit}</span>
                   </div>
+
+                  <p className={`mp-pkg__perk-badge mp-pkg__perk-badge--${p.color}`}>{p.perkBadge}</p>
 
                   <p className="mp-pkg__tagline">{p.tagline}</p>
 
