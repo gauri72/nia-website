@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { FaSearch, FaPlus, FaCopy, FaDownload } from 'react-icons/fa';
+import { Search, Plus, Copy, Download } from 'lucide-react';
 import adminApi from '../../services/adminApi';
 import StatusBadge from '../../components/admin/StatusBadge';
 
@@ -65,12 +65,12 @@ export default function AdminEventsPage() {
     <div>
       <div className="flex items-center justify-between mb-5">
         <h1 className="text-2xl font-extrabold text-nia-navy-dark">Events</h1>
-        <Link to="/admin/events/new" className={btnPrimary}><FaPlus className="inline mr-1.5" />Create Event</Link>
+        <Link to="/admin/events/new" className={btnPrimary}><Plus className="inline mr-1.5" />Create Event</Link>
       </div>
 
       <div className="flex flex-wrap gap-3 mb-4">
         <div className="relative flex-1 min-w-[200px]">
-          <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-nia-text-faint text-xs" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-nia-text-faint text-xs" />
           <input
             className="w-full rounded-nia-btn border border-nia-border py-2 pl-8 pr-3 text-sm focus:border-nia-orange focus:outline-none focus:ring-2 focus:ring-nia-orange/20"
             placeholder="Search events, venue…" value={search} onChange={(e) => setSearch(e.target.value)}
@@ -116,8 +116,8 @@ export default function AdminEventsPage() {
                     <button onClick={() => handlePublishToggle(e)} className={btnSecondary}>
                       {e.status === 'published' ? 'Unpublish' : 'Publish'}
                     </button>
-                    <button onClick={() => handleDuplicate(e)} title="Duplicate" className="rounded-nia-btn border border-nia-border px-2.5 py-2 hover:bg-nia-panel"><FaCopy /></button>
-                    <button onClick={() => exportAttendees(e)} title="Export attendees" className="rounded-nia-btn border border-nia-border px-2.5 py-2 hover:bg-nia-panel"><FaDownload /></button>
+                    <button onClick={() => handleDuplicate(e)} title="Duplicate" className="rounded-nia-btn border border-nia-border px-2.5 py-2 hover:bg-nia-panel"><Copy /></button>
+                    <button onClick={() => exportAttendees(e)} title="Export attendees" className="rounded-nia-btn border border-nia-border px-2.5 py-2 hover:bg-nia-panel"><Download /></button>
                     <button onClick={() => handleDelete(e)} className="rounded-nia-btn border border-nia-error px-2.5 py-2 text-nia-error hover:bg-red-50">Delete</button>
                   </div>
                 </td>

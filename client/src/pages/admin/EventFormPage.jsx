@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { FaArrowLeft, FaPlus, FaTrash } from 'react-icons/fa';
+import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import adminApi from '../../services/adminApi';
 import Modal from '../../components/admin/Modal';
 
@@ -89,7 +89,7 @@ export default function EventFormPage() {
   return (
     <div>
       <Link to="/admin/events" className="inline-flex items-center gap-1.5 text-sm text-nia-text-muted hover:text-nia-navy-dark mb-4">
-        <FaArrowLeft /> Back to Events
+        <ArrowLeft /> Back to Events
       </Link>
       <h1 className="text-2xl font-extrabold text-nia-navy-dark mb-5">{isNew ? 'Create Event' : form.title}</h1>
 
@@ -128,7 +128,7 @@ export default function EventFormPage() {
         <div className="rounded-nia-card border border-nia-border bg-white p-5">
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-bold text-nia-navy-dark">Ticket Types</h2>
-            {!isNew && <button onClick={() => setShowTTModal('new')} className="text-nia-orange text-sm font-semibold hover:underline"><FaPlus className="inline mr-1" />Add</button>}
+            {!isNew && <button onClick={() => setShowTTModal('new')} className="text-nia-orange text-sm font-semibold hover:underline"><Plus className="inline mr-1" />Add</button>}
           </div>
           {isNew && <p className="text-sm text-nia-text-faint">Save the event first to add ticket types.</p>}
           {!isNew && ticketTypes.length === 0 && <p className="text-sm text-nia-text-faint">No ticket types yet.</p>}
@@ -141,7 +141,7 @@ export default function EventFormPage() {
                 </div>
                 <div className="flex gap-1.5">
                   <button onClick={() => setShowTTModal(tt)} className="text-xs font-semibold text-nia-navy-dark hover:underline">Edit</button>
-                  <button onClick={() => handleDeleteTT(tt)} className="text-nia-error"><FaTrash className="text-xs" /></button>
+                  <button onClick={() => handleDeleteTT(tt)} className="text-nia-error"><Trash2 className="text-xs" /></button>
                 </div>
               </div>
             ))}

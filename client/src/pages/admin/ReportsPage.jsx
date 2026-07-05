@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { FaDownload, FaFilePdf } from 'react-icons/fa';
+import { Download, FileText } from 'lucide-react';
 import adminApi from '../../services/adminApi';
 
 const TABS = [
@@ -38,8 +38,8 @@ export default function ReportsPage() {
       <div className="flex items-center justify-between mb-5">
         <h1 className="text-2xl font-extrabold text-nia-navy-dark">Reports</h1>
         <div className="flex gap-2">
-          <button onClick={() => download('csv')} className={btnSecondary}><FaDownload className="inline mr-1.5" />Export CSV</button>
-          <button onClick={() => download('pdf')} className={btnSecondary}><FaFilePdf className="inline mr-1.5" />Export PDF</button>
+          <button onClick={() => download('csv')} className={btnSecondary}><Download className="inline mr-1.5" />Export CSV</button>
+          <button onClick={() => download('pdf')} className={btnSecondary}><FileText className="inline mr-1.5" />Export PDF</button>
         </div>
       </div>
 
@@ -80,7 +80,7 @@ export default function ReportsPage() {
       {!loading && data && tab === 'events' && (
         <div className="rounded-nia-card border border-nia-border bg-white overflow-hidden overflow-x-auto">
           <table className="w-full text-sm">
-            <thead><tr className="bg-nia-panel-alt text-left text-xs font-bold uppercase text-nia-text-muted"><th className="px-4 py-3">Title</th><th className="px-4 py-3">Category</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Tickets Sold</th><th className="px-4 py-3">Revenue</th></tr></thead>
+            <thead><tr className="bg-nia-panel-alt text-left text-xs font-bold uppercase text-nia-text-muted"><th className="px-4 py-3">Title</th><th className="px-4 py-3">Category</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Tickets Sold</th><th className="pl-4 pr-8 py-3 text-right">Revenue</th></tr></thead>
             <tbody>
               {data.events.map((e, i) => (
                 <tr key={i} className="border-t border-nia-border">
@@ -88,7 +88,7 @@ export default function ReportsPage() {
                   <td className="px-4 py-2.5 text-nia-text-muted">{e.category}</td>
                   <td className="px-4 py-2.5 text-nia-text-muted capitalize">{e.status}</td>
                   <td className="px-4 py-2.5 text-nia-text-muted">{e.ticketsSold}</td>
-                  <td className="px-4 py-2.5 text-nia-text-muted">€{e.revenue.toFixed(2)}</td>
+                  <td className="pl-4 pr-8 py-2.5 font-semibold text-nia-navy-dark text-right tabular-nums">€{e.revenue.toFixed(2)}</td>
                 </tr>
               ))}
             </tbody>
@@ -104,8 +104,8 @@ export default function ReportsPage() {
             <div className="rounded-nia-btn bg-nia-panel p-3 text-center"><p className="text-lg font-extrabold text-nia-orange">€{data.total.toFixed(2)}</p><p className="text-xs text-nia-text-faint">Total</p></div>
           </div>
           <table className="w-full text-sm">
-            <thead><tr className="text-left text-xs font-bold uppercase text-nia-text-muted"><th className="py-2">Month</th><th className="py-2">Revenue</th></tr></thead>
-            <tbody>{data.monthly.map((m) => <tr key={m.month} className="border-t border-nia-border"><td className="py-2">{m.month}</td><td className="py-2">€{m.amount.toFixed(2)}</td></tr>)}</tbody>
+            <thead><tr className="text-left text-xs font-bold uppercase text-nia-text-muted"><th className="py-2">Month</th><th className="py-2 text-right">Revenue</th></tr></thead>
+            <tbody>{data.monthly.map((m) => <tr key={m.month} className="border-t border-nia-border"><td className="py-2">{m.month}</td><td className="py-2 font-semibold text-nia-navy-dark text-right tabular-nums">€{m.amount.toFixed(2)}</td></tr>)}</tbody>
           </table>
         </div>
       )}

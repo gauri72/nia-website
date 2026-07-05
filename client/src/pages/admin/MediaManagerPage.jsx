@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { FaUpload, FaTrash, FaCopy, FaFilePdf } from 'react-icons/fa';
+import { Upload, Trash2, Copy, FileText } from 'lucide-react';
 import adminApi from '../../services/adminApi';
 
 const btnPrimary = 'rounded-nia-btn bg-nia-orange px-4 py-2 text-sm font-semibold text-white hover:bg-nia-orange-dark transition-colors disabled:bg-nia-border disabled:text-nia-text-faint';
@@ -56,7 +56,7 @@ export default function MediaManagerPage() {
       <div className="flex items-center justify-between mb-5">
         <h1 className="text-2xl font-extrabold text-nia-navy-dark">Media Manager</h1>
         <label className={btnPrimary + ' cursor-pointer'}>
-          <FaUpload className="inline mr-1.5" />{uploading ? 'Uploading…' : 'Upload File'}
+          <Upload className="inline mr-1.5" />{uploading ? 'Uploading…' : 'Upload File'}
           <input ref={fileInputRef} type="file" accept="image/*,application/pdf" onChange={handleUpload} disabled={uploading} className="hidden" />
         </label>
       </div>
@@ -74,7 +74,7 @@ export default function MediaManagerPage() {
               {isImage(f.filename) ? (
                 <img src={f.url} alt={f.filename} className="w-full h-full object-cover" />
               ) : (
-                <FaFilePdf className="text-4xl text-nia-text-faint" />
+                <FileText className="text-4xl text-nia-text-faint" />
               )}
             </div>
             <div className="p-2.5 flex flex-col gap-1.5">
@@ -82,9 +82,9 @@ export default function MediaManagerPage() {
               <p className="text-[10px] text-nia-text-faint">{(f.size / 1024).toFixed(0)} KB</p>
               <div className="flex gap-1.5">
                 <button onClick={() => handleCopy(f.url)} className="flex-1 rounded-nia-btn border border-nia-border px-2 py-1 text-[11px] font-semibold text-nia-navy-dark hover:bg-nia-panel">
-                  <FaCopy className="inline mr-1" />{copiedUrl === f.url ? 'Copied!' : 'Copy URL'}
+                  <Copy className="inline mr-1" />{copiedUrl === f.url ? 'Copied!' : 'Copy URL'}
                 </button>
-                <button onClick={() => handleDelete(f)} className="rounded-nia-btn border border-nia-error px-2 py-1 text-nia-error hover:bg-red-50"><FaTrash className="text-[11px]" /></button>
+                <button onClick={() => handleDelete(f)} className="rounded-nia-btn border border-nia-error px-2 py-1 text-nia-error hover:bg-red-50"><Trash2 className="text-[11px]" /></button>
               </div>
             </div>
           </div>

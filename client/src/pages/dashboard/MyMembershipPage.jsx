@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { FaDownload, FaCheckCircle } from 'react-icons/fa';
+import { Download, CheckCircle2 } from 'lucide-react';
 import memberApi from '../../services/memberApi';
 import { useMemberAuth } from '../../context/MemberAuthContext';
 import StatusBadge from '../../components/admin/StatusBadge';
@@ -89,7 +89,7 @@ export default function MyMembershipPage() {
           </label>
           <div className="flex flex-wrap gap-3">
             <button onClick={handleRenew} disabled={busy} className={btnPrimary}>Renew Membership</button>
-            <button onClick={downloadCard} className={btnSecondary}><FaDownload className="inline mr-1.5" />Download Card</button>
+            <button onClick={downloadCard} className={btnSecondary}><Download className="inline mr-1.5" />Download Card</button>
           </div>
         </div>
       ) : (
@@ -107,7 +107,7 @@ export default function MyMembershipPage() {
               <p className="text-2xl font-extrabold text-nia-orange">€{t.price}<span className="text-sm font-medium text-nia-text-faint">/{t.billingPeriod === 'annual' ? 'yr' : 'mo'}</span></p>
               <p className="text-sm text-nia-text-muted">{t.description}</p>
               <ul className="text-sm text-nia-text-muted flex flex-col gap-1 flex-1">
-                {t.benefits.map((b, i) => <li key={i} className="flex items-start gap-1.5"><FaCheckCircle className="text-nia-success mt-0.5 flex-shrink-0 text-xs" />{b}</li>)}
+                {t.benefits.map((b, i) => <li key={i} className="flex items-start gap-1.5"><CheckCircle2 className="text-nia-success mt-0.5 flex-shrink-0 text-xs" />{b}</li>)}
               </ul>
               <button onClick={() => handleJoinOrUpgrade(t._id)} disabled={busy} className={btnPrimary + ' mt-2'}>
                 {status.membershipTier ? 'Upgrade' : 'Join'}

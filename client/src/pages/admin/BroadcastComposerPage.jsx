@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaCheck, FaRobot } from 'react-icons/fa';
+import { Check, Bot } from 'lucide-react';
 import adminApi from '../../services/adminApi';
 import EmailBroadcastingNav from '../../components/admin/EmailBroadcastingNav';
 
@@ -117,7 +117,7 @@ export default function BroadcastComposerPage() {
         {STEPS.map((s, i) => (
           <div key={s} className="flex items-center gap-2">
             <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${i < step ? 'bg-nia-success text-white' : i === step ? 'bg-nia-orange text-white' : 'bg-nia-panel-alt text-nia-text-faint'}`}>
-              {i < step ? <FaCheck className="text-[10px]" /> : i + 1}
+              {i < step ? <Check className="text-[10px]" /> : i + 1}
             </div>
             <span className={`text-xs font-semibold ${i === step ? 'text-nia-navy-dark' : 'text-nia-text-faint'}`}>{s}</span>
             {i < STEPS.length - 1 && <div className="w-8 h-px bg-nia-border" />}
@@ -146,7 +146,7 @@ export default function BroadcastComposerPage() {
                 </button>
               ))}
             </div>
-            <Link to="/admin/broadcasting/generate" className="inline-flex items-center gap-1.5 text-sm text-nia-orange font-semibold mb-4"><FaRobot />Generate a new template with AI</Link>
+            <Link to="/admin/broadcasting/generate" className="inline-flex items-center gap-1.5 text-sm text-nia-orange font-semibold mb-4"><Bot />Generate a new template with AI</Link>
             <div className="flex justify-end">
               <button onClick={goToAudience} disabled={!selectedTemplate || busy} className={btnPrimary}>{busy ? 'Starting…' : 'Continue'}</button>
             </div>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FaPlus, FaEdit, FaTrash, FaArrowLeft } from 'react-icons/fa';
+import { Plus, Pencil, Trash2, ArrowLeft } from 'lucide-react';
 import adminApi from '../../services/adminApi';
 import { useAdminAuth } from '../../context/AdminAuthContext';
 import Modal from '../../components/admin/Modal';
@@ -40,12 +40,12 @@ export default function MembershipTiersPage() {
   return (
     <div>
       <Link to="/admin/members" className="inline-flex items-center gap-1.5 text-sm text-nia-text-muted hover:text-nia-navy-dark mb-4">
-        <FaArrowLeft /> Back to Members
+        <ArrowLeft /> Back to Members
       </Link>
       <div className="flex items-center justify-between mb-5">
         <h1 className="text-2xl font-extrabold text-nia-navy-dark">Membership Tiers</h1>
         {isSuperAdmin && (
-          <button onClick={() => setEditing('new')} className={btnPrimary}><FaPlus className="inline mr-1.5" />Add Tier</button>
+          <button onClick={() => setEditing('new')} className={btnPrimary}><Plus className="inline mr-1.5" />Add Tier</button>
         )}
       </div>
 
@@ -68,8 +68,8 @@ export default function MembershipTiersPage() {
             <p className="text-xs text-nia-text-faint">{t.activeMemberCount} active member{t.activeMemberCount === 1 ? '' : 's'}{t.maxMembers ? ` / ${t.maxMembers} max` : ''}</p>
             {isSuperAdmin && (
               <div className="flex gap-2 mt-2">
-                <button onClick={() => setEditing(t)} className={btnSecondary + ' flex-1'}><FaEdit className="inline mr-1" />Edit</button>
-                <button onClick={() => handleDelete(t)} className="rounded-nia-btn border border-nia-error px-3 py-2 text-sm font-semibold text-nia-error hover:bg-red-50"><FaTrash /></button>
+                <button onClick={() => setEditing(t)} className={btnSecondary + ' flex-1'}><Pencil className="inline mr-1" />Edit</button>
+                <button onClick={() => handleDelete(t)} className="rounded-nia-btn border border-nia-error px-3 py-2 text-sm font-semibold text-nia-error hover:bg-red-50"><Trash2 /></button>
               </div>
             )}
           </div>

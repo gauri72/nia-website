@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { FaPlus, FaDownload } from 'react-icons/fa';
+import { Plus, Download } from 'lucide-react';
 import adminApi from '../../services/adminApi';
 import StatusBadge from '../../components/admin/StatusBadge';
 import Modal from '../../components/admin/Modal';
@@ -58,7 +58,7 @@ export default function AdminBookingsPage() {
     <div>
       <div className="flex items-center justify-between mb-5">
         <h1 className="text-2xl font-extrabold text-nia-navy-dark">Tickets & Bookings</h1>
-        <button onClick={() => setShowManual(true)} className={btnPrimary}><FaPlus className="inline mr-1.5" />Manual Booking</button>
+        <button onClick={() => setShowManual(true)} className={btnPrimary}><Plus className="inline mr-1.5" />Manual Booking</button>
       </div>
 
       <div className="flex flex-wrap gap-3 mb-4">
@@ -83,7 +83,7 @@ export default function AdminBookingsPage() {
               <th className="px-4 py-3">Reference</th>
               <th className="px-4 py-3">Member</th>
               <th className="px-4 py-3">Event</th>
-              <th className="px-4 py-3">Amount</th>
+              <th className="pl-4 pr-8 py-3 text-right">Amount</th>
               <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3">Booked</th>
               <th className="px-4 py-3"></th>
@@ -95,16 +95,16 @@ export default function AdminBookingsPage() {
             )}
             {bookings.map((b) => (
               <tr key={b._id} className="border-t border-nia-border hover:bg-nia-panel/40">
-                <td className="px-4 py-3 font-mono text-xs text-nia-navy-dark">{b.bookingNumber}</td>
-                <td className="px-4 py-3 text-nia-text-muted">{b.member?.firstName} {b.member?.lastName}</td>
+                <td className="px-4 py-3 font-mono text-xs text-nia-text-faint">{b.bookingNumber}</td>
+                <td className="px-4 py-3 font-medium text-nia-navy-dark">{b.member?.firstName} {b.member?.lastName}</td>
                 <td className="px-4 py-3 text-nia-text-muted">{b.event?.title}</td>
-                <td className="px-4 py-3 text-nia-text-muted">€{b.amount.toFixed(2)}</td>
+                <td className="pl-4 pr-8 py-3 font-semibold text-nia-navy-dark text-right tabular-nums">€{b.amount.toFixed(2)}</td>
                 <td className="px-4 py-3"><StatusBadge status={b.status} /></td>
-                <td className="px-4 py-3 text-nia-text-muted whitespace-nowrap">{new Date(b.createdAt).toLocaleDateString()}</td>
+                <td className="px-4 py-3 text-nia-text-faint whitespace-nowrap">{new Date(b.createdAt).toLocaleDateString()}</td>
                 <td className="px-4 py-3 text-right whitespace-nowrap">
                   <div className="flex gap-2 justify-end">
                     {b.status === 'paid' && (
-                      <button onClick={() => downloadPdf(b)} title="Download PDF" className="rounded-nia-btn border border-nia-border px-2.5 py-1.5 hover:bg-nia-panel"><FaDownload /></button>
+                      <button onClick={() => downloadPdf(b)} title="Download PDF" className="rounded-nia-btn border border-nia-border px-2.5 py-1.5 hover:bg-nia-panel"><Download /></button>
                     )}
                     {b.status === 'paid' && (
                       <button onClick={() => handleRefund(b)} className="rounded-nia-btn border border-nia-error px-3 py-1.5 text-xs font-semibold text-nia-error hover:bg-red-50">Refund</button>

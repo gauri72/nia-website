@@ -1,7 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import {
-  FaSyncAlt, FaDownload, FaCheck, FaTimes, FaExclamationTriangle, FaHistory,
-} from 'react-icons/fa';
+import { RefreshCw, Download, Check, X, AlertTriangle, History } from 'lucide-react';
 import adminApi from '../../services/adminApi';
 import StatusBadge from '../../components/admin/StatusBadge';
 
@@ -154,7 +152,7 @@ function SyncTab({ push }) {
   if (connected === false) {
     return (
       <div className="rounded-nia-card border border-nia-warning/40 bg-nia-warning/10 p-5 text-sm text-nia-navy-dark flex items-center gap-2">
-        <FaExclamationTriangle className="text-nia-warning" />
+        <AlertTriangle className="text-nia-warning" />
         Mollie is not connected yet. Add an API key in <span className="font-semibold">Settings</span> first.
       </div>
     );
@@ -164,7 +162,7 @@ function SyncTab({ push }) {
     <div>
       <div className="flex items-center justify-between mb-4">
         <button onClick={handleSync} disabled={syncing || connected === null} className={btnPrimary}>
-          <FaSyncAlt className={`inline mr-2 ${syncing ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`inline mr-2 ${syncing ? 'animate-spin' : ''}`} />
           {syncing ? 'Fetching from Mollie…' : 'Sync Now'}
         </button>
         {rows && (
@@ -185,7 +183,7 @@ function SyncTab({ push }) {
                 <th className="px-3 py-3">Name</th>
                 <th className="px-3 py-3">Email</th>
                 <th className="px-3 py-3">Type</th>
-                <th className="px-3 py-3">Amount</th>
+                <th className="pl-3 pr-6 py-3 text-right">Amount</th>
                 <th className="px-3 py-3">Description</th>
                 <th className="px-3 py-3">Paid At</th>
                 <th className="px-3 py-3">Match</th>
@@ -203,9 +201,9 @@ function SyncTab({ push }) {
                     />
                   </td>
                   <td className="px-3 py-2.5 font-medium text-nia-navy-dark">{t.name || '—'}</td>
-                  <td className="px-3 py-2.5 text-nia-text-muted">{t.email || '—'}</td>
+                  <td className="px-3 py-2.5 text-nia-text-faint">{t.email || '—'}</td>
                   <td className="px-3 py-2.5 text-nia-text-muted">{t.type || 'unknown'}</td>
-                  <td className="px-3 py-2.5 text-nia-text-muted">€{t.amount.toFixed(2)}</td>
+                  <td className="pl-3 pr-6 py-2.5 font-semibold text-nia-navy-dark text-right tabular-nums">€{t.amount.toFixed(2)}</td>
                   <td className="px-3 py-2.5 text-nia-text-muted">{t.description}</td>
                   <td className="px-3 py-2.5 text-nia-text-muted">{t.paidAt ? new Date(t.paidAt).toLocaleDateString() : '—'}</td>
                   <td className="px-3 py-2.5">
@@ -248,13 +246,13 @@ function HistoryTab() {
         <h2 className="font-bold text-nia-navy-dark mb-3">Run detail — {new Date(detail.log.createdAt).toLocaleString()}</h2>
         <div className="rounded-nia-card border border-nia-border bg-white overflow-hidden overflow-x-auto">
           <table className="w-full text-sm">
-            <thead><tr className="bg-nia-panel-alt text-left text-xs font-bold uppercase text-nia-text-muted"><th className="px-3 py-3">Payment ID</th><th className="px-3 py-3">Email</th><th className="px-3 py-3">Amount</th><th className="px-3 py-3">Result</th></tr></thead>
+            <thead><tr className="bg-nia-panel-alt text-left text-xs font-bold uppercase text-nia-text-muted"><th className="px-3 py-3">Payment ID</th><th className="px-3 py-3">Email</th><th className="pl-3 pr-6 py-3 text-right">Amount</th><th className="px-3 py-3">Result</th></tr></thead>
             <tbody>
               {detail.transactions.map((t) => (
                 <tr key={t._id} className="border-t border-nia-border">
-                  <td className="px-3 py-2.5 font-mono text-xs text-nia-text-muted">{t.paymentId}</td>
-                  <td className="px-3 py-2.5 text-nia-text-muted">{t.email || '—'}</td>
-                  <td className="px-3 py-2.5 text-nia-text-muted">€{t.amount.toFixed(2)}</td>
+                  <td className="px-3 py-2.5 font-mono text-xs text-nia-text-faint">{t.paymentId}</td>
+                  <td className="px-3 py-2.5 text-nia-text-faint">{t.email || '—'}</td>
+                  <td className="pl-3 pr-6 py-2.5 font-semibold text-nia-navy-dark text-right tabular-nums">€{t.amount.toFixed(2)}</td>
                   <td className="px-3 py-2.5"><StatusBadge status={t.importStatus === 'created' || t.importStatus === 'updated' ? 'active' : t.importStatus === 'flagged' ? 'pending' : 'canceled'} /> <span className="text-xs text-nia-text-faint ml-1 capitalize">{t.importStatus}</span></td>
                 </tr>
               ))}
@@ -347,7 +345,7 @@ function ReviewTab({ push, onResolved }) {
             <div>
               <p className="font-semibold text-nia-navy-dark">€{item.amount?.toFixed(2)} — {item.transaction?.paymentId}</p>
               <p className="text-xs text-nia-text-faint">{item.description}</p>
-              <p className="text-xs text-nia-warning font-semibold mt-1"><FaExclamationTriangle className="inline mr-1" />{item.reason}</p>
+              <p className="text-xs text-nia-warning font-semibold mt-1"><AlertTriangle className="inline mr-1" />{item.reason}</p>
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
@@ -359,9 +357,9 @@ function ReviewTab({ push, onResolved }) {
             </select>
           </div>
           <div className="flex gap-2">
-            <button onClick={() => resolve(item._id, 'assign_tier')} className={btnSecondary}><FaCheck className="inline mr-1" />Assign Tier & Create Member</button>
+            <button onClick={() => resolve(item._id, 'assign_tier')} className={btnSecondary}><Check className="inline mr-1" />Assign Tier & Create Member</button>
             <button onClick={() => resolve(item._id, 'mark_processed')} className={btnSecondary}>Mark Processed</button>
-            <button onClick={() => resolve(item._id, 'ignore')} className={btnSecondary}><FaTimes className="inline mr-1" />Ignore</button>
+            <button onClick={() => resolve(item._id, 'ignore')} className={btnSecondary}><X className="inline mr-1" />Ignore</button>
           </div>
         </div>
       ))}
@@ -387,7 +385,7 @@ function WebhookTab() {
           {logs.map((l) => (
             <tr key={l._id} className="border-t border-nia-border">
               <td className="px-3 py-2.5 text-nia-text-muted">{new Date(l.receivedAt).toLocaleString()}</td>
-              <td className="px-3 py-2.5 font-mono text-xs text-nia-text-muted">{l.paymentId}</td>
+              <td className="px-3 py-2.5 font-mono text-xs text-nia-text-faint">{l.paymentId}</td>
               <td className="px-3 py-2.5 text-nia-text-muted capitalize">{l.action}</td>
               <td className="px-3 py-2.5"><StatusBadge status={l.status === 'success' ? 'active' : l.status === 'retrying' ? 'pending' : 'suspended'} /></td>
               <td className="px-3 py-2.5 text-nia-text-muted">{l.attempts}</td>
@@ -395,7 +393,7 @@ function WebhookTab() {
           ))}
           {logs.length === 0 && (
             <tr><td colSpan={5} className="px-3 py-6 text-center text-nia-text-faint">
-              <FaHistory className="inline mr-2" />No webhook events received yet.
+              <History className="inline mr-2" />No webhook events received yet.
             </td></tr>
           )}
         </tbody>
@@ -440,7 +438,7 @@ function TransactionsTab() {
         />
         <div className="flex gap-2">
           <button onClick={() => load()} className={btnSecondary}>Search</button>
-          <button onClick={handleExport} className={btnSecondary}><FaDownload className="inline mr-1.5" />Export CSV</button>
+          <button onClick={handleExport} className={btnSecondary}><Download className="inline mr-1.5" />Export CSV</button>
         </div>
       </div>
 
@@ -449,14 +447,14 @@ function TransactionsTab() {
       {data && (
         <div className="rounded-nia-card border border-nia-border bg-white overflow-hidden overflow-x-auto">
           <table className="w-full text-sm">
-            <thead><tr className="bg-nia-panel-alt text-left text-xs font-bold uppercase text-nia-text-muted"><th className="px-3 py-3">Email</th><th className="px-3 py-3">Name</th><th className="px-3 py-3">Type</th><th className="px-3 py-3">Amount</th><th className="px-3 py-3">Result</th><th className="px-3 py-3">Date</th></tr></thead>
+            <thead><tr className="bg-nia-panel-alt text-left text-xs font-bold uppercase text-nia-text-muted"><th className="px-3 py-3">Email</th><th className="px-3 py-3">Name</th><th className="px-3 py-3">Type</th><th className="pl-3 pr-6 py-3 text-right">Amount</th><th className="px-3 py-3">Result</th><th className="px-3 py-3">Date</th></tr></thead>
             <tbody>
               {data.items.map((t) => (
                 <tr key={t._id} className="border-t border-nia-border">
                   <td className="px-3 py-2.5 text-nia-navy-dark font-medium">{t.email || '—'}</td>
                   <td className="px-3 py-2.5 text-nia-text-muted">{t.name || '—'}</td>
                   <td className="px-3 py-2.5 text-nia-text-muted">{t.type || 'unknown'}</td>
-                  <td className="px-3 py-2.5 text-nia-text-muted">€{t.amount.toFixed(2)}</td>
+                  <td className="pl-3 pr-6 py-2.5 font-semibold text-nia-navy-dark text-right tabular-nums">€{t.amount.toFixed(2)}</td>
                   <td className="px-3 py-2.5"><StatusBadge status={t.importStatus === 'created' || t.importStatus === 'updated' ? 'active' : t.importStatus === 'flagged' ? 'pending' : 'canceled'} /></td>
                   <td className="px-3 py-2.5 text-nia-text-muted">{new Date(t.createdAt).toLocaleDateString()}</td>
                 </tr>

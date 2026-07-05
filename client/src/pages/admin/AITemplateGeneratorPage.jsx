@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaMagic, FaRedo, FaCopy, FaSave } from 'react-icons/fa';
+import { ArrowLeft, Sparkles, RotateCw, Copy, Save } from 'lucide-react';
 import adminApi from '../../services/adminApi';
 import Modal from '../../components/admin/Modal';
 
@@ -72,7 +72,7 @@ export default function AITemplateGeneratorPage() {
   return (
     <div className="flex flex-col h-full">
       <Link to="/admin/broadcasting" className="inline-flex items-center gap-1.5 text-sm text-nia-text-muted hover:text-nia-navy-dark mb-4">
-        <FaArrowLeft /> Back to Email Broadcasting
+        <ArrowLeft /> Back to Email Broadcasting
       </Link>
 
       <h1 className="text-2xl font-extrabold text-nia-navy-dark mb-5">AI Template Generator</h1>
@@ -106,7 +106,7 @@ export default function AITemplateGeneratorPage() {
                   Generating…
                 </span>
               ) : (
-                <><FaMagic className="inline mr-1.5" />Generate Template</>
+                <><Sparkles className="inline mr-1.5" />Generate Template</>
               )}
             </button>
           </div>
@@ -137,9 +137,9 @@ export default function AITemplateGeneratorPage() {
           </div>
 
           <div className="flex flex-wrap gap-3 mt-4">
-            <button onClick={handleGenerate} disabled={generating} className={btnSecondary}><FaRedo className="inline mr-1.5" />Regenerate</button>
-            <button onClick={handleCopy} className={btnSecondary}><FaCopy className="inline mr-1.5" />{copied ? 'Copied!' : 'Copy HTML'}</button>
-            <button onClick={() => setShowSave(true)} className={btnPrimary}><FaSave className="inline mr-1.5" />Save to Library</button>
+            <button onClick={handleGenerate} disabled={generating} className={btnSecondary}><RotateCw className="inline mr-1.5" />Regenerate</button>
+            <button onClick={handleCopy} className={btnSecondary}><Copy className="inline mr-1.5" />{copied ? 'Copied!' : 'Copy HTML'}</button>
+            <button onClick={() => setShowSave(true)} className={btnPrimary}><Save className="inline mr-1.5" />Save to Library</button>
           </div>
         </>
       )}

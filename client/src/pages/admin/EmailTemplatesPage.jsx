@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FaSearch, FaPlus, FaEye, FaEdit, FaCopy, FaTrash, FaRobot } from 'react-icons/fa';
+import { Search, Plus, Eye, Pencil, Copy, Trash2, Bot } from 'lucide-react';
 import adminApi from '../../services/adminApi';
 import Modal from '../../components/admin/Modal';
 import EmailBroadcastingNav from '../../components/admin/EmailBroadcastingNav';
@@ -43,12 +43,12 @@ export default function EmailTemplatesPage() {
       <EmailBroadcastingNav />
       <div className="flex items-center justify-between mb-5">
         <h1 className="text-2xl font-extrabold text-nia-navy-dark">Email Templates</h1>
-        <Link to="/admin/broadcasting/generate" className={btnPrimary}><FaRobot className="inline mr-1.5" />Generate with AI</Link>
+        <Link to="/admin/broadcasting/generate" className={btnPrimary}><Bot className="inline mr-1.5" />Generate with AI</Link>
       </div>
 
       <div className="flex flex-wrap gap-3 mb-5">
         <div className="relative flex-1 min-w-[200px]">
-          <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-nia-text-faint text-xs" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-nia-text-faint text-xs" />
           <input
             className="w-full rounded-nia-btn border border-nia-border py-2 pl-8 pr-3 text-sm focus:border-nia-orange focus:outline-none focus:ring-2 focus:ring-nia-orange/20"
             placeholder="Search templates…" value={search} onChange={(e) => setSearch(e.target.value)}
@@ -78,10 +78,10 @@ export default function EmailTemplatesPage() {
               <p className="text-xs text-nia-text-faint">Edited {new Date(t.updatedAt).toLocaleDateString()}</p>
               <div className="flex-1" />
               <div className="flex flex-wrap gap-1.5 mt-2">
-                <button onClick={() => setPreviewTemplate(t)} className={btnSecondary}><FaEye className="inline mr-1" />Preview</button>
-                <Link to={`/admin/broadcasting/generate?templateId=${t._id}`} className={btnSecondary}><FaEdit className="inline mr-1" />Edit</Link>
-                <button onClick={() => handleDuplicate(t)} className={btnSecondary}><FaCopy className="inline mr-1" />Duplicate</button>
-                <button onClick={() => handleDelete(t)} className="rounded-nia-btn border border-nia-error px-3 py-1.5 text-xs font-semibold text-nia-error hover:bg-red-50"><FaTrash /></button>
+                <button onClick={() => setPreviewTemplate(t)} className={btnSecondary}><Eye className="inline mr-1" />Preview</button>
+                <Link to={`/admin/broadcasting/generate?templateId=${t._id}`} className={btnSecondary}><Pencil className="inline mr-1" />Edit</Link>
+                <button onClick={() => handleDuplicate(t)} className={btnSecondary}><Copy className="inline mr-1" />Duplicate</button>
+                <button onClick={() => handleDelete(t)} className="rounded-nia-btn border border-nia-error px-3 py-1.5 text-xs font-semibold text-nia-error hover:bg-red-50"><Trash2 /></button>
               </div>
             </div>
           </div>

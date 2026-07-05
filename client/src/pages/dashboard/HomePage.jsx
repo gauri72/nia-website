@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FaCalendarAlt, FaTicketAlt, FaIdCard } from 'react-icons/fa';
+import { Calendar, Ticket, IdCard } from 'lucide-react';
 import memberApi from '../../services/memberApi';
 import { useMemberAuth } from '../../context/MemberAuthContext';
 import StatusBadge from '../../components/admin/StatusBadge';
@@ -24,7 +24,7 @@ export default function DashboardHomePage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div className="rounded-nia-card border border-nia-border bg-white p-5">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-bold text-nia-navy-dark flex items-center gap-2"><FaIdCard className="text-nia-orange" />Membership</h2>
+            <h2 className="font-bold text-nia-navy-dark flex items-center gap-2"><IdCard className="text-nia-orange" />Membership</h2>
             {data && <StatusBadge status={data.member.membershipStatus} />}
           </div>
           {data?.member.membershipTier ? (
@@ -41,7 +41,7 @@ export default function DashboardHomePage() {
         </div>
 
         <div className="rounded-nia-card border border-nia-border bg-white p-5">
-          <h2 className="font-bold text-nia-navy-dark flex items-center gap-2 mb-3"><FaTicketAlt className="text-nia-orange" />Upcoming Events</h2>
+          <h2 className="font-bold text-nia-navy-dark flex items-center gap-2 mb-3"><Ticket className="text-nia-orange" />Upcoming Events</h2>
           {data?.upcomingBookings?.length ? (
             <ul className="flex flex-col gap-2">
               {data.upcomingBookings.map((b) => (
@@ -61,7 +61,7 @@ export default function DashboardHomePage() {
       <div className="rounded-nia-card border border-nia-border bg-white p-5">
         <h2 className="font-bold text-nia-navy-dark mb-3">Quick Actions</h2>
         <div className="flex flex-wrap gap-3">
-          <Link to="/dashboard/events" className={btnPrimary}><FaCalendarAlt className="inline mr-1.5" />Browse Events</Link>
+          <Link to="/dashboard/events" className={btnPrimary}><Calendar className="inline mr-1.5" />Browse Events</Link>
           <Link to="/dashboard/membership" className={btnSecondary}>Renew Membership</Link>
           <Link to="/dashboard/tickets" className={btnSecondary}>View My Tickets</Link>
         </div>

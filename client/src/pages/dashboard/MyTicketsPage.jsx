@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { FaDownload, FaQrcode, FaTimes } from 'react-icons/fa';
+import { Download, QrCode, X } from 'lucide-react';
 import memberApi from '../../services/memberApi';
 import StatusBadge from '../../components/admin/StatusBadge';
 import Modal from '../../components/admin/Modal';
@@ -71,10 +71,10 @@ export default function MyTicketsPage() {
               <StatusBadge status={statusFor(b)} />
               {b.status === 'paid' && (
                 <div className="flex gap-2">
-                  <button onClick={() => showQr(b)} className={btnSecondary}><FaQrcode className="inline mr-1" />QR</button>
-                  <button onClick={() => downloadPdf(b)} className={btnSecondary}><FaDownload className="inline mr-1" />PDF</button>
+                  <button onClick={() => showQr(b)} className={btnSecondary}><QrCode className="inline mr-1" />QR</button>
+                  <button onClick={() => downloadPdf(b)} className={btnSecondary}><Download className="inline mr-1" />PDF</button>
                   {b.event && new Date(b.event.startDate) > new Date() && (
-                    <button onClick={() => handleCancel(b)} className="rounded-nia-btn border border-nia-error px-3 py-1.5 text-xs font-semibold text-nia-error hover:bg-red-50"><FaTimes className="inline mr-1" />Cancel</button>
+                    <button onClick={() => handleCancel(b)} className="rounded-nia-btn border border-nia-error px-3 py-1.5 text-xs font-semibold text-nia-error hover:bg-red-50"><X className="inline mr-1" />Cancel</button>
                   )}
                 </div>
               )}

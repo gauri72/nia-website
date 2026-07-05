@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FaSearch, FaMapMarkerAlt, FaCalendarAlt } from 'react-icons/fa';
+import { Search, MapPin, Calendar } from 'lucide-react';
 import memberApi from '../../services/memberApi';
 
 const CATEGORIES = ['Cultural', 'Community', 'Workshop', 'Festival', 'Exhibition', 'Performance', 'Other'];
@@ -25,7 +25,7 @@ export default function DashboardEventsPage() {
 
       <div className="flex flex-wrap gap-3 mb-5">
         <div className="relative flex-1 min-w-[200px]">
-          <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-nia-text-faint text-xs" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-nia-text-faint text-xs" />
           <input
             className="w-full rounded-nia-btn border border-nia-border py-2 pl-8 pr-3 text-sm focus:border-nia-orange focus:outline-none focus:ring-2 focus:ring-nia-orange/20"
             placeholder="Search events…" value={search} onChange={(e) => setSearch(e.target.value)}
@@ -46,8 +46,8 @@ export default function DashboardEventsPage() {
             <div className="p-4 flex flex-col gap-1.5 flex-1">
               <span className="text-xs font-bold uppercase tracking-wide text-nia-orange">{e.category}</span>
               <h3 className="font-bold text-nia-navy-dark">{e.title}</h3>
-              <p className="text-sm text-nia-text-muted flex items-center gap-1.5"><FaCalendarAlt className="text-xs" />{new Date(e.startDate).toLocaleDateString()}</p>
-              {e.venueCity && <p className="text-sm text-nia-text-muted flex items-center gap-1.5"><FaMapMarkerAlt className="text-xs" />{e.venueCity}</p>}
+              <p className="text-sm text-nia-text-muted flex items-center gap-1.5"><Calendar className="text-xs" />{new Date(e.startDate).toLocaleDateString()}</p>
+              {e.venueCity && <p className="text-sm text-nia-text-muted flex items-center gap-1.5"><MapPin className="text-xs" />{e.venueCity}</p>}
               <div className="flex-1" />
               <div className="flex items-center justify-between mt-2">
                 <span className="font-bold text-nia-orange">{e.minPrice != null ? `From €${e.minPrice}` : 'Free'}</span>

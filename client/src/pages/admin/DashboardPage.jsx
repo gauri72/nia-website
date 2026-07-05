@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FaUsers, FaIdCard, FaCalendarAlt, FaTicketAlt, FaEuroSign, FaPlus, FaRobot, FaChartBar } from 'react-icons/fa';
+import { Users, IdCard, Calendar, Ticket, Euro, Plus, Bot, BarChart3 } from 'lucide-react';
 import adminApi from '../../services/adminApi';
 import StatusBadge from '../../components/admin/StatusBadge';
 import StatCard from '../../components/admin/StatCard';
@@ -34,16 +34,16 @@ export default function AdminDashboardPage() {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        <StatCard icon={FaUsers} label="Total Members" value={data.totalMembers} tone="navy" />
-        <StatCard icon={FaIdCard} label="Active Memberships" value={data.activeMemberships} tone="green" />
-        <StatCard icon={FaCalendarAlt} label="Upcoming Events" value={data.upcomingEventsCount} tone="gold" />
-        <StatCard icon={FaTicketAlt} label="Tickets Sold" value={data.ticketsSold} tone="orange" />
-        <StatCard icon={FaEuroSign} label="Total Revenue" value={`€${data.totalRevenue.toLocaleString()}`} tone="orange" />
+        <StatCard icon={Users} label="Total Members" value={data.totalMembers} tone="navy" />
+        <StatCard icon={IdCard} label="Active Memberships" value={data.activeMemberships} tone="green" />
+        <StatCard icon={Calendar} label="Upcoming Events" value={data.upcomingEventsCount} tone="gold" />
+        <StatCard icon={Ticket} label="Tickets Sold" value={data.ticketsSold} tone="orange" />
+        <StatCard icon={Euro} label="Total Revenue" value={`€${data.totalRevenue.toLocaleString()}`} tone="orange" />
       </div>
 
       <div className="rounded-nia-card border border-nia-border bg-white p-5">
         <h2 className="font-bold text-nia-navy-dark mb-4 flex items-center gap-2">
-          <span className="w-8 h-8 rounded-lg bg-nia-orange/10 text-nia-orange flex items-center justify-center"><FaChartBar className="text-sm" /></span>
+          <span className="w-8 h-8 rounded-lg bg-nia-orange/10 text-nia-orange flex items-center justify-center"><BarChart3 className="text-sm" /></span>
           Monthly Revenue (Tickets + Memberships)
         </h2>
         <RevenueChart data={data.revenueChart} />
@@ -52,9 +52,9 @@ export default function AdminDashboardPage() {
       <div className="rounded-nia-card border border-nia-border bg-white p-5">
         <h2 className="font-bold text-nia-navy-dark mb-3">Quick Actions</h2>
         <div className="flex flex-wrap gap-3">
-          <Link to="/admin/events/new" className={btnPrimary}><FaPlus className="inline mr-1.5" />Create Event</Link>
-          <Link to="/admin/members" className={btnSecondary}><FaPlus className="inline mr-1.5" />Add Member</Link>
-          <Link to="/admin/broadcasting/compose" className={btnSecondary}><FaRobot className="inline mr-1.5" />Create Broadcast</Link>
+          <Link to="/admin/events/new" className={btnPrimary}><Plus className="inline mr-1.5" />Create Event</Link>
+          <Link to="/admin/members" className={btnSecondary}><Plus className="inline mr-1.5" />Add Member</Link>
+          <Link to="/admin/broadcasting/compose" className={btnSecondary}><Bot className="inline mr-1.5" />Create Broadcast</Link>
           <Link to="/admin/reports" className={btnSecondary}>View Reports</Link>
         </div>
       </div>

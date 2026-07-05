@@ -1,9 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Outlet, NavLink, Link } from 'react-router-dom';
-import {
-  FaTachometerAlt, FaUsers, FaCalendarAlt, FaTicketAlt, FaFileAlt, FaImages,
-  FaEnvelopeOpenText, FaChartBar, FaCommentDots, FaBell, FaCog, FaSignOutAlt, FaSyncAlt, FaReceipt,
-} from 'react-icons/fa';
+import { LayoutDashboard, Users, Calendar, Ticket, FileText, Images, MailOpen, BarChart3, MessageCircle, Bell, Settings, LogOut, RefreshCw, Receipt } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import adminApi from '../services/adminApi';
 import '../styles/admin-tailwind.css';
@@ -12,34 +9,34 @@ const NAV_GROUPS = [
   {
     label: 'Overview',
     items: [
-      { to: '/admin', label: 'Dashboard', icon: FaTachometerAlt, end: true },
-      { to: '/admin/reports', label: 'Reports', icon: FaChartBar },
+      { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
+      { to: '/admin/reports', label: 'Reports', icon: BarChart3 },
     ],
   },
   {
     label: 'Members & Events',
     items: [
-      { to: '/admin/members', label: 'Members', icon: FaUsers },
-      { to: '/admin/events', label: 'Events', icon: FaCalendarAlt },
-      { to: '/admin/bookings', label: 'Tickets & Bookings', icon: FaTicketAlt },
-      { to: '/admin/ticket-sales', label: 'Ticket Sales', icon: FaReceipt },
+      { to: '/admin/members', label: 'Members', icon: Users },
+      { to: '/admin/events', label: 'Events', icon: Calendar },
+      { to: '/admin/bookings', label: 'Tickets & Bookings', icon: Ticket },
+      { to: '/admin/ticket-sales', label: 'Ticket Sales', icon: Receipt },
     ],
   },
   {
     label: 'Content & Comms',
     items: [
-      { to: '/admin/content', label: 'Content Management', icon: FaFileAlt },
-      { to: '/admin/media', label: 'Media Manager', icon: FaImages },
-      { to: '/admin/broadcasting', label: 'Email Broadcasting', icon: FaEnvelopeOpenText },
-      { to: '/admin/messages', label: 'Messages', icon: FaCommentDots },
+      { to: '/admin/content', label: 'Content Management', icon: FileText },
+      { to: '/admin/media', label: 'Media Manager', icon: Images },
+      { to: '/admin/broadcasting', label: 'Email Broadcasting', icon: MailOpen },
+      { to: '/admin/messages', label: 'Messages', icon: MessageCircle },
     ],
   },
   {
     label: 'System',
     items: [
-      { to: '/admin/mollie-import', label: 'Mollie Import', icon: FaSyncAlt },
-      { to: '/admin/notifications', label: 'Notifications', icon: FaBell },
-      { to: '/admin/settings', label: 'Settings', icon: FaCog },
+      { to: '/admin/mollie-import', label: 'Mollie Import', icon: RefreshCw },
+      { to: '/admin/notifications', label: 'Notifications', icon: Bell },
+      { to: '/admin/settings', label: 'Settings', icon: Settings },
     ],
   },
 ];
@@ -62,10 +59,10 @@ export default function AdminLayout() {
   const initials = `${admin?.firstName?.[0] || ''}${admin?.lastName?.[0] || ''}`.toUpperCase();
 
   return (
-    <div className="nia-app-root min-h-screen flex bg-nia-panel">
+    <div className="nia-app-root min-h-screen flex bg-nia-canvas">
       {/* Sidebar */}
       <aside className="w-64 flex-shrink-0 bg-gradient-to-b from-nia-navy-dark to-nia-navy-darker flex flex-col shadow-xl">
-        <Link to="/admin" className="px-6 py-6 text-lg font-extrabold text-white block tracking-tight">
+        <Link to="/admin" className="font-nia px-6 py-6 text-lg font-extrabold text-white block tracking-tight">
           NIA <span className="text-nia-orange">Admin</span>
         </Link>
 
@@ -98,7 +95,7 @@ export default function AdminLayout() {
           className="flex items-center gap-3 mx-3 mb-3 px-3 py-2.5 rounded-xl text-sm font-medium text-white/55 hover:text-white hover:bg-white/5 transition-colors border-t border-white/10 pt-4"
         >
           <span className="w-7 h-7 rounded-lg bg-nia-orange/20 text-nia-orange flex items-center justify-center flex-shrink-0 text-[11px] font-bold">
-            {initials || <FaCog className="text-[12px]" />}
+            {initials || <Settings className="text-[12px]" />}
           </span>
           <span>Profile</span>
         </Link>
@@ -120,7 +117,7 @@ export default function AdminLayout() {
             onClick={logout}
             className="flex items-center gap-2 rounded-nia-btn border border-nia-border bg-white px-3.5 py-2 text-sm font-semibold text-nia-navy-dark hover:bg-nia-panel hover:border-nia-error/30 hover:text-nia-error transition-colors"
           >
-            <FaSignOutAlt /> Logout
+            <LogOut /> Logout
           </button>
         </header>
         <main className="flex-1 p-6 overflow-y-auto">

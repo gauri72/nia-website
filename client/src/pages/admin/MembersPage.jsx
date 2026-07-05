@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { FaSearch, FaDownload, FaPlus, FaLayerGroup } from 'react-icons/fa';
+import { Search, Download, Plus, Layers } from 'lucide-react';
 import adminApi from '../../services/adminApi';
 import StatusBadge from '../../components/admin/StatusBadge';
 import Modal from '../../components/admin/Modal';
@@ -60,15 +60,15 @@ export default function MembersPage() {
       <div className="flex items-center justify-between mb-5">
         <h1 className="text-2xl font-extrabold text-nia-navy-dark">Members</h1>
         <div className="flex gap-2">
-          <Link to="/admin/membership-tiers" className={btnSecondary}><FaLayerGroup className="inline mr-1.5" />Membership Tiers</Link>
-          <button onClick={exportCsv} className={btnSecondary}><FaDownload className="inline mr-1.5" />Export CSV</button>
-          <button onClick={() => setShowAdd(true)} className={btnPrimary}><FaPlus className="inline mr-1.5" />Add Member</button>
+          <Link to="/admin/membership-tiers" className={btnSecondary}><Layers className="inline mr-1.5" />Membership Tiers</Link>
+          <button onClick={exportCsv} className={btnSecondary}><Download className="inline mr-1.5" />Export CSV</button>
+          <button onClick={() => setShowAdd(true)} className={btnPrimary}><Plus className="inline mr-1.5" />Add Member</button>
         </div>
       </div>
 
       <div className="flex flex-wrap gap-3 mb-4">
         <div className="relative flex-1 min-w-[200px]">
-          <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-nia-text-faint text-xs" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-nia-text-faint text-xs" />
           <input
             className="w-full rounded-nia-btn border border-nia-border py-2 pl-8 pr-3 text-sm focus:border-nia-orange focus:outline-none focus:ring-2 focus:ring-nia-orange/20"
             placeholder="Search name, email, member ID…"
@@ -111,10 +111,10 @@ export default function MembersPage() {
             {!loading && members.map((m) => (
               <tr key={m._id} className="border-t border-nia-border hover:bg-nia-panel/40">
                 <td className="px-4 py-3 font-medium text-nia-navy-dark">{m.firstName} {m.lastName}</td>
-                <td className="px-4 py-3 text-nia-text-muted">{m.email}</td>
+                <td className="px-4 py-3 text-nia-text-faint">{m.email}</td>
                 <td className="px-4 py-3 text-nia-text-muted">{m.membershipTier?.name || '—'}</td>
                 <td className="px-4 py-3"><StatusBadge status={m.membershipStatus} /></td>
-                <td className="px-4 py-3 text-nia-text-muted">
+                <td className="px-4 py-3 text-nia-text-faint">
                   {new Date(m.transactionDate || m.createdAt).toLocaleDateString()}
                   {m.transactionDate && <span className="block text-[10px] text-nia-text-faint">via Mollie</span>}
                 </td>

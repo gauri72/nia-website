@@ -1,17 +1,17 @@
 import { useEffect, useState } from 'react';
 import { Outlet, NavLink, Link } from 'react-router-dom';
-import { FaHome, FaIdCard, FaCalendarAlt, FaTicketAlt, FaUserCircle, FaBell, FaSignOutAlt } from 'react-icons/fa';
+import { Home, IdCard, Calendar, Ticket, UserCircle, Bell, LogOut } from 'lucide-react';
 import { useMemberAuth } from '../context/MemberAuthContext';
 import memberApi from '../services/memberApi';
 import '../styles/admin-tailwind.css';
 
 const NAV_ITEMS = [
-  { to: '/dashboard',               label: 'Dashboard',     icon: FaHome, end: true },
-  { to: '/dashboard/membership',    label: 'My Membership', icon: FaIdCard },
-  { to: '/dashboard/events',        label: 'Events',        icon: FaCalendarAlt },
-  { to: '/dashboard/tickets',       label: 'My Tickets',    icon: FaTicketAlt },
-  { to: '/dashboard/notifications', label: 'Notifications', icon: FaBell },
-  { to: '/dashboard/profile',       label: 'Profile',       icon: FaUserCircle },
+  { to: '/dashboard',               label: 'Dashboard',     icon: Home, end: true },
+  { to: '/dashboard/membership',    label: 'My Membership', icon: IdCard },
+  { to: '/dashboard/events',        label: 'Events',        icon: Calendar },
+  { to: '/dashboard/tickets',       label: 'My Tickets',    icon: Ticket },
+  { to: '/dashboard/notifications', label: 'Notifications', icon: Bell },
+  { to: '/dashboard/profile',       label: 'Profile',       icon: UserCircle },
 ];
 
 export default function DashboardLayout() {
@@ -28,10 +28,10 @@ export default function DashboardLayout() {
     }`;
 
   return (
-    <div className="nia-app-root min-h-screen flex flex-col bg-nia-panel/40">
+    <div className="nia-app-root min-h-screen flex flex-col bg-nia-canvas">
       <header className="bg-white border-b border-nia-border sticky top-0 z-10 shadow-sm">
         <div className="max-w-6xl mx-auto px-5 py-3 flex items-center justify-between flex-wrap gap-3">
-          <Link to="/dashboard" className="font-extrabold text-lg text-nia-navy">
+          <Link to="/dashboard" className="font-nia font-extrabold text-lg text-nia-navy">
             NIA <span className="text-nia-orange">Member Portal</span>
           </Link>
           <nav className="flex gap-1 flex-wrap">
@@ -50,7 +50,7 @@ export default function DashboardLayout() {
               onClick={logout}
               className="flex items-center gap-1.5 rounded-nia-btn border border-nia-border bg-nia-panel px-3 py-1.5 font-semibold text-nia-navy-dark hover:bg-nia-panel-alt transition-colors"
             >
-              <FaSignOutAlt /> Logout
+              <LogOut /> Logout
             </button>
           </div>
         </div>

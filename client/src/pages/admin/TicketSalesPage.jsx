@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { FaTicketAlt, FaEuroSign, FaUsers, FaFilePdf, FaQrcode, FaPaperPlane, FaUndo, FaSearch } from 'react-icons/fa';
+import { Ticket, Euro, Users, FileText, QrCode, Send, Undo2, Search } from 'lucide-react';
 import adminApi from '../../services/adminApi';
 import StatusBadge from '../../components/admin/StatusBadge';
 import StatCard from '../../components/admin/StatCard';
@@ -127,15 +127,15 @@ export default function TicketSalesPage() {
 
       {data && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
-          <StatCard icon={FaTicketAlt} label="Paid Tickets" value={data.summary.paidCount} tone="orange" />
-          <StatCard icon={FaUsers} label="Seats Sold" value={data.summary.seats} tone="navy" />
-          <StatCard icon={FaEuroSign} label="Revenue" value={`€${data.summary.revenue.toFixed(2)}`} tone="green" />
+          <StatCard icon={Ticket} label="Paid Tickets" value={data.summary.paidCount} tone="orange" />
+          <StatCard icon={Users} label="Seats Sold" value={data.summary.seats} tone="navy" />
+          <StatCard icon={Euro} label="Revenue" value={`€${data.summary.revenue.toFixed(2)}`} tone="green" />
         </div>
       )}
 
       <div className="flex flex-wrap items-center gap-2 mb-4">
         <div className="relative flex-1 min-w-[220px] max-w-xs">
-          <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-nia-text-faint text-xs" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-nia-text-faint text-xs" />
           <input
             className={`${inputCls} w-full pl-8`}
             placeholder="Search name, email, ticket number…"
@@ -163,7 +163,7 @@ export default function TicketSalesPage() {
                 <th className="px-4 py-3">Email</th>
                 <th className="px-4 py-3">Event</th>
                 <th className="px-4 py-3">Tickets</th>
-                <th className="px-4 py-3">Amount</th>
+                <th className="pl-4 pr-8 py-3 text-right">Amount</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Booked</th>
               </tr>
@@ -172,15 +172,15 @@ export default function TicketSalesPage() {
               {data.items.map((t) => (
                 <tr key={t._id} className="border-t border-nia-border">
                   <td className="px-4 py-3">
-                    <button onClick={() => openDetail(t._id)} className="font-mono text-xs font-semibold text-nia-orange bg-nia-orange-light px-2 py-1 rounded-md hover:bg-nia-orange/20 transition-colors focus:outline-none">{t.ticketNumber}</button>
+                    <button onClick={() => openDetail(t._id)} className="font-mono text-xs text-nia-text-faint hover:text-nia-navy-dark transition-colors focus:outline-none">{t.ticketNumber}</button>
                   </td>
                   <td className="px-4 py-3 font-medium text-nia-navy-dark">{t.name}</td>
-                  <td className="px-4 py-3 text-nia-text-muted">{t.email}</td>
+                  <td className="px-4 py-3 text-nia-text-faint">{t.email}</td>
                   <td className="px-4 py-3 text-nia-text-muted">{t.eventLabel}</td>
                   <td className="px-4 py-3 text-nia-text-muted">{t.tickets.map((l) => `${l.quantity}× ${l.ticket_type}`).join(', ')}</td>
-                  <td className="px-4 py-3 font-semibold text-nia-navy-dark">€{t.amount.toFixed(2)}</td>
+                  <td className="pl-4 pr-8 py-3 font-semibold text-nia-navy-dark text-right tabular-nums">€{t.amount.toFixed(2)}</td>
                   <td className="px-4 py-3"><StatusBadge status={t.ticket_status} /></td>
-                  <td className="px-4 py-3 text-nia-text-muted">{new Date(t.createdAt).toLocaleDateString()}</td>
+                  <td className="px-4 py-3 text-nia-text-faint">{new Date(t.createdAt).toLocaleDateString()}</td>
                 </tr>
               ))}
               {data.items.length === 0 && (
@@ -227,9 +227,9 @@ export default function TicketSalesPage() {
 
             <hr className="border-nia-border my-1" />
             <div className="flex flex-wrap gap-2">
-              <button onClick={() => handleDownloadPdf(detail)} className={btnAction}><FaFilePdf /> Download PDF</button>
-              <button onClick={() => handleDownloadQr(detail)} className={btnAction}><FaQrcode /> Download QR</button>
-              <button onClick={() => handleResendEmail(detail)} disabled={busy} className={btnAction}><FaPaperPlane /> Resend Email</button>
+              <button onClick={() => handleDownloadPdf(detail)} className={btnAction}><FileText /> Download PDF</button>
+              <button onClick={() => handleDownloadQr(detail)} className={btnAction}><QrCode /> Download QR</button>
+              <button onClick={() => handleResendEmail(detail)} disabled={busy} className={btnAction}><Send /> Resend Email</button>
             </div>
 
             {detail.ticket_status !== 'refunded' && (
@@ -242,7 +242,7 @@ export default function TicketSalesPage() {
                     value={refundAmount} onChange={(e) => setRefundAmount(e.target.value)}
                   />
                   <button onClick={() => handleRefund(detail)} disabled={busy} className={`${btnAction} bg-nia-error/10 text-nia-error border-nia-error/30 hover:bg-nia-error/20`}>
-                    <FaUndo /> Refund
+                    <Undo2 /> Refund
                   </button>
                 </div>
                 <p className="text-[11px] text-nia-text-faint mt-1.5">

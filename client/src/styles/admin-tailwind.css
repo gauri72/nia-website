@@ -22,12 +22,14 @@
   --color-nia-error: #e74c3c;
   --color-nia-panel: #f0f4ff;
   --color-nia-panel-alt: #e8edf5;
+  --color-nia-canvas: #e9edf6;
   --color-nia-border: #d8e3f0;
   --color-nia-text: #333333;
   --color-nia-text-muted: #555555;
   --color-nia-text-faint: #888888;
 
   --font-nia: 'Poppins', sans-serif;
+  --font-nia-ui: 'Inter', sans-serif;
 
   --radius-nia-card: 16px;
   --radius-nia-btn: 8px;
@@ -38,8 +40,22 @@
   box-sizing: border-box;
 }
 .nia-app-root {
-  font-family: var(--font-nia);
+  font-family: var(--font-nia-ui);
   -webkit-font-smoothing: antialiased;
+}
+/* Poppins stays reserved for headings/branding — everything else (data, labels,
+   buttons) reads better in a dedicated UI face. No per-page edits needed since
+   this targets the tag, not a utility class. */
+.nia-app-root h1, .nia-app-root h2, .nia-app-root h3 {
+  font-family: var(--font-nia);
+}
+
+/* Lucide icons default to a fixed 24px box; forcing 1em makes every icon
+   inherit size from its surrounding text-* class exactly like the FontAwesome
+   icons did before, so no per-usage size prop is needed anywhere. */
+.nia-app-root svg.lucide {
+  width: 1em;
+  height: 1em;
 }
 
 /* ── Panel-wide elevation & polish ──────────────────────────────────

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { FaArrowLeft, FaMapMarkerAlt, FaCalendarAlt, FaMinus, FaPlus } from 'react-icons/fa';
+import { ArrowLeft, MapPin, Calendar, Minus, Plus } from 'lucide-react';
 import memberApi from '../../services/memberApi';
 import { useMemberAuth } from '../../context/MemberAuthContext';
 
@@ -55,7 +55,7 @@ export default function DashboardEventDetailPage() {
   return (
     <div>
       <Link to="/dashboard/events" className="inline-flex items-center gap-1.5 text-sm text-nia-text-muted hover:text-nia-navy-dark mb-4">
-        <FaArrowLeft /> Back to Events
+        <ArrowLeft /> Back to Events
       </Link>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -64,8 +64,8 @@ export default function DashboardEventDetailPage() {
           <span className="text-xs font-bold uppercase tracking-wide text-nia-orange">{event.category}</span>
           <h1 className="text-2xl font-extrabold text-nia-navy-dark">{event.title}</h1>
           <div className="flex flex-wrap gap-4 text-sm text-nia-text-muted">
-            <span className="flex items-center gap-1.5"><FaCalendarAlt />{new Date(event.startDate).toLocaleString()}</span>
-            {event.venueName && <span className="flex items-center gap-1.5"><FaMapMarkerAlt />{event.venueName}{event.venueCity ? `, ${event.venueCity}` : ''}</span>}
+            <span className="flex items-center gap-1.5"><Calendar />{new Date(event.startDate).toLocaleString()}</span>
+            {event.venueName && <span className="flex items-center gap-1.5"><MapPin />{event.venueName}{event.venueCity ? `, ${event.venueCity}` : ''}</span>}
           </div>
           <p className="text-nia-text-muted whitespace-pre-line">{event.description}</p>
         </div>
@@ -86,9 +86,9 @@ export default function DashboardEventDetailPage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button type="button" onClick={() => setQty(tt._id, (quantities[tt._id] || 0) - 1)} className="w-7 h-7 rounded-full border border-nia-border flex items-center justify-center text-nia-navy-dark"><FaMinus className="text-xs" /></button>
+                    <button type="button" onClick={() => setQty(tt._id, (quantities[tt._id] || 0) - 1)} className="w-7 h-7 rounded-full border border-nia-border flex items-center justify-center text-nia-navy-dark"><Minus className="text-xs" /></button>
                     <span className="w-5 text-center text-sm">{quantities[tt._id] || 0}</span>
-                    <button type="button" onClick={() => setQty(tt._id, Math.min(tt.remaining, tt.maxPerOrder, (quantities[tt._id] || 0) + 1))} className="w-7 h-7 rounded-full border border-nia-border flex items-center justify-center text-nia-navy-dark"><FaPlus className="text-xs" /></button>
+                    <button type="button" onClick={() => setQty(tt._id, Math.min(tt.remaining, tt.maxPerOrder, (quantities[tt._id] || 0) + 1))} className="w-7 h-7 rounded-full border border-nia-border flex items-center justify-center text-nia-navy-dark"><Plus className="text-xs" /></button>
                   </div>
                 </div>
               );

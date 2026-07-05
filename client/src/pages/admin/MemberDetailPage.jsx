@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { FaArrowLeft } from 'react-icons/fa';
+import { ArrowLeft } from 'lucide-react';
 import adminApi from '../../services/adminApi';
 import { useAdminAuth } from '../../context/AdminAuthContext';
 import StatusBadge from '../../components/admin/StatusBadge';
@@ -70,7 +70,7 @@ export default function MemberDetailPage() {
   return (
     <div>
       <Link to="/admin/members" className="inline-flex items-center gap-1.5 text-sm text-nia-text-muted hover:text-nia-navy-dark mb-4">
-        <FaArrowLeft /> Back to Members
+        <ArrowLeft /> Back to Members
       </Link>
 
       <div className="flex items-center justify-between mb-5">
