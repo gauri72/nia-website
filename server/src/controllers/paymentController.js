@@ -58,7 +58,8 @@ async function webhook(req, res) {
       return;
     }
 
-    // Update the database record
+    // Update the database record — returns null if this payment was already processed
+    // (e.g. a webhook redelivery, or a refund notification on an already-paid payment)
     const updatedRecord = await updateRecordByType(
       metadata.type,
       metadata.referenceId,
@@ -67,8 +68,8 @@ async function webhook(req, res) {
       paidAt
     );
 
-    // Send emails only on successful payment
-    if (status === 'paid') {
+    // Only send emails on a genuine paid transition — not on every redelivered webhook
+    if (status === 'paid' && updatedRecord) {
       await sendPostPaymentEmails(metadata.type, updatedRecord);
     }
   } catch (err) {
@@ -102,8 +103,9 @@ async function status(req, res, next) {
             mollieStatus,
             paidAt
           );
-          // Only send emails if record was actually just updated (not already processed)
-          if (updatedRecord && updatedRecord.mollie_payment_id === paymentId) {
+          // Only send emails if record was actually just updated (not already processed) —
+          // updateRecordByType now returns null on skip, so this check is meaningful.
+          if (updatedRecord) {
             await sendPostPaymentEmails(metadata.type, updatedRecord);
           }
         } catch (err) {
