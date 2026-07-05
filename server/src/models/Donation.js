@@ -25,6 +25,7 @@ const DonationSchema = new mongoose.Schema({
   payment_provider: { type: String, default: 'mollie' },
   mollie_payment_id: { type: String },
   paid_at: { type: Date },
+  member: { type: mongoose.Schema.Types.ObjectId, ref: 'Member' },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Donation', DonationSchema);

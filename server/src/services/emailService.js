@@ -254,6 +254,25 @@ async function sendTicketReceipt(ticket) {
   console.log(`[Email] Ticket receipt sent to ${ticket.email}`);
 }
 
+async function sendTicketRefundConfirmation(ticket) {
+  const transporter = createTransporter();
+  const body = `
+    <p>Dear <strong>${ticket.name}</strong>,</p>
+    <p>Your refund for NIA event tickets <strong>${ticket.ticketNumber}</strong> has been processed.</p>
+    <div class="detail-row"><span class="label">Ticket Number</span><span class="value">${ticket.ticketNumber}</span></div>
+    <div class="detail-row"><span class="label">Refund Amount</span><span class="value amount">€${Number(ticket.refund_amount ?? ticket.amount).toFixed(2)}</span></div>
+    <div class="detail-row"><span class="label">Date</span><span class="value">${new Date(ticket.refunded_at || Date.now()).toLocaleDateString('nl-NL')}</span></div>
+    <p style="margin-top:20px; font-size:13px; color:#999;">Please allow a few business days for the refund to appear on your original payment method.</p>`;
+
+  await transporter.sendMail({
+    from: FROM,
+    to: ticket.email,
+    subject: `Refund Processed — ${ticket.ticketNumber}`,
+    html: htmlWrap('Refund Confirmation', body),
+  });
+  console.log(`[Email] Ticket refund confirmation sent to ${ticket.email}`);
+}
+
 // ── Donation ──────────────────────────────────────────────────
 async function sendDonationThankYou(donation) {
   const transporter = createTransporter();
@@ -451,6 +470,340 @@ async function notifyAdminSponsorship(sponsorship) {
   console.log(`[Email] Admin sponsorship notification sent to ${ADMIN_EMAIL}`);
 }
 
+// ── Booking (event ticketing, account-linked) PDF ─────────────
+async function generateBookingPDF(booking) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const doc = new PDFDocument({ size: 'A5', margin: 40 });
+      const chunks = [];
+      doc.on('data', c => chunks.push(c));
+      doc.on('end', () => resolve(Buffer.concat(chunks)));
+      doc.on('error', reject);
+
+      const qrDataUrl = await generateQRDataURL(booking.bookingNumber);
+      const qrBuffer  = Buffer.from(qrDataUrl.replace(/^data:image\/png;base64,/, ''), 'base64');
+
+      const W = doc.page.width;
+      const eventTitle = booking.event?.title || 'NIA Event';
+      const eventDate = booking.event?.startDate ? new Date(booking.event.startDate).toLocaleString('nl-NL') : '';
+      const venue = [booking.event?.venueName, booking.event?.venueCity].filter(Boolean).join(', ');
+
+      doc.rect(0, 0, W, 70).fill('#0F1F4B');
+      doc.fillColor('#ffffff').fontSize(16).font('Helvetica-Bold').text(eventTitle, 40, 18, { width: W - 80 });
+      doc.fontSize(10).font('Helvetica').text([eventDate, venue].filter(Boolean).join(' — '), 40, 40, { width: W - 80 });
+
+      doc.rect(0, 70, W, 5).fill('#E8641A');
+
+      doc.fillColor('#0F1F4B').fontSize(13).font('Helvetica-Bold').text('EVENT TICKET', 40, 95);
+      doc.fontSize(20).text(booking.bookingNumber, 40, 114);
+
+      doc.moveTo(40, 150).lineTo(W - 40, 150).strokeColor('#e0e0e0').stroke();
+
+      const details = [
+        ['Name',     `${booking.member?.firstName || ''} ${booking.member?.lastName || ''}`.trim()],
+        ['Email',    booking.member?.email || ''],
+        ['Tickets',  booking.lines.map(l => `${l.quantity}× ${l.name}`).join(', ')],
+        ['Total Paid', `€${Number(booking.amount).toFixed(2)}`],
+        ['Payment ID', booking.mollie_payment_id],
+        ['Date',       booking.paid_at ? new Date(booking.paid_at).toLocaleDateString('nl-NL') : ''],
+      ];
+
+      let y = 166;
+      doc.fontSize(10);
+      for (const [label, value] of details) {
+        doc.font('Helvetica').fillColor('#888888').text(label, 40, y);
+        doc.font('Helvetica-Bold').fillColor('#0F1F4B').text(value, 160, y);
+        y += 24;
+      }
+
+      y += 8;
+      doc.moveTo(40, y).lineTo(W - 40, y).strokeColor('#e0e0e0').stroke();
+      y += 16;
+
+      const qrSize = 130;
+      const qrX = (W - qrSize) / 2;
+      doc.image(qrBuffer, qrX, y, { width: qrSize, height: qrSize });
+      doc.font('Helvetica').fillColor('#888888').fontSize(8)
+        .text('Scan at event entry', 0, y + qrSize + 6, { width: W, align: 'center' });
+
+      doc.rect(0, doc.page.height - 40, W, 40).fill('#f5f5f5');
+      doc.fillColor('#999999').fontSize(8)
+        .text('Please present this ticket (print or digital) at the event entrance.', 40, doc.page.height - 28);
+
+      doc.end();
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
+
+async function sendBookingConfirmation(booking) {
+  const transporter = createTransporter();
+  const eventTitle = booking.event?.title || 'NIA Event';
+  const eventDate = booking.event?.startDate ? new Date(booking.event.startDate).toLocaleString('nl-NL') : '';
+  const venue = [booking.event?.venueName, booking.event?.venueCity].filter(Boolean).join(', ');
+
+  const ticketLines = booking.lines.map(l =>
+    `<div class="detail-row"><span class="label">${l.name} × ${l.quantity}</span><span class="value">€${l.line_total.toFixed(2)}</span></div>`
+  ).join('');
+
+  const qrDataUrl = await generateQRDataURL(booking.bookingNumber);
+  const qrBuffer  = Buffer.from(qrDataUrl.replace(/^data:image\/png;base64,/, ''), 'base64');
+  const qrCid     = `qr-${booking.bookingNumber}@nia`;
+
+  const qrBlock = `
+    <div class="qr-block">
+      <img src="cid:${qrCid}" alt="QR Code" width="160" height="160" style="display:block;margin:0 auto;" />
+      <p>Scan at event entry — ${booking.bookingNumber}</p>
+    </div>`;
+
+  const pdfBuffer = await generateBookingPDF(booking);
+
+  const body = `
+    <p>Dear <strong>${booking.member?.firstName || 'Member'}</strong>,</p>
+    <p>🎟️ Your booking for <strong>${eventTitle}</strong> has been confirmed! Your PDF ticket with QR code is attached.</p>
+    <div class="highlight">
+      <strong>Booking Reference:</strong> ${booking.bookingNumber}<br>
+      ${eventDate ? `<strong>When:</strong> ${eventDate}<br>` : ''}
+      ${venue ? `<strong>Where:</strong> ${venue}` : ''}
+    </div>
+    <p><strong>Booking Summary:</strong></p>
+    ${ticketLines}
+    ${booking.discount_amount > 0 ? `<div class="detail-row"><span class="label">Discount Applied</span><span class="value" style="color:green;">−€${booking.discount_amount.toFixed(2)}</span></div>` : ''}
+    <div class="detail-row"><span class="label">Total Paid</span><span class="value amount">€${booking.amount.toFixed(2)}</span></div>
+    ${qrBlock}
+    <p style="margin-top:20px;">Please present your ticket (PDF or this email) at the event entrance. We look forward to seeing you! 🇮🇳🇳🇱</p>`;
+
+  await transporter.sendMail({
+    from: FROM,
+    to: booking.member?.email,
+    subject: `🎟️ Booking Confirmed — ${eventTitle} (${booking.bookingNumber})`,
+    html: htmlWrap('Booking Confirmation', body),
+    attachments: [
+      { filename: `NIA-Ticket-${booking.bookingNumber}.pdf`, content: pdfBuffer, contentType: 'application/pdf' },
+      { filename: 'ticket-qr.png', content: qrBuffer, contentType: 'image/png', cid: qrCid },
+    ],
+  });
+  console.log(`[Email] Booking confirmation + PDF sent to ${booking.member?.email}`);
+}
+
+async function sendRefundConfirmation(booking) {
+  const transporter = createTransporter();
+  const eventTitle = booking.event?.title || 'NIA Event';
+  const body = `
+    <p>Dear <strong>${booking.member?.firstName || 'Member'}</strong>,</p>
+    <p>Your refund for <strong>${eventTitle}</strong> has been processed.</p>
+    <div class="detail-row"><span class="label">Booking Reference</span><span class="value">${booking.bookingNumber}</span></div>
+    <div class="detail-row"><span class="label">Refund Amount</span><span class="value amount">€${Number(booking.refund_amount || booking.amount).toFixed(2)}</span></div>
+    <div class="detail-row"><span class="label">Date</span><span class="value">${new Date(booking.refunded_at || Date.now()).toLocaleDateString('nl-NL')}</span></div>
+    <p style="margin-top:20px; font-size:13px; color:#999;">Please allow a few business days for the refund to appear on your original payment method.</p>`;
+
+  await transporter.sendMail({
+    from: FROM,
+    to: booking.member?.email,
+    subject: `Refund Processed — ${booking.bookingNumber}`,
+    html: htmlWrap('Refund Confirmation', body),
+  });
+  console.log(`[Email] Refund confirmation sent to ${booking.member?.email}`);
+}
+
+// ── Membership card PDF (Member Dashboard tiers) ──────────────
+async function generateMembershipCardPDF(member, tier) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const doc = new PDFDocument({ size: [340, 214], margin: 0 }); // credit-card-ish proportions
+      const chunks = [];
+      doc.on('data', c => chunks.push(c));
+      doc.on('end', () => resolve(Buffer.concat(chunks)));
+      doc.on('error', reject);
+
+      const W = doc.page.width, H = doc.page.height;
+      doc.rect(0, 0, W, H).fill('#0F1F4B');
+      doc.rect(0, 0, W, 8).fill('#E8641A');
+
+      doc.fillColor('#ffffff').fontSize(13).font('Helvetica-Bold').text('Netherlands India Association', 20, 24);
+      doc.fontSize(9).font('Helvetica').fillColor('rgba(255,255,255,0.7)').text('Member Card', 20, 42);
+
+      doc.fontSize(16).font('Helvetica-Bold').fillColor('#ffffff').text(`${member.firstName} ${member.lastName}`, 20, 90);
+      doc.fontSize(10).font('Helvetica').fillColor('#E8641A').text((tier?.name || 'Member').toUpperCase(), 20, 112);
+
+      const qrDataUrl = await generateQRDataURL(member.memberId);
+      const qrBuffer  = Buffer.from(qrDataUrl.replace(/^data:image\/png;base64,/, ''), 'base64');
+      doc.image(qrBuffer, W - 90, H - 90, { width: 70, height: 70 });
+
+      doc.fontSize(8).fillColor('rgba(255,255,255,0.6)').text(member.memberId, 20, H - 46);
+      doc.text(member.membershipExpiresAt ? `Valid until ${new Date(member.membershipExpiresAt).toLocaleDateString('nl-NL')}` : '', 20, H - 32);
+
+      doc.end();
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
+
+async function sendMembershipPaymentConfirmation(payment) {
+  const transporter = createTransporter();
+  const member = payment.member;
+  const tier = payment.membershipTier;
+  const actionLabel = payment.type === 'upgrade' ? 'upgraded' : payment.type === 'new' ? 'activated' : 'renewed';
+
+  const cardBuffer = await generateMembershipCardPDF(member, tier);
+
+  const body = `
+    <p>Dear <strong>${member.firstName}</strong>,</p>
+    <p>🎉 Your NIA membership has been ${actionLabel}! Your digital membership card is attached.</p>
+    <div class="highlight">
+      <strong>Tier:</strong> ${tier?.name}<br>
+      <strong>Valid Until:</strong> ${member.membershipExpiresAt ? new Date(member.membershipExpiresAt).toLocaleDateString('nl-NL') : ''}
+    </div>
+    <div class="detail-row"><span class="label">Amount Paid</span><span class="value amount">€${Number(payment.amount).toFixed(2)}</span></div>
+    <div class="detail-row"><span class="label">Payment ID</span><span class="value">${payment.mollie_payment_id}</span></div>
+    <p style="margin-top:20px;">Thank you for being part of the NIA family!</p>`;
+
+  await transporter.sendMail({
+    from: FROM,
+    to: member.email,
+    subject: `✅ NIA Membership ${actionLabel.charAt(0).toUpperCase() + actionLabel.slice(1)} — ${tier?.name}`,
+    html: htmlWrap('Membership Confirmation', body),
+    attachments: [{ filename: `NIA-Membership-Card-${member.memberId}.pdf`, content: cardBuffer, contentType: 'application/pdf' }],
+  });
+  console.log(`[Email] Membership payment confirmation sent to ${member.email}`);
+}
+
+// ── Member lifecycle emails ─────────────────────────────────────
+async function sendWelcomeEmail(member) {
+  const transporter = createTransporter();
+  const body = `
+    <p>Dear <strong>${member.firstName}</strong>,</p>
+    <p>🎉 Welcome to the Netherlands India Association! We're delighted to have you as part of our community.</p>
+    <div class="highlight">Explore upcoming events, manage your membership and book tickets any time from your <a href="${process.env.FRONTEND_URL}/dashboard">Member Dashboard</a>.</div>
+    <p style="margin-top:20px;">Netherlands & India — Together Since 1950. We look forward to seeing you at our next event!</p>`;
+
+  await transporter.sendMail({
+    from: FROM,
+    to: member.email,
+    subject: `Welcome to the Netherlands India Association!`,
+    html: htmlWrap('Welcome to NIA', body),
+  });
+  console.log(`[Email] Welcome email sent to ${member.email}`);
+}
+
+async function sendRenewalReminder(member, tier, daysRemaining) {
+  const transporter = createTransporter();
+  const body = `
+    <p>Dear <strong>${member.firstName}</strong>,</p>
+    <p>Your <strong>${tier?.name || 'NIA'}</strong> membership expires in <strong>${daysRemaining} day${daysRemaining === 1 ? '' : 's'}</strong>, on ${new Date(member.membershipExpiresAt).toLocaleDateString('nl-NL')}.</p>
+    <p style="text-align:center;"><a class="btn" href="${process.env.FRONTEND_URL}/dashboard/membership">Renew Now</a></p>
+    <p style="margin-top:20px; font-size:13px; color:#999;">Renew before your expiry date to keep your membership benefits without interruption.</p>`;
+
+  await transporter.sendMail({
+    from: FROM,
+    to: member.email,
+    subject: `Your NIA membership expires in ${daysRemaining} day${daysRemaining === 1 ? '' : 's'}`,
+    html: htmlWrap('Membership Renewal Reminder', body),
+  });
+  console.log(`[Email] Renewal reminder sent to ${member.email}`);
+}
+
+async function sendExpiryNotice(member) {
+  const transporter = createTransporter();
+  const body = `
+    <p>Dear <strong>${member.firstName}</strong>,</p>
+    <p>Your NIA membership expired on ${new Date(member.membershipExpiresAt).toLocaleDateString('nl-NL')}. We'd love to have you back!</p>
+    <p style="text-align:center;"><a class="btn" href="${process.env.FRONTEND_URL}/dashboard/membership">Renew Your Membership</a></p>`;
+
+  await transporter.sendMail({
+    from: FROM,
+    to: member.email,
+    subject: `Your NIA membership has expired`,
+    html: htmlWrap('Membership Expired', body),
+  });
+  console.log(`[Email] Expiry notice sent to ${member.email}`);
+}
+
+async function sendEventReminder(booking) {
+  const transporter = createTransporter();
+  const event = booking.event;
+  const member = booking.member;
+  const venue = [event?.venueName, event?.venueCity].filter(Boolean).join(', ');
+
+  const body = `
+    <p>Dear <strong>${member?.firstName || 'Member'}</strong>,</p>
+    <p>This is a friendly reminder that <strong>${event?.title}</strong> is happening in less than 24 hours!</p>
+    <div class="highlight">
+      <strong>When:</strong> ${event?.startDate ? new Date(event.startDate).toLocaleString('nl-NL') : ''}<br>
+      ${venue ? `<strong>Where:</strong> ${venue}<br>` : ''}
+      <strong>Booking Reference:</strong> ${booking.bookingNumber}
+    </div>
+    <p style="margin-top:20px;">Don't forget to bring your ticket (PDF or QR code from your Member Dashboard). We look forward to seeing you there!</p>`;
+
+  await transporter.sendMail({
+    from: FROM,
+    to: member?.email,
+    subject: `Reminder: ${event?.title} is tomorrow!`,
+    html: htmlWrap('Event Reminder', body),
+  });
+  console.log(`[Email] Event reminder sent to ${member?.email}`);
+}
+
+// ── Member account emails ──────────────────────────────────────
+async function sendMemberVerificationEmail(member, verifyUrl) {
+  const transporter = createTransporter();
+  const body = `
+    <p>Dear <strong>${member.firstName}</strong>,</p>
+    <p>Welcome to the Netherlands India Association! Please verify your email address to activate your member account.</p>
+    <p style="text-align:center;">
+      <a class="btn" href="${verifyUrl}">Verify My Email</a>
+    </p>
+    <p style="margin-top:20px; font-size:13px; color:#999;">If the button doesn't work, copy and paste this link into your browser:<br>${verifyUrl}</p>`;
+
+  await transporter.sendMail({
+    from: FROM,
+    to: member.email,
+    subject: `Verify your email — NIA Member Account`,
+    html: htmlWrap('Verify Your Email', body),
+  });
+  console.log(`[Email] Verification email sent to ${member.email}`);
+}
+
+async function sendMemberPasswordResetEmail(member, resetUrl) {
+  const transporter = createTransporter();
+  const body = `
+    <p>Dear <strong>${member.firstName}</strong>,</p>
+    <p>We received a request to reset your NIA member account password. Click below to choose a new password. This link expires in 1 hour.</p>
+    <p style="text-align:center;">
+      <a class="btn" href="${resetUrl}">Reset My Password</a>
+    </p>
+    <p style="margin-top:20px; font-size:13px; color:#999;">If you didn't request this, you can safely ignore this email.</p>`;
+
+  await transporter.sendMail({
+    from: FROM,
+    to: member.email,
+    subject: `Reset your password — NIA`,
+    html: htmlWrap('Reset Your Password', body),
+  });
+  console.log(`[Email] Password reset email sent to ${member.email}`);
+}
+
+async function sendAdminPasswordResetEmail(admin, resetUrl) {
+  const transporter = createTransporter();
+  const body = `
+    <p>Dear <strong>${admin.firstName}</strong>,</p>
+    <p>We received a request to reset your NIA admin account password. Click below to choose a new password. This link expires in 1 hour.</p>
+    <p style="text-align:center;">
+      <a class="btn" href="${resetUrl}">Reset My Password</a>
+    </p>
+    <p style="margin-top:20px; font-size:13px; color:#999;">If you didn't request this, you can safely ignore this email.</p>`;
+
+  await transporter.sendMail({
+    from: FROM,
+    to: admin.email,
+    subject: `Reset your password — NIA Admin`,
+    html: htmlWrap('Reset Your Password', body),
+  });
+  console.log(`[Email] Admin password reset email sent to ${admin.email}`);
+}
+
 // ── Post-payment email dispatcher ─────────────────────────────
 async function sendPostPaymentEmails(type, record) {
   try {
@@ -475,10 +828,33 @@ async function sendPostPaymentEmails(type, record) {
         await sendSponsorshipReceipt(record);
         await notifyAdminSponsorship(record);
         break;
+      case 'booking':
+        await sendBookingConfirmation(record);
+        break;
+      case 'membership_payment':
+        await sendMembershipPaymentConfirmation(record);
+        break;
     }
   } catch (err) {
     console.error(`[Email] Failed to send post-payment emails for ${type}:`, err.message);
   }
 }
 
-module.exports = { sendPostPaymentEmails };
+module.exports = {
+  sendPostPaymentEmails,
+  sendMemberVerificationEmail,
+  sendMemberPasswordResetEmail,
+  sendAdminPasswordResetEmail,
+  sendBookingConfirmation,
+  sendRefundConfirmation,
+  generateBookingPDF,
+  generateMembershipCardPDF,
+  sendWelcomeEmail,
+  sendRenewalReminder,
+  sendExpiryNotice,
+  sendEventReminder,
+  sendTicketConfirmation,
+  sendTicketRefundConfirmation,
+  generateTicketPDF,
+  generateQRDataURL,
+};

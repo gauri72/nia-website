@@ -1,0 +1,106 @@
+/* Tailwind for the Admin Panel + Member Dashboard only.
+   Deliberately importing theme+utilities WITHOUT preflight — Vite bundles all
+   imported CSS into one file regardless of which component imports it, so a
+   normal `@import "tailwindcss"` would reset margins/fonts/etc. on the 8
+   existing public pages too. Skipping preflight keeps this additive-only. */
+@import "tailwindcss/theme" layer(theme);
+@import "tailwindcss/utilities" layer(utilities);
+
+@theme {
+  --color-nia-navy: #1a2b5e;
+  --color-nia-navy-dark: #0f1f4b;
+  --color-nia-navy-darker: #091531;
+  --color-nia-orange: #e8641a;
+  --color-nia-orange-dark: #d0561a;
+  --color-nia-orange-light: #fff1e8;
+  --color-nia-green: #2d7d3a;
+  --color-nia-saffron: #ff9933;
+  --color-nia-gold: #e8c84a;
+  --color-nia-gold-dark: #b8860b;
+  --color-nia-success: #2ecc71;
+  --color-nia-warning: #f39c12;
+  --color-nia-error: #e74c3c;
+  --color-nia-panel: #f0f4ff;
+  --color-nia-panel-alt: #e8edf5;
+  --color-nia-border: #d8e3f0;
+  --color-nia-text: #333333;
+  --color-nia-text-muted: #555555;
+  --color-nia-text-faint: #888888;
+
+  --font-nia: 'Poppins', sans-serif;
+
+  --radius-nia-card: 16px;
+  --radius-nia-btn: 8px;
+}
+
+/* Scoped reset — applies only inside admin/dashboard roots, not globally */
+.nia-app-root, .nia-app-root * {
+  box-sizing: border-box;
+}
+.nia-app-root {
+  font-family: var(--font-nia);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Panel-wide elevation & polish ──────────────────────────────────
+   These target utility classes already applied consistently across every
+   admin/dashboard page, so the lift cascades everywhere without having to
+   touch each page individually. Purely additive — no layout changes. */
+
+/* Cards & table containers */
+.nia-app-root .rounded-nia-card {
+  border-color: color-mix(in srgb, var(--color-nia-border) 70%, transparent);
+  box-shadow: 0 1px 2px rgba(15, 31, 75, 0.04), 0 10px 28px -12px rgba(15, 31, 75, 0.12);
+  transition: box-shadow .2s ease, transform .2s ease;
+}
+button.rounded-nia-card, a.rounded-nia-card {
+  transition: box-shadow .2s ease, transform .15s ease;
+}
+button.rounded-nia-card:hover, a.rounded-nia-card:hover {
+  box-shadow: 0 4px 10px -2px rgba(15, 31, 75, 0.1), 0 16px 32px -14px rgba(15, 31, 75, 0.16);
+  transform: translateY(-1px);
+}
+
+/* Buttons — subtle depth + press feedback across the whole panel */
+.nia-app-root button, .nia-app-root a.rounded-nia-btn {
+  transition: box-shadow .15s ease, transform .1s ease, background-color .15s ease, color .15s ease, border-color .15s ease;
+}
+.nia-app-root button:not(:disabled):active, .nia-app-root a.rounded-nia-btn:active {
+  transform: translateY(1px);
+}
+.nia-app-root .rounded-nia-btn.bg-nia-orange {
+  box-shadow: 0 1px 2px rgba(232, 100, 26, 0.22), 0 6px 16px -6px rgba(232, 100, 26, 0.4);
+}
+.nia-app-root .rounded-nia-btn.bg-nia-orange:hover:not(:disabled) {
+  box-shadow: 0 2px 4px rgba(232, 100, 26, 0.26), 0 10px 22px -6px rgba(232, 100, 26, 0.48);
+}
+.nia-app-root .rounded-nia-btn.border.bg-white:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--color-nia-orange) 40%, var(--color-nia-border));
+}
+
+/* Inputs — soft depth on focus already present via ring utilities; add default subtlety */
+.nia-app-root input, .nia-app-root select, .nia-app-root textarea {
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+/* Table rows — consistent hover feedback everywhere, skip empty/loading placeholder rows */
+.nia-app-root tbody tr:not(:has(td[colspan])) {
+  transition: background-color .12s ease;
+}
+.nia-app-root tbody tr:hover:not(:has(td[colspan])) {
+  background-color: var(--color-nia-panel);
+}
+.nia-app-root thead th {
+  letter-spacing: .05em;
+}
+
+/* Scrollbar polish inside the admin shell */
+.nia-app-root ::-webkit-scrollbar { width: 8px; height: 8px; }
+.nia-app-root ::-webkit-scrollbar-track { background: transparent; }
+.nia-app-root ::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--color-nia-navy) 20%, transparent); border-radius: 8px; }
+.nia-app-root ::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--color-nia-navy) 35%, transparent); }
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

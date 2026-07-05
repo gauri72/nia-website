@@ -1,12 +1,14 @@
 const mollieClient = require('../config/mollie');
 
-const VALID_TYPES = ['membership', 'event_ticket', 'donation', 'sponsorship'];
+const VALID_TYPES = ['membership', 'event_ticket', 'donation', 'sponsorship', 'booking', 'membership_payment'];
 
 const TYPE_DESCRIPTIONS = {
   membership: 'NIA Membership',
   event_ticket: 'NIA Event Ticket',
   donation: 'NIA Donation',
   sponsorship: 'NIA Sponsorship',
+  booking: 'NIA Event Booking',
+  membership_payment: 'NIA Membership',
 };
 
 /**
@@ -77,4 +79,15 @@ async function getPaymentStatus(paymentId) {
   };
 }
 
-module.exports = { createPayment, getPayment, getPaymentStatus };
+/**
+ * Refund a payment (fully or partially) via Mollie.
+ */
+async function refundPayment(paymentId, amount) {
+  const refund = await mollieClient.paymentRefunds.create({
+    paymentId,
+    amount: { currency: 'EUR', value: Number(amount).toFixed(2) },
+  });
+  return refund;
+}
+
+module.exports = { createPayment, getPayment, getPaymentStatus, refundPayment };

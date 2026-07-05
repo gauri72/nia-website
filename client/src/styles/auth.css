@@ -1,0 +1,135 @@
+/* Shared login/register/reset pages for both Admin and Member auth — matches the
+   niaonline.org "prp" payment-result card look (light card, navy/orange tokens). */
+.auth-page {
+  min-height: 100vh;
+  background: #f0f4ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  font-family: var(--font-primary, 'Poppins', sans-serif);
+}
+
+.auth-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 40px rgba(26, 43, 94, 0.12);
+  padding: 2.75rem 2.5rem;
+  max-width: 440px;
+  width: 100%;
+}
+
+.auth-card__logo {
+  text-align: center;
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: var(--color-navy, #1a2b5e);
+  margin-bottom: 0.3rem;
+  letter-spacing: 0.01em;
+}
+
+.auth-card__logo span { color: var(--color-orange, #e8641a); }
+
+.auth-card__title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #0f1f4b;
+  text-align: center;
+  margin: 0 0 0.4rem;
+}
+
+.auth-card__sub {
+  font-size: 0.9rem;
+  color: #4a6080;
+  text-align: center;
+  line-height: 1.6;
+  margin: 0 0 1.8rem;
+}
+
+.auth-form { display: flex; flex-direction: column; gap: 1.1rem; }
+
+.auth-row { display: flex; gap: 0.9rem; }
+.auth-row .auth-field { flex: 1; }
+
+.auth-field { display: flex; flex-direction: column; gap: 0.4rem; }
+
+.auth-field__label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #555;
+  letter-spacing: 0.02em;
+}
+
+.auth-field__input {
+  height: 46px;
+  padding: 0 1rem;
+  border: 1.5px solid #d8e3f0;
+  border-radius: 8px;
+  font-size: 0.92rem;
+  color: #0f1f4b;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.auth-field__input:focus {
+  border-color: var(--color-orange, #e8641a);
+  box-shadow: 0 0 0 3px rgba(232, 100, 26, 0.15);
+}
+
+.auth-btn {
+  height: 48px;
+  border: none;
+  border-radius: 8px;
+  background: var(--color-orange, #e8641a);
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.18s, transform 0.15s;
+  margin-top: 0.4rem;
+}
+.auth-btn:hover:not(:disabled) { background: #d0561a; transform: translateY(-1px); }
+.auth-btn:disabled { background: #c8d8e8; color: #8a9aaa; cursor: not-allowed; }
+
+.auth-error {
+  background: #fdecea;
+  border-left: 4px solid #e74c3c;
+  color: #c0392b;
+  font-size: 0.85rem;
+  padding: 0.7rem 1rem;
+  border-radius: 4px;
+}
+
+.auth-success {
+  background: #eafaf1;
+  border-left: 4px solid #2ecc71;
+  color: #1e8449;
+  font-size: 0.85rem;
+  padding: 0.7rem 1rem;
+  border-radius: 4px;
+}
+
+.auth-links {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1.2rem;
+  font-size: 0.82rem;
+}
+
+.auth-links a { color: var(--color-orange, #e8641a); font-weight: 600; }
+.auth-links a:hover { text-decoration: underline; }
+
+.auth-card__footer {
+  text-align: center;
+  margin-top: 1.6rem;
+  font-size: 0.85rem;
+  color: #555;
+}
+.auth-card__footer a { color: var(--color-orange, #e8641a); font-weight: 700; }
+.auth-card__footer a:hover { text-decoration: underline; }
+
+@media (max-width: 480px) {
+  .auth-card { padding: 2rem 1.4rem; }
+  .auth-row { flex-direction: column; gap: 1.1rem; }
+}

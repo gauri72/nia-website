@@ -1,0 +1,132 @@
+import { useEffect, useState } from 'react';
+import { Outlet, NavLink, Link } from 'react-router-dom';
+import {
+  FaTachometerAlt, FaUsers, FaCalendarAlt, FaTicketAlt, FaFileAlt, FaImages,
+  FaEnvelopeOpenText, FaChartBar, FaCommentDots, FaBell, FaCog, FaSignOutAlt, FaSyncAlt, FaReceipt,
+} from 'react-icons/fa';
+import { useAdminAuth } from '../context/AdminAuthContext';
+import adminApi from '../services/adminApi';
+import '../styles/admin-tailwind.css';
+
+const NAV_GROUPS = [
+  {
+    label: 'Overview',
+    items: [
+      { to: '/admin', label: 'Dashboard', icon: FaTachometerAlt, end: true },
+      { to: '/admin/reports', label: 'Reports', icon: FaChartBar },
+    ],
+  },
+  {
+    label: 'Members & Events',
+    items: [
+      { to: '/admin/members', label: 'Members', icon: FaUsers },
+      { to: '/admin/events', label: 'Events', icon: FaCalendarAlt },
+      { to: '/admin/bookings', label: 'Tickets & Bookings', icon: FaTicketAlt },
+      { to: '/admin/ticket-sales', label: 'Ticket Sales', icon: FaReceipt },
+    ],
+  },
+  {
+    label: 'Content & Comms',
+    items: [
+      { to: '/admin/content', label: 'Content Management', icon: FaFileAlt },
+      { to: '/admin/media', label: 'Media Manager', icon: FaImages },
+      { to: '/admin/broadcasting', label: 'Email Broadcasting', icon: FaEnvelopeOpenText },
+      { to: '/admin/messages', label: 'Messages', icon: FaCommentDots },
+    ],
+  },
+  {
+    label: 'System',
+    items: [
+      { to: '/admin/mollie-import', label: 'Mollie Import', icon: FaSyncAlt },
+      { to: '/admin/notifications', label: 'Notifications', icon: FaBell },
+      { to: '/admin/settings', label: 'Settings', icon: FaCog },
+    ],
+  },
+];
+
+export default function AdminLayout() {
+  const { admin, logout } = useAdminAuth();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    adminApi.get('/admin/notifications').then((r) => setUnreadCount(r.data.unreadCount)).catch(() => {});
+  }, []);
+
+  const linkClasses = ({ isActive }) =>
+    `group relative flex items-center gap-3 mx-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
+      isActive
+        ? 'bg-white/10 text-white shadow-inner'
+        : 'text-white/55 hover:text-white hover:bg-white/5'
+    }`;
+
+  const initials = `${admin?.firstName?.[0] || ''}${admin?.lastName?.[0] || ''}`.toUpperCase();
+
+  return (
+    <div className="nia-app-root min-h-screen flex bg-nia-panel">
+      {/* Sidebar */}
+      <aside className="w-64 flex-shrink-0 bg-gradient-to-b from-nia-navy-dark to-nia-navy-darker flex flex-col shadow-xl">
+        <Link to="/admin" className="px-6 py-6 text-lg font-extrabold text-white block tracking-tight">
+          NIA <span className="text-nia-orange">Admin</span>
+        </Link>
+
+        <nav className="flex-1 overflow-y-auto pb-4">
+          {NAV_GROUPS.map((group) => (
+            <div key={group.label} className="mb-1">
+              <p className="px-6 pt-4 pb-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-white/30">{group.label}</p>
+              {group.items.map(({ to, label, icon: Icon, end }) => (
+                <NavLink key={to} to={to} end={end} className={linkClasses}>
+                  {({ isActive }) => (
+                    <>
+                      {isActive && <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-1 rounded-full bg-nia-orange" />}
+                      <span className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${isActive ? 'bg-nia-orange text-white' : 'bg-white/5 text-white/50 group-hover:bg-white/10 group-hover:text-white/80'}`}>
+                        <Icon className="text-[13px]" />
+                      </span>
+                      <span className="flex-1">{label}</span>
+                      {to === '/admin/notifications' && unreadCount > 0 && (
+                        <span className="bg-nia-orange text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center">{unreadCount}</span>
+                      )}
+                    </>
+                  )}
+                </NavLink>
+              ))}
+            </div>
+          ))}
+        </nav>
+
+        <Link
+          to="/admin/profile"
+          className="flex items-center gap-3 mx-3 mb-3 px-3 py-2.5 rounded-xl text-sm font-medium text-white/55 hover:text-white hover:bg-white/5 transition-colors border-t border-white/10 pt-4"
+        >
+          <span className="w-7 h-7 rounded-lg bg-nia-orange/20 text-nia-orange flex items-center justify-center flex-shrink-0 text-[11px] font-bold">
+            {initials || <FaCog className="text-[12px]" />}
+          </span>
+          <span>Profile</span>
+        </Link>
+      </aside>
+
+      {/* Main column */}
+      <div className="flex-1 flex flex-col min-w-0">
+        <header className="bg-white/80 backdrop-blur-sm border-b border-nia-border px-6 py-3.5 flex items-center justify-between shadow-sm sticky top-0 z-10">
+          <div className="flex items-center gap-3">
+            <span className="w-9 h-9 rounded-full bg-gradient-to-br from-nia-navy to-nia-navy-dark text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
+              {initials || 'A'}
+            </span>
+            <div className="text-sm leading-tight">
+              <p className="font-semibold text-nia-navy-dark">{admin?.firstName} {admin?.lastName}</p>
+              <p className="text-xs text-nia-text-faint">{admin?.role === 'super_admin' ? 'Super Admin' : 'Content Manager'}</p>
+            </div>
+          </div>
+          <button
+            onClick={logout}
+            className="flex items-center gap-2 rounded-nia-btn border border-nia-border bg-white px-3.5 py-2 text-sm font-semibold text-nia-navy-dark hover:bg-nia-panel hover:border-nia-error/30 hover:text-nia-error transition-colors"
+          >
+            <FaSignOutAlt /> Logout
+          </button>
+        </header>
+        <main className="flex-1 p-6 overflow-y-auto">
+          <Outlet />
+        </main>
+      </div>
+    </div>
+  );
+}

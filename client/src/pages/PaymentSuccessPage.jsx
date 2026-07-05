@@ -8,6 +8,8 @@ const TYPE_LABELS = {
   event_ticket: { label: 'Event Tickets', icon: '🎟️', next: '/events' },
   donation:     { label: 'Donation',      icon: '💛', next: '/donation' },
   sponsorship:  { label: 'Sponsorship',   icon: '🌟', next: '/sponsorship' },
+  booking:            { label: 'Event Booking',  icon: '🎟️', next: '/dashboard/tickets' },
+  membership_payment: { label: 'Membership',      icon: '🎖️', next: '/dashboard/membership' },
 };
 
 export default function PaymentSuccessPage() {

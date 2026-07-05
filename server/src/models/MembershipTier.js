@@ -1,0 +1,19 @@
+const mongoose = require('mongoose');
+
+const MembershipTierSchema = new mongoose.Schema({
+  name: { type: String, required: true, unique: true, trim: true },
+  slug: { type: String, required: true, unique: true, lowercase: true, trim: true },
+  description: { type: String, trim: true },
+  price: { type: Number, required: true, min: 0 },
+  billingPeriod: { type: String, enum: ['monthly', 'annual'], default: 'annual' },
+  benefits: [{ type: String }],
+  maxMembers: { type: Number }, // null/undefined = unlimited
+  color: { type: String, default: '#1a2b5e' },
+  isActive: { type: Boolean, default: true },
+  sortOrder: { type: Number, default: 0 },
+  autoRenewDefault: { type: Boolean, default: false },
+  renewalReminderDays: { type: Number, default: 7 },
+  gracePeriodDays: { type: Number, default: 0 },
+}, { timestamps: true });
+
+module.exports = mongoose.model('MembershipTier', MembershipTierSchema);

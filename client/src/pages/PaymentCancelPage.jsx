@@ -6,6 +6,8 @@ const TYPE_NEXT = {
   event_ticket: '/events',
   donation:     '/donation',
   sponsorship:  '/sponsorship',
+  booking:            '/dashboard/events',
+  membership_payment: '/dashboard/membership',
 };
 
 export default function PaymentCancelPage() {

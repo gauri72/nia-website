@@ -1,0 +1,63 @@
+import { useEffect, useState } from 'react';
+import { Outlet, NavLink, Link } from 'react-router-dom';
+import { FaHome, FaIdCard, FaCalendarAlt, FaTicketAlt, FaUserCircle, FaBell, FaSignOutAlt } from 'react-icons/fa';
+import { useMemberAuth } from '../context/MemberAuthContext';
+import memberApi from '../services/memberApi';
+import '../styles/admin-tailwind.css';
+
+const NAV_ITEMS = [
+  { to: '/dashboard',               label: 'Dashboard',     icon: FaHome, end: true },
+  { to: '/dashboard/membership',    label: 'My Membership', icon: FaIdCard },
+  { to: '/dashboard/events',        label: 'Events',        icon: FaCalendarAlt },
+  { to: '/dashboard/tickets',       label: 'My Tickets',    icon: FaTicketAlt },
+  { to: '/dashboard/notifications', label: 'Notifications', icon: FaBell },
+  { to: '/dashboard/profile',       label: 'Profile',       icon: FaUserCircle },
+];
+
+export default function DashboardLayout() {
+  const { member, logout } = useMemberAuth();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    memberApi.get('/member/notifications').then((r) => setUnreadCount(r.data.unreadCount)).catch(() => {});
+  }, []);
+
+  const linkClasses = ({ isActive }) =>
+    `flex items-center gap-1.5 px-3 py-2 rounded-nia-btn text-sm font-medium border-b-2 transition-colors ${
+      isActive ? 'border-nia-orange text-nia-navy-dark' : 'border-transparent text-nia-text-muted hover:text-nia-navy-dark hover:border-nia-border'
+    }`;
+
+  return (
+    <div className="nia-app-root min-h-screen flex flex-col bg-nia-panel/40">
+      <header className="bg-white border-b border-nia-border sticky top-0 z-10 shadow-sm">
+        <div className="max-w-6xl mx-auto px-5 py-3 flex items-center justify-between flex-wrap gap-3">
+          <Link to="/dashboard" className="font-extrabold text-lg text-nia-navy">
+            NIA <span className="text-nia-orange">Member Portal</span>
+          </Link>
+          <nav className="flex gap-1 flex-wrap">
+            {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
+              <NavLink key={to} to={to} end={end} className={linkClasses}>
+                <Icon className="text-sm" /> {label}
+                {to === '/dashboard/notifications' && unreadCount > 0 && (
+                  <span className="bg-nia-orange text-white text-[10px] font-bold rounded-full min-w-[16px] h-[16px] px-1 flex items-center justify-center">{unreadCount}</span>
+                )}
+              </NavLink>
+            ))}
+          </nav>
+          <div className="flex items-center gap-3 text-sm">
+            <span className="text-nia-text-muted hidden sm:inline">Hi, {member?.firstName}</span>
+            <button
+              onClick={logout}
+              className="flex items-center gap-1.5 rounded-nia-btn border border-nia-border bg-nia-panel px-3 py-1.5 font-semibold text-nia-navy-dark hover:bg-nia-panel-alt transition-colors"
+            >
+              <FaSignOutAlt /> Logout
+            </button>
+          </div>
+        </div>
+      </header>
+      <main className="flex-1 max-w-6xl w-full mx-auto px-5 py-6">
+        <Outlet />
+      </main>
+    </div>
+  );
+}

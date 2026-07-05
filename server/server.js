@@ -5,6 +5,8 @@ const connectDB    = require('./src/config/db');
 const routes       = require('./src/routes/index');
 const errorHandler = require('./src/middleware/errorHandler');
 const { apiLimiter } = require('./src/middleware/rateLimiter');
+const schedulerService = require('./src/services/schedulerService');
+const path = require('path');
 
 const app = express();
 
@@ -13,6 +15,9 @@ app.set('trust proxy', 1);
 
 // ── Database ──────────────────────────────────────────────────
 connectDB();
+
+// ── Broadcast scheduler ───────────────────────────────────────
+schedulerService.start();
 
 // ── CORS ──────────────────────────────────────────────────────
 const allowedOrigins = [
@@ -50,6 +55,9 @@ app.use((req, _res, next) => {
 
 // ── Rate limiting ─────────────────────────────────────────────
 app.use('/api', apiLimiter);
+
+// ── Static uploads ────────────────────────────────────────────
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ── Routes ────────────────────────────────────────────────────
 app.use('/api', routes);

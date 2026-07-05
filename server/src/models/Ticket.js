@@ -27,13 +27,16 @@ const TicketSchema = new mongoose.Schema({
   amount: { type: Number, required: true }, // final amount after discount
   ticket_status: {
     type: String,
-    enum: ['pending_payment', 'paid', 'failed', 'expired', 'canceled'],
+    enum: ['pending_payment', 'paid', 'failed', 'expired', 'canceled', 'refunded'],
     default: 'pending_payment',
   },
   payment_provider: { type: String, default: 'mollie' },
   mollie_payment_id: { type: String },
   paid_at: { type: Date },
   qr_code: { type: String },
+  member: { type: mongoose.Schema.Types.ObjectId, ref: 'Member' },
+  refunded_at: { type: Date },
+  refund_amount: { type: Number },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Ticket', TicketSchema);

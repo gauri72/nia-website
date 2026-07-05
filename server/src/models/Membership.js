@@ -35,6 +35,7 @@ const MembershipSchema = new mongoose.Schema({
   qr_code: { type: String },
   digital_card_url: { type: String },
   activated_at: { type: Date },
+  member: { type: mongoose.Schema.Types.ObjectId, ref: 'Member' },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Membership', MembershipSchema);
