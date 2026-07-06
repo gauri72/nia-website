@@ -27,8 +27,9 @@ export default function MyTicketsPage() {
   useEffect(() => { load(); }, []);
 
   function downloadPdf(booking) {
+    const path = booking.source === 'legacy_ticket' ? `legacy/${booking._id}/ticket.pdf` : `${booking._id}/ticket.pdf`;
     const token = localStorage.getItem('nia_member_token');
-    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5050/api'}/bookings/${booking._id}/ticket.pdf`, {
+    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5050/api'}/bookings/${path}`, {
       headers: { Authorization: `Bearer ${token}` },
     }).then((r) => r.blob()).then((blob) => {
       const url = URL.createObjectURL(blob);
@@ -40,7 +41,8 @@ export default function MyTicketsPage() {
 
   async function showQr(booking) {
     setQrBooking(booking);
-    const { data } = await memberApi.get(`/bookings/${booking._id}/qrcode`);
+    const path = booking.source === 'legacy_ticket' ? `legacy/${booking._id}/qrcode` : `${booking._id}/qrcode`;
+    const { data } = await memberApi.get(`/bookings/${path}`);
     setQrDataUrl(data.dataUrl);
   }
 
@@ -74,7 +76,7 @@ export default function MyTicketsPage() {
                 <div className="flex gap-2">
                   <Button variant="secondary" size="sm" onClick={() => showQr(b)}><QrCode />QR</Button>
                   <Button variant="secondary" size="sm" onClick={() => downloadPdf(b)}><Download />PDF</Button>
-                  {b.event && new Date(b.event.startDate) > new Date() && (
+                  {b.source !== 'legacy_ticket' && b.event && new Date(b.event.startDate) > new Date() && (
                     <Button variant="danger" size="sm" onClick={() => handleCancel(b)}><X />Cancel</Button>
                   )}
                 </div>

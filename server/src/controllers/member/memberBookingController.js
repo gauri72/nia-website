@@ -2,11 +2,33 @@ const Booking = require('../../models/Booking');
 const Event = require('../../models/Event');
 const TicketType = require('../../models/TicketType');
 const Member = require('../../models/Member');
+const Ticket = require('../../models/Ticket');
 const QRCode = require('qrcode');
 const { createPayment, refundPayment } = require('../../services/mollieService');
-const { generateBookingPDF } = require('../../services/emailService');
+const { generateBookingPDF, generateTicketPDF } = require('../../services/emailService');
 const { validateDiscountCode, applyDiscount } = require('../../services/discountService');
 const { finalizeFreeOrder } = require('../../services/databaseService');
+
+// The public guest-checkout flow (ticketController.js) predates the Event/Booking
+// system and still runs against one fixed, hardcoded event rather than a real
+// Event document — so a member who bought a ticket there (matched only by email,
+// no Member link) would otherwise be invisible on their own dashboard. The two
+// systems aren't linked by ID; this derives the display info for that one legacy
+// event by matching on its known date, which is the only correspondence that exists.
+const LEGACY_EVENT_ID = 'NIA-EVENT-20260815';
+let legacyEventCache;
+async function getLegacyEventDisplay() {
+  if (legacyEventCache !== undefined) return legacyEventCache;
+  const y = LEGACY_EVENT_ID.slice(-8, -4), m = LEGACY_EVENT_ID.slice(-4, -2), d = LEGACY_EVENT_ID.slice(-2);
+  const dayStart = new Date(`${y}-${m}-${d}T00:00:00.000Z`);
+  const dayEnd = new Date(`${y}-${m}-${d}T23:59:59.999Z`);
+  const event = await Event.findOne({ startDate: { $gte: dayStart, $lte: dayEnd } })
+    .select('title startDate venueName venueCity').lean();
+  legacyEventCache = event || null;
+  return legacyEventCache;
+}
+
+function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
 // ── Shared by create() and previewDiscount() — identical pricing logic so a
 // preview can never show a different number than the real submission would
@@ -226,12 +248,63 @@ async function previewDiscount(req, res, next) {
 }
 
 // ── GET /api/bookings/mine ────────────────────────────────────────
+// Merges real Bookings (member-linked) with legacy guest-checkout Tickets
+// (email-matched only) so a member sees every ticket they've ever bought,
+// regardless of which flow they used.
 async function listMine(req, res, next) {
   try {
-    const bookings = await Booking.find({ member: req.member.id, status: { $ne: 'pending_payment' } })
-      .populate('event', 'title startDate venueName venueCity coverImageUrl')
-      .sort('-createdAt');
-    return res.json(bookings);
+    const member = await Member.findById(req.member.id);
+    const [bookings, legacyTickets, legacyEvent] = await Promise.all([
+      Booking.find({ member: req.member.id, status: { $ne: 'pending_payment' } })
+        .populate('event', 'title startDate venueName venueCity coverImageUrl')
+        .lean(),
+      Ticket.find({ email: member.email, ticket_status: { $ne: 'pending_payment' } }).lean(),
+      getLegacyEventDisplay(),
+    ]);
+
+    const normalizedLegacy = legacyTickets.map((t) => ({
+      _id: t._id,
+      source: 'legacy_ticket',
+      bookingNumber: t.ticketNumber,
+      status: t.ticket_status,
+      event: legacyEvent,
+      lines: t.tickets.map((l) => ({ quantity: l.quantity, name: capitalize(l.ticket_type) })),
+      createdAt: t.createdAt,
+    }));
+
+    const combined = [...bookings, ...normalizedLegacy]
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    return res.json(combined);
+  } catch (err) {
+    next(err);
+  }
+}
+
+// ── GET /api/bookings/legacy/:id/qrcode ────────────────────────────
+async function legacyGetQrCode(req, res, next) {
+  try {
+    const member = await Member.findById(req.member.id);
+    const ticket = await Ticket.findOne({ _id: req.params.id, email: member.email });
+    if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
+    const dataUrl = await QRCode.toDataURL(ticket.ticketNumber, { width: 200, margin: 1, color: { dark: '#0F1F4B', light: '#ffffff' } });
+    return res.json({ dataUrl });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// ── GET /api/bookings/legacy/:id/ticket.pdf ────────────────────────
+async function legacyDownloadTicketPdf(req, res, next) {
+  try {
+    const member = await Member.findById(req.member.id);
+    const ticket = await Ticket.findOne({ _id: req.params.id, email: member.email });
+    if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
+    if (ticket.ticket_status !== 'paid') return res.status(400).json({ error: 'Ticket PDF only available for paid tickets' });
+
+    const pdfBuffer = await generateTicketPDF(ticket);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="NIA-Ticket-${ticket.ticketNumber}.pdf"`);
+    return res.send(pdfBuffer);
   } catch (err) {
     next(err);
   }
@@ -311,4 +384,4 @@ async function cancel(req, res, next) {
   }
 }
 
-module.exports = { create, previewDiscount, listMine, getById, downloadTicketPdf, getQrCode, cancel };
+module.exports = { create, previewDiscount, listMine, getById, downloadTicketPdf, getQrCode, cancel, legacyGetQrCode, legacyDownloadTicketPdf, getLegacyEventDisplay };
