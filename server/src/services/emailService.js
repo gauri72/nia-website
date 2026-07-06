@@ -645,19 +645,35 @@ async function sendMembershipPaymentConfirmation(payment) {
   const transporter = createTransporter();
   const member = payment.member;
   const tier = payment.membershipTier;
-  const actionLabel = payment.type === 'upgrade' ? 'upgraded' : payment.type === 'new' ? 'activated' : 'renewed';
+  const actionLabel = payment.type === 'upgrade' ? 'upgraded'
+    : payment.type === 'new' ? 'activated'
+    : payment.type === 'manual' ? 'assigned'
+    : 'renewed';
 
   const cardBuffer = await generateMembershipCardPDF(member, tier);
 
+  // Manual admin assignments have no Mollie payment behind them, so the
+  // amount/payment-ID rows are only rendered when that data actually exists.
+  const paymentRows = payment.amount != null ? `
+    <div class="detail-row"><span class="label">Amount Paid</span><span class="value amount">€${Number(payment.amount).toFixed(2)}</span></div>
+    <div class="detail-row"><span class="label">Payment ID</span><span class="value">${payment.mollie_payment_id}</span></div>` : '';
+
+  const benefitsBlock = tier?.benefits?.length ? `
+    <p style="margin-top:20px;"><strong>Your ${tier.name} Membership Benefits:</strong></p>
+    <ul style="padding-left:20px; margin:8px 0;">
+      ${tier.benefits.map((b) => `<li style="margin-bottom:4px;">${b}</li>`).join('')}
+    </ul>` : '';
+
   const body = `
     <p>Dear <strong>${member.firstName}</strong>,</p>
-    <p>🎉 Your NIA membership has been ${actionLabel}! Your digital membership card is attached.</p>
+    <p>🎉 Your NIA membership has been ${actionLabel}! Your digital membership card (with QR code and Membership ID) is attached.</p>
     <div class="highlight">
+      <strong>Membership ID:</strong> ${member.memberId}<br>
       <strong>Tier:</strong> ${tier?.name}<br>
       <strong>Valid Until:</strong> ${member.membershipExpiresAt ? new Date(member.membershipExpiresAt).toLocaleDateString('nl-NL') : ''}
     </div>
-    <div class="detail-row"><span class="label">Amount Paid</span><span class="value amount">€${Number(payment.amount).toFixed(2)}</span></div>
-    <div class="detail-row"><span class="label">Payment ID</span><span class="value">${payment.mollie_payment_id}</span></div>
+    ${paymentRows}
+    ${benefitsBlock}
     <p style="margin-top:20px;">Thank you for being part of the NIA family!</p>`;
 
   await transporter.sendMail({
@@ -855,6 +871,7 @@ module.exports = {
   sendEventReminder,
   sendTicketConfirmation,
   sendTicketRefundConfirmation,
+  sendMembershipPaymentConfirmation,
   generateTicketPDF,
   generateQRDataURL,
 };

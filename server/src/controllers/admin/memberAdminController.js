@@ -2,7 +2,7 @@ const Member = require('../../models/Member');
 const MembershipTier = require('../../models/MembershipTier');
 const MollieTransaction = require('../../models/MollieTransaction');
 const { hashPassword, generateRawToken } = require('../../services/authService');
-const { sendMemberPasswordResetEmail } = require('../../services/emailService');
+const { sendMemberPasswordResetEmail, sendMembershipPaymentConfirmation } = require('../../services/emailService');
 
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
 const SENSITIVE_FIELDS = '-passwordHash -emailVerificationToken -emailVerificationExpires -passwordResetToken -passwordResetExpires';
@@ -158,6 +158,9 @@ async function update(req, res, next) {
       if (!tierExists) return res.status(400).json({ error: 'Invalid membership tier' });
     }
 
+    const before = await Member.findById(req.params.id);
+    if (!before) return res.status(404).json({ error: 'Member not found' });
+
     const update = {};
     if (firstName !== undefined) update.firstName = firstName.trim();
     if (lastName !== undefined) update.lastName = lastName.trim();
@@ -172,6 +175,17 @@ async function update(req, res, next) {
       .select(SENSITIVE_FIELDS)
       .populate('membershipTier');
     if (!member) return res.status(404).json({ error: 'Member not found' });
+
+    // Send the membership confirmation (benefits, Membership ID, QR card, validity)
+    // whenever an admin's manual edit results in an active membership and something
+    // membership-relevant actually changed — not on unrelated edits like a phone number.
+    const tierChanged = String(before.membershipTier || '') !== String(member.membershipTier?._id || '');
+    const statusChanged = before.membershipStatus !== member.membershipStatus;
+    const expiryChanged = String(before.membershipExpiresAt || '') !== String(member.membershipExpiresAt || '');
+    if (member.membershipStatus === 'active' && member.membershipTier && (tierChanged || statusChanged || expiryChanged)) {
+      sendMembershipPaymentConfirmation({ member, membershipTier: member.membershipTier, type: 'manual' })
+        .catch((err) => console.error('[MemberAdmin] Failed to send manual membership confirmation email:', err.message));
+    }
 
     return res.json(member);
   } catch (err) {
