@@ -3,8 +3,9 @@ import adminApi from '../../services/adminApi';
 import EmailBroadcastingNav from '../../components/admin/EmailBroadcastingNav';
 import StatusBadge from '../../components/admin/StatusBadge';
 import Modal from '../../components/admin/Modal';
-
-const btnSecondary = 'rounded-nia-btn border border-nia-border bg-white px-3 py-1.5 text-xs font-semibold text-nia-navy-dark hover:bg-nia-panel transition-colors';
+import PageHeader from '../../components/admin/PageHeader';
+import Table from '../../components/admin/Table';
+import Button from '../../components/admin/Button';
 
 export default function BroadcastHistoryPage() {
   const [broadcasts, setBroadcasts] = useState([]);
@@ -48,47 +49,44 @@ export default function BroadcastHistoryPage() {
   return (
     <div>
       <EmailBroadcastingNav />
-      <h1 className="text-2xl font-extrabold text-nia-navy-dark mb-5">Broadcast History</h1>
+      <PageHeader title="Broadcast History" />
 
-      <div className="rounded-nia-card border border-nia-border bg-white overflow-hidden overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="bg-nia-panel-alt text-left text-xs font-bold uppercase tracking-wide text-nia-text-muted">
-              <th className="px-4 py-3">Name</th>
-              <th className="px-4 py-3">Subject</th>
-              <th className="px-4 py-3">Audience</th>
-              <th className="px-4 py-3">Sent / Scheduled</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {!loading && broadcasts.length === 0 && (
-              <tr><td colSpan={6} className="px-4 py-8 text-center text-nia-text-faint">No broadcasts yet.</td></tr>
-            )}
-            {broadcasts.map((b) => (
-              <tr key={b._id} className="border-t border-nia-border hover:bg-nia-panel/40">
-                <td className="px-4 py-3 font-medium">
-                  <button onClick={() => openDetail(b)} className="text-nia-navy-dark hover:text-nia-orange hover:underline text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-nia-orange/40 rounded">{b.name}</button>
-                </td>
-                <td className="px-4 py-3 text-nia-text-muted">{b.subject}</td>
-                <td className="px-4 py-3 text-nia-text-muted">{b.stats.totalRecipients}</td>
-                <td className="px-4 py-3 text-nia-text-muted whitespace-nowrap">
-                  {b.sentAt ? new Date(b.sentAt).toLocaleString() : b.scheduledAt ? new Date(b.scheduledAt).toLocaleString() : '—'}
-                </td>
-                <td className="px-4 py-3"><StatusBadge status={b.status} /></td>
-                <td className="px-4 py-3 text-right whitespace-nowrap">
-                  <div className="flex gap-1.5 justify-end">
-                    {b.status === 'scheduled' && <button onClick={() => handleCancel(b)} className="rounded-nia-btn border border-nia-error px-3 py-1.5 text-xs font-semibold text-nia-error hover:bg-red-50">Cancel</button>}
-                    {b.status === 'sent' && <button onClick={() => handleResend(b)} className={btnSecondary}>Resend to Unopened</button>}
-                    <button onClick={() => handleDuplicate(b)} className={btnSecondary}>Duplicate</button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <Table>
+        <Table.Head>
+          <Table.HeaderRow>
+            <Table.Th>Name</Table.Th>
+            <Table.Th>Subject</Table.Th>
+            <Table.Th>Audience</Table.Th>
+            <Table.Th>Sent / Scheduled</Table.Th>
+            <Table.Th>Status</Table.Th>
+            <Table.Th></Table.Th>
+          </Table.HeaderRow>
+        </Table.Head>
+        <Table.Body>
+          {loading && <Table.Skeleton colSpan={6} />}
+          {!loading && broadcasts.length === 0 && <Table.Empty colSpan={6}>No broadcasts yet.</Table.Empty>}
+          {broadcasts.map((b) => (
+            <Table.Row key={b._id}>
+              <Table.Cell className="font-medium">
+                <button onClick={() => openDetail(b)} className="border-0 bg-transparent text-nia-navy-dark hover:text-nia-orange hover:underline text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-nia-orange/40 rounded">{b.name}</button>
+              </Table.Cell>
+              <Table.Cell className="text-nia-text-muted">{b.subject}</Table.Cell>
+              <Table.Cell className="text-nia-text-muted">{b.stats.totalRecipients}</Table.Cell>
+              <Table.Cell className="text-nia-text-muted whitespace-nowrap">
+                {b.sentAt ? new Date(b.sentAt).toLocaleString() : b.scheduledAt ? new Date(b.scheduledAt).toLocaleString() : '—'}
+              </Table.Cell>
+              <Table.Cell><StatusBadge status={b.status} /></Table.Cell>
+              <Table.Cell align="right" className="whitespace-nowrap">
+                <div className="flex gap-1.5 justify-end">
+                  {b.status === 'scheduled' && <Button variant="danger" size="sm" onClick={() => handleCancel(b)}>Cancel</Button>}
+                  {b.status === 'sent' && <Button variant="secondary" size="sm" onClick={() => handleResend(b)}>Resend to Unopened</Button>}
+                  <Button variant="secondary" size="sm" onClick={() => handleDuplicate(b)}>Duplicate</Button>
+                </div>
+              </Table.Cell>
+            </Table.Row>
+          ))}
+        </Table.Body>
+      </Table>
 
       {detail && (
         <Modal title={detail.name} onClose={() => setDetail(null)} width="max-w-2xl">
@@ -108,18 +106,23 @@ export default function BroadcastHistoryPage() {
             ))}
           </div>
           <h3 className="font-bold text-nia-navy-dark mb-2 text-sm">Recipients</h3>
-          <div className="max-h-64 overflow-y-auto border border-nia-border rounded-nia-btn">
-            <table className="w-full text-xs">
-              <thead><tr className="bg-nia-panel-alt text-left"><th className="px-3 py-2">Email</th><th className="px-3 py-2">Status</th></tr></thead>
-              <tbody>
+          <div className="max-h-64 overflow-y-auto">
+            <Table bare>
+              <Table.Head>
+                <Table.HeaderRow>
+                  <Table.Th className="text-xs">Email</Table.Th>
+                  <Table.Th className="text-xs">Status</Table.Th>
+                </Table.HeaderRow>
+              </Table.Head>
+              <Table.Body>
                 {recipients.map((r) => (
-                  <tr key={r._id} className="border-t border-nia-border">
-                    <td className="px-3 py-2">{r.email}</td>
-                    <td className="px-3 py-2"><StatusBadge status={r.status} /></td>
-                  </tr>
+                  <Table.Row key={r._id}>
+                    <Table.Cell className="text-xs">{r.email}</Table.Cell>
+                    <Table.Cell className="text-xs"><StatusBadge status={r.status} /></Table.Cell>
+                  </Table.Row>
                 ))}
-              </tbody>
-            </table>
+              </Table.Body>
+            </Table>
           </div>
         </Modal>
       )}

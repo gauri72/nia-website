@@ -5,9 +5,10 @@ import adminApi from '../../services/adminApi';
 import StatusBadge from '../../components/admin/StatusBadge';
 import StatCard from '../../components/admin/StatCard';
 import RevenueChart from '../../components/admin/RevenueChart';
-
-const btnPrimary = 'rounded-nia-btn bg-nia-orange px-4 py-2 text-sm font-semibold text-white hover:bg-nia-orange-dark transition-colors';
-const btnSecondary = 'rounded-nia-btn border border-nia-border bg-white px-4 py-2 text-sm font-semibold text-nia-navy-dark hover:bg-nia-panel transition-colors';
+import PageHeader from '../../components/admin/PageHeader';
+import Card from '../../components/admin/Card';
+import Table from '../../components/admin/Table';
+import Button from '../../components/admin/Button';
 
 export default function AdminDashboardPage() {
   const [data, setData] = useState(null);
@@ -28,10 +29,7 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-extrabold text-nia-navy-dark">Dashboard</h1>
-        <p className="text-sm text-nia-text-faint mt-0.5">A snapshot of members, events and revenue across the NIA platform.</p>
-      </div>
+      <PageHeader title="Dashboard" description="A snapshot of members, events and revenue across the NIA platform." />
 
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <StatCard icon={Users} label="Total Members" value={data.totalMembers} tone="navy" />
@@ -41,60 +39,60 @@ export default function AdminDashboardPage() {
         <StatCard icon={Euro} label="Total Revenue" value={`€${data.totalRevenue.toLocaleString()}`} tone="orange" />
       </div>
 
-      <div className="rounded-nia-card border border-nia-border bg-white p-5">
+      <Card>
         <h2 className="font-bold text-nia-navy-dark mb-4 flex items-center gap-2">
           <span className="w-8 h-8 rounded-lg bg-nia-orange/10 text-nia-orange flex items-center justify-center"><BarChart3 className="text-sm" /></span>
           Monthly Revenue (Tickets + Memberships)
         </h2>
         <RevenueChart data={data.revenueChart} />
-      </div>
+      </Card>
 
-      <div className="rounded-nia-card border border-nia-border bg-white p-5">
+      <Card>
         <h2 className="font-bold text-nia-navy-dark mb-3">Quick Actions</h2>
         <div className="flex flex-wrap gap-3">
-          <Link to="/admin/events/new" className={btnPrimary}><Plus className="inline mr-1.5" />Create Event</Link>
-          <Link to="/admin/members" className={btnSecondary}><Plus className="inline mr-1.5" />Add Member</Link>
-          <Link to="/admin/broadcasting/compose" className={btnSecondary}><Bot className="inline mr-1.5" />Create Broadcast</Link>
-          <Link to="/admin/reports" className={btnSecondary}>View Reports</Link>
+          <Button as={Link} to="/admin/events/new" variant="primary"><Plus /> Create Event</Button>
+          <Button as={Link} to="/admin/members" variant="secondary"><Plus /> Add Member</Button>
+          <Button as={Link} to="/admin/broadcasting/compose" variant="secondary"><Bot /> Create Broadcast</Button>
+          <Button as={Link} to="/admin/reports" variant="secondary">View Reports</Button>
         </div>
-      </div>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <div className="rounded-nia-card border border-nia-border bg-white overflow-hidden">
+        <Card padded={false}>
           <h2 className="font-bold text-nia-navy-dark p-4 pb-2">Recent Bookings</h2>
-          <table className="w-full text-sm">
-            <tbody>
-              {data.recentBookings.length === 0 && <tr><td className="px-4 py-4 text-nia-text-faint text-center">No bookings yet.</td></tr>}
+          <Table bare>
+            <Table.Body>
+              {data.recentBookings.length === 0 && <Table.Empty colSpan={2}>No bookings yet.</Table.Empty>}
               {data.recentBookings.map((b) => (
-                <tr key={b._id} className="border-t border-nia-border">
-                  <td className="px-4 py-2.5">
+                <Table.Row key={b._id}>
+                  <Table.Cell>
                     <p className="font-medium text-nia-navy-dark">{b.member?.firstName} {b.member?.lastName}</p>
                     <p className="text-xs text-nia-text-faint">{b.event?.title}</p>
-                  </td>
-                  <td className="px-4 py-2.5 text-right font-semibold text-nia-navy-dark">€{b.amount.toFixed(2)}</td>
-                </tr>
+                  </Table.Cell>
+                  <Table.Cell align="right" className="font-semibold text-nia-navy-dark">€{b.amount.toFixed(2)}</Table.Cell>
+                </Table.Row>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </Table.Body>
+          </Table>
+        </Card>
 
-        <div className="rounded-nia-card border border-nia-border bg-white overflow-hidden">
+        <Card padded={false}>
           <h2 className="font-bold text-nia-navy-dark p-4 pb-2">Upcoming Events</h2>
-          <table className="w-full text-sm">
-            <tbody>
-              {data.upcomingEvents.length === 0 && <tr><td className="px-4 py-4 text-nia-text-faint text-center">No upcoming events.</td></tr>}
+          <Table bare>
+            <Table.Body>
+              {data.upcomingEvents.length === 0 && <Table.Empty colSpan={2}>No upcoming events.</Table.Empty>}
               {data.upcomingEvents.map((e) => (
-                <tr key={e._id} className="border-t border-nia-border">
-                  <td className="px-4 py-2.5">
+                <Table.Row key={e._id}>
+                  <Table.Cell>
                     <Link to={`/admin/events/${e._id}`} className="font-medium text-nia-navy-dark hover:text-nia-orange hover:underline">{e.title}</Link>
                     <p className="text-xs text-nia-text-faint">{new Date(e.startDate).toLocaleDateString()}</p>
-                  </td>
-                  <td className="px-4 py-2.5 text-right"><StatusBadge status="published" /></td>
-                </tr>
+                  </Table.Cell>
+                  <Table.Cell align="right"><StatusBadge status="published" /></Table.Cell>
+                </Table.Row>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </Table.Body>
+          </Table>
+        </Card>
       </div>
     </div>
   );

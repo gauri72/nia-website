@@ -3,8 +3,8 @@ import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, MapPin, Calendar, Minus, Plus } from 'lucide-react';
 import memberApi from '../../services/memberApi';
 import { useMemberAuth } from '../../context/MemberAuthContext';
-
-const btnPrimary = 'rounded-nia-btn bg-nia-orange px-4 py-2 text-sm font-semibold text-white hover:bg-nia-orange-dark transition-colors disabled:bg-nia-border disabled:text-nia-text-faint';
+import Card from '../../components/admin/Card';
+import Button from '../../components/admin/Button';
 
 function goToCheckout(paymentId, checkoutUrl) {
   sessionStorage.setItem('nia_pending_payment_id', paymentId);
@@ -70,7 +70,7 @@ export default function DashboardEventDetailPage() {
           <p className="text-nia-text-muted whitespace-pre-line">{event.description}</p>
         </div>
 
-        <div className="rounded-nia-card border border-nia-border bg-white p-5 h-fit sticky top-20">
+        <Card className="h-fit sticky top-20">
           <h2 className="font-bold text-nia-navy-dark mb-3">Book Tickets</h2>
           {error && <div className="mb-3 rounded bg-red-50 border-l-4 border-nia-error px-3 py-2 text-sm text-red-700">{error}</div>}
           {event.ticketTypes.length === 0 && <p className="text-sm text-nia-text-faint">No ticket types available yet.</p>}
@@ -98,10 +98,10 @@ export default function DashboardEventDetailPage() {
             <span className="text-sm font-semibold text-nia-text-muted">Total</span>
             <span className="text-xl font-extrabold text-nia-orange">€{total.toFixed(2)}</span>
           </div>
-          <button onClick={handleCheckout} disabled={busy || lines.length === 0} className={btnPrimary + ' w-full'}>
+          <Button variant="primary" disabled={busy || lines.length === 0} onClick={handleCheckout} className="w-full">
             {busy ? 'Redirecting…' : 'Checkout'}
-          </button>
-        </div>
+          </Button>
+        </Card>
       </div>
     </div>
   );

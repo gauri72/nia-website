@@ -1,3 +1,10 @@
+/* Layer order: base < utilities, so admin-tailwind.css's Tailwind utility
+   classes (imported with `layer(utilities)`) can override this reset. Without
+   this declaration the reset below would be unlayered and beat every layered
+   Tailwind utility (p-*, m-*, etc.) regardless of specificity — cascade layers
+   give unlayered rules unconditional priority over layered ones. */
+@layer base, utilities;
+
 :root {
   --color-navy: #1A2B5E;
   --color-orange: #E8641A;
@@ -6,10 +13,12 @@
   --font-primary: 'Poppins', sans-serif;
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
 }
 
 body {

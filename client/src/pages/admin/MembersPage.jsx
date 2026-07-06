@@ -4,12 +4,13 @@ import { Search, Download, Plus, Layers } from 'lucide-react';
 import adminApi from '../../services/adminApi';
 import StatusBadge from '../../components/admin/StatusBadge';
 import Modal from '../../components/admin/Modal';
+import PageHeader from '../../components/admin/PageHeader';
+import Table from '../../components/admin/Table';
+import Button from '../../components/admin/Button';
 
 const STATUS_OPTIONS = ['active', 'expired', 'pending', 'suspended', 'none', 'canceled'];
 const inputCls = 'w-full rounded-nia-btn border border-nia-border px-3 py-2 text-sm focus:border-nia-orange focus:outline-none focus:ring-2 focus:ring-nia-orange/20';
 const selectFilterCls = 'rounded-nia-btn border border-nia-border px-3 py-2 text-sm focus:border-nia-orange focus:outline-none focus:ring-2 focus:ring-nia-orange/20 w-auto';
-const btnPrimary = 'rounded-nia-btn bg-nia-orange px-4 py-2 text-sm font-semibold text-white hover:bg-nia-orange-dark transition-colors disabled:bg-nia-border disabled:text-nia-text-faint';
-const btnSecondary = 'rounded-nia-btn border border-nia-border bg-white px-4 py-2 text-sm font-semibold text-nia-navy-dark hover:bg-nia-panel transition-colors';
 
 export default function MembersPage() {
   const [members, setMembers] = useState([]);
@@ -57,14 +58,16 @@ export default function MembersPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-5">
-        <h1 className="text-2xl font-extrabold text-nia-navy-dark">Members</h1>
-        <div className="flex gap-2">
-          <Link to="/admin/membership-tiers" className={btnSecondary}><Layers className="inline mr-1.5" />Membership Tiers</Link>
-          <button onClick={exportCsv} className={btnSecondary}><Download className="inline mr-1.5" />Export CSV</button>
-          <button onClick={() => setShowAdd(true)} className={btnPrimary}><Plus className="inline mr-1.5" />Add Member</button>
-        </div>
-      </div>
+      <PageHeader
+        title="Members"
+        actions={(
+          <>
+            <Button as={Link} to="/admin/membership-tiers" variant="secondary"><Layers /> Membership Tiers</Button>
+            <Button variant="secondary" onClick={exportCsv}><Download /> Export CSV</Button>
+            <Button variant="primary" onClick={() => setShowAdd(true)}><Plus /> Add Member</Button>
+          </>
+        )}
+      />
 
       <div className="flex flex-wrap gap-3 mb-4">
         <div className="relative flex-1 min-w-[200px]">
@@ -85,55 +88,45 @@ export default function MembersPage() {
         </select>
       </div>
 
-      <div className="rounded-nia-card border border-nia-border bg-white overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="bg-nia-panel-alt text-left text-xs font-bold uppercase tracking-wide text-nia-text-muted">
-              <th className="px-4 py-3">Name</th>
-              <th className="px-4 py-3">Email</th>
-              <th className="px-4 py-3">Tier</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Joined</th>
-              <th className="px-4 py-3"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading && (
-              [...Array(5)].map((_, i) => (
-                <tr key={i} className="border-t border-nia-border animate-pulse">
-                  <td className="px-4 py-3" colSpan={6}><div className="h-4 bg-nia-panel-alt rounded w-full" /></td>
-                </tr>
-              ))
-            )}
-            {!loading && members.length === 0 && (
-              <tr><td colSpan={6} className="px-4 py-8 text-center text-nia-text-faint">No members found.</td></tr>
-            )}
-            {!loading && members.map((m) => (
-              <tr key={m._id} className="border-t border-nia-border hover:bg-nia-panel/40">
-                <td className="px-4 py-3 font-medium text-nia-navy-dark">{m.firstName} {m.lastName}</td>
-                <td className="px-4 py-3 text-nia-text-faint">{m.email}</td>
-                <td className="px-4 py-3 text-nia-text-muted">{m.membershipTier?.name || '—'}</td>
-                <td className="px-4 py-3"><StatusBadge status={m.membershipStatus} /></td>
-                <td className="px-4 py-3 text-nia-text-faint">
-                  {new Date(m.transactionDate || m.createdAt).toLocaleDateString()}
-                  {m.transactionDate && <span className="block text-[10px] text-nia-text-faint">via Mollie</span>}
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <Link to={`/admin/members/${m._id}`} className="text-nia-orange font-semibold hover:underline">View</Link>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <Table>
+        <Table.Head>
+          <Table.HeaderRow>
+            <Table.Th>Name</Table.Th>
+            <Table.Th>Email</Table.Th>
+            <Table.Th>Tier</Table.Th>
+            <Table.Th>Status</Table.Th>
+            <Table.Th>Joined</Table.Th>
+            <Table.Th></Table.Th>
+          </Table.HeaderRow>
+        </Table.Head>
+        <Table.Body>
+          {loading && <Table.Skeleton colSpan={6} />}
+          {!loading && members.length === 0 && <Table.Empty colSpan={6}>No members found.</Table.Empty>}
+          {!loading && members.map((m) => (
+            <Table.Row key={m._id}>
+              <Table.Cell className="font-medium text-nia-navy-dark">{m.firstName} {m.lastName}</Table.Cell>
+              <Table.Cell className="text-nia-text-faint">{m.email}</Table.Cell>
+              <Table.Cell className="text-nia-text-muted">{m.membershipTier?.name || '—'}</Table.Cell>
+              <Table.Cell><StatusBadge status={m.membershipStatus} /></Table.Cell>
+              <Table.Cell className="text-nia-text-faint">
+                {new Date(m.transactionDate || m.createdAt).toLocaleDateString()}
+                {m.transactionDate && <span className="block text-[10px] text-nia-text-faint">via Mollie</span>}
+              </Table.Cell>
+              <Table.Cell align="right">
+                <Button as={Link} to={`/admin/members/${m._id}`} variant="ghost" size="sm">View</Button>
+              </Table.Cell>
+            </Table.Row>
+          ))}
+        </Table.Body>
+      </Table>
 
       {pages > 1 && (
         <div className="flex items-center justify-between mt-4 text-sm text-nia-text-muted">
           <span>{total} members total</span>
-          <div className="flex gap-2">
-            <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)} className={btnSecondary + ' disabled:opacity-40'}>Prev</button>
-            <span className="px-2 py-2">Page {page} of {pages}</span>
-            <button disabled={page >= pages} onClick={() => setPage((p) => p + 1)} className={btnSecondary + ' disabled:opacity-40'}>Next</button>
+          <div className="flex gap-2 items-center">
+            <Button variant="secondary" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Prev</Button>
+            <span className="px-2">Page {page} of {pages}</span>
+            <Button variant="secondary" size="sm" disabled={page >= pages} onClick={() => setPage((p) => p + 1)}>Next</Button>
           </div>
         </div>
       )}
@@ -182,8 +175,8 @@ function AddMemberModal({ tiers, onClose, onCreated }) {
         </select>
         <p className="text-xs text-nia-text-faint">The member will receive an email to set their own password.</p>
         <div className="flex justify-end gap-2 mt-2">
-          <button type="button" onClick={onClose} className={btnSecondary}>Cancel</button>
-          <button type="submit" disabled={saving} className={btnPrimary}>{saving ? 'Adding…' : 'Add Member'}</button>
+          <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
+          <Button type="submit" variant="primary" disabled={saving}>{saving ? 'Adding…' : 'Add Member'}</Button>
         </div>
       </form>
     </Modal>

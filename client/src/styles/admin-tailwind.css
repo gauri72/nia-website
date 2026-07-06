@@ -33,6 +33,10 @@
 
   --radius-nia-card: 16px;
   --radius-nia-btn: 8px;
+
+  --spacing-nia-row: 1rem;
+  --spacing-nia-section: 1.5rem;
+  --container-nia-main: 90rem;
 }
 
 /* Scoped reset — applies only inside admin/dashboard roots, not globally */

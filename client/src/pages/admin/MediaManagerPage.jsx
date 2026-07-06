@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { Upload, Trash2, Copy, FileText } from 'lucide-react';
 import adminApi from '../../services/adminApi';
-
-const btnPrimary = 'rounded-nia-btn bg-nia-orange px-4 py-2 text-sm font-semibold text-white hover:bg-nia-orange-dark transition-colors disabled:bg-nia-border disabled:text-nia-text-faint';
+import PageHeader from '../../components/admin/PageHeader';
+import Card from '../../components/admin/Card';
+import Button from '../../components/admin/Button';
 
 function isImage(filename) {
   return /\.(jpe?g|png|gif|webp|svg)$/i.test(filename);
@@ -53,23 +54,25 @@ export default function MediaManagerPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-5">
-        <h1 className="text-2xl font-extrabold text-nia-navy-dark">Media Manager</h1>
-        <label className={btnPrimary + ' cursor-pointer'}>
-          <Upload className="inline mr-1.5" />{uploading ? 'Uploading…' : 'Upload File'}
-          <input ref={fileInputRef} type="file" accept="image/*,application/pdf" onChange={handleUpload} disabled={uploading} className="hidden" />
-        </label>
-      </div>
+      <PageHeader
+        title="Media Manager"
+        actions={
+          <Button as="label" variant="primary" className="cursor-pointer" disabled={uploading}>
+            <Upload />{uploading ? 'Uploading…' : 'Upload File'}
+            <input ref={fileInputRef} type="file" accept="image/*,application/pdf" onChange={handleUpload} disabled={uploading} className="hidden" />
+          </Button>
+        }
+      />
 
       {error && <div className="mb-4 rounded bg-red-50 border-l-4 border-nia-error px-3 py-2 text-sm text-red-700">{error}</div>}
 
       {!loading && files.length === 0 && (
-        <div className="rounded-nia-card border border-nia-border bg-white p-8 text-center text-nia-text-faint">No media uploaded yet. Use images here for event covers, content sections, and email templates.</div>
+        <Card className="text-center text-nia-text-faint">No media uploaded yet. Use images here for event covers, content sections, and email templates.</Card>
       )}
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         {files.map((f) => (
-          <div key={f.filename} className="rounded-nia-card border border-nia-border bg-white overflow-hidden flex flex-col">
+          <Card key={f.filename} padded={false} className="flex flex-col">
             <div className="h-28 bg-nia-panel-alt flex items-center justify-center overflow-hidden">
               {isImage(f.filename) ? (
                 <img src={f.url} alt={f.filename} className="w-full h-full object-cover" />
@@ -81,13 +84,13 @@ export default function MediaManagerPage() {
               <p className="text-xs text-nia-text-muted truncate" title={f.filename}>{f.filename}</p>
               <p className="text-[10px] text-nia-text-faint">{(f.size / 1024).toFixed(0)} KB</p>
               <div className="flex gap-1.5">
-                <button onClick={() => handleCopy(f.url)} className="flex-1 rounded-nia-btn border border-nia-border px-2 py-1 text-[11px] font-semibold text-nia-navy-dark hover:bg-nia-panel">
-                  <Copy className="inline mr-1" />{copiedUrl === f.url ? 'Copied!' : 'Copy URL'}
-                </button>
-                <button onClick={() => handleDelete(f)} className="rounded-nia-btn border border-nia-error px-2 py-1 text-nia-error hover:bg-red-50"><Trash2 className="text-[11px]" /></button>
+                <Button variant="secondary" size="sm" className="flex-1" onClick={() => handleCopy(f.url)}>
+                  <Copy />{copiedUrl === f.url ? 'Copied!' : 'Copy URL'}
+                </Button>
+                <Button variant="danger" size="sm" icon onClick={() => handleDelete(f)}><Trash2 /></Button>
               </div>
             </div>
-          </div>
+          </Card>
         ))}
       </div>
     </div>

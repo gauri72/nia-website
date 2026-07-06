@@ -3,6 +3,9 @@ import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Sparkles, RotateCw, Copy, Save } from 'lucide-react';
 import adminApi from '../../services/adminApi';
 import Modal from '../../components/admin/Modal';
+import PageHeader from '../../components/admin/PageHeader';
+import Card from '../../components/admin/Card';
+import Button from '../../components/admin/Button';
 
 const TYPES = [
   { value: 'event_announcement', label: 'Event Announcement' },
@@ -20,8 +23,6 @@ const COLOR_SCHEMES = [
 ];
 
 const inputCls = 'w-full rounded-nia-btn border border-nia-border px-3 py-2 text-sm focus:border-nia-orange focus:outline-none focus:ring-2 focus:ring-nia-orange/20';
-const btnPrimary = 'rounded-nia-btn bg-nia-orange px-4 py-2 text-sm font-semibold text-white hover:bg-nia-orange-dark transition-colors disabled:bg-nia-border disabled:text-nia-text-faint';
-const btnSecondary = 'rounded-nia-btn border border-nia-border bg-white px-4 py-2 text-sm font-semibold text-nia-navy-dark hover:bg-nia-panel transition-colors disabled:opacity-40';
 const label = 'text-xs font-semibold text-nia-text-muted uppercase tracking-wide mb-1 block';
 
 export default function AITemplateGeneratorPage() {
@@ -75,9 +76,9 @@ export default function AITemplateGeneratorPage() {
         <ArrowLeft /> Back to Email Broadcasting
       </Link>
 
-      <h1 className="text-2xl font-extrabold text-nia-navy-dark mb-5">AI Template Generator</h1>
+      <PageHeader title="AI Template Generator" />
 
-      <div className="rounded-nia-card border border-nia-border bg-white p-5 mb-5">
+      <Card className="mb-5">
         {error && <div className="mb-3 rounded bg-red-50 border-l-4 border-nia-error px-3 py-2 text-sm text-red-700">{error}</div>}
         <label className={label}>Describe the email you want</label>
         <textarea
@@ -99,19 +100,19 @@ export default function AITemplateGeneratorPage() {
             </select>
           </div>
           <div className="flex items-end">
-            <button onClick={handleGenerate} disabled={generating || !prompt.trim()} className={btnPrimary + ' w-full'}>
+            <Button variant="primary" disabled={generating || !prompt.trim()} onClick={handleGenerate} className="w-full">
               {generating ? (
                 <span className="flex items-center justify-center gap-2">
                   <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
                   Generating…
                 </span>
               ) : (
-                <><Sparkles className="inline mr-1.5" />Generate Template</>
+                <><Sparkles /> Generate Template</>
               )}
-            </button>
+            </Button>
           </div>
         </div>
-      </div>
+      </Card>
 
       {html && (
         <>
@@ -137,9 +138,9 @@ export default function AITemplateGeneratorPage() {
           </div>
 
           <div className="flex flex-wrap gap-3 mt-4">
-            <button onClick={handleGenerate} disabled={generating} className={btnSecondary}><RotateCw className="inline mr-1.5" />Regenerate</button>
-            <button onClick={handleCopy} className={btnSecondary}><Copy className="inline mr-1.5" />{copied ? 'Copied!' : 'Copy HTML'}</button>
-            <button onClick={() => setShowSave(true)} className={btnPrimary}><Save className="inline mr-1.5" />Save to Library</button>
+            <Button variant="secondary" disabled={generating} onClick={handleGenerate}><RotateCw /> Regenerate</Button>
+            <Button variant="secondary" onClick={handleCopy}><Copy /> {copied ? 'Copied!' : 'Copy HTML'}</Button>
+            <Button variant="primary" onClick={() => setShowSave(true)}><Save /> Save to Library</Button>
           </div>
         </>
       )}
@@ -187,8 +188,8 @@ function SaveTemplateModal({ templateId, subject, html, type, colorScheme, promp
         <div><label className={label}>Template Name</label><input className={inputCls} required value={name} onChange={(e) => setName(e.target.value)} /></div>
         <div><label className={label}>Tags (comma separated)</label><input className={inputCls} value={tags} onChange={(e) => setTags(e.target.value)} placeholder="festival, summer, 2026" /></div>
         <div className="flex justify-end gap-2 mt-2">
-          <button type="button" onClick={onClose} className={btnSecondary}>Cancel</button>
-          <button type="submit" disabled={saving} className={btnPrimary}>{saving ? 'Saving…' : 'Save'}</button>
+          <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
+          <Button type="submit" variant="primary" disabled={saving}>{saving ? 'Saving…' : 'Save'}</Button>
         </div>
       </form>
     </Modal>

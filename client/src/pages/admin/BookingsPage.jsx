@@ -3,10 +3,11 @@ import { Plus, Download } from 'lucide-react';
 import adminApi from '../../services/adminApi';
 import StatusBadge from '../../components/admin/StatusBadge';
 import Modal from '../../components/admin/Modal';
+import PageHeader from '../../components/admin/PageHeader';
+import Table from '../../components/admin/Table';
+import Button from '../../components/admin/Button';
 
 const inputCls = 'w-full rounded-nia-btn border border-nia-border px-3 py-2 text-sm focus:border-nia-orange focus:outline-none focus:ring-2 focus:ring-nia-orange/20';
-const btnPrimary = 'rounded-nia-btn bg-nia-orange px-4 py-2 text-sm font-semibold text-white hover:bg-nia-orange-dark transition-colors disabled:bg-nia-border disabled:text-nia-text-faint';
-const btnSecondary = 'rounded-nia-btn border border-nia-border bg-white px-4 py-2 text-sm font-semibold text-nia-navy-dark hover:bg-nia-panel transition-colors';
 const selectFilterCls = 'rounded-nia-btn border border-nia-border px-3 py-2 text-sm focus:border-nia-orange focus:outline-none focus:ring-2 focus:ring-nia-orange/20 w-auto';
 const label = 'text-xs font-semibold text-nia-text-muted uppercase tracking-wide mb-1 block';
 
@@ -56,10 +57,10 @@ export default function AdminBookingsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-5">
-        <h1 className="text-2xl font-extrabold text-nia-navy-dark">Tickets & Bookings</h1>
-        <button onClick={() => setShowManual(true)} className={btnPrimary}><Plus className="inline mr-1.5" />Manual Booking</button>
-      </div>
+      <PageHeader
+        title="Tickets & Bookings"
+        actions={<Button variant="primary" onClick={() => setShowManual(true)}><Plus /> Manual Booking</Button>}
+      />
 
       <div className="flex flex-wrap gap-3 mb-4">
         <input
@@ -76,46 +77,42 @@ export default function AdminBookingsPage() {
         </select>
       </div>
 
-      <div className="rounded-nia-card border border-nia-border bg-white overflow-hidden overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="bg-nia-panel-alt text-left text-xs font-bold uppercase tracking-wide text-nia-text-muted">
-              <th className="px-4 py-3">Reference</th>
-              <th className="px-4 py-3">Member</th>
-              <th className="px-4 py-3">Event</th>
-              <th className="pl-4 pr-8 py-3 text-right">Amount</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Booked</th>
-              <th className="px-4 py-3"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {!loading && bookings.length === 0 && (
-              <tr><td colSpan={7} className="px-4 py-8 text-center text-nia-text-faint">No bookings found.</td></tr>
-            )}
-            {bookings.map((b) => (
-              <tr key={b._id} className="border-t border-nia-border hover:bg-nia-panel/40">
-                <td className="px-4 py-3 font-mono text-xs text-nia-text-faint">{b.bookingNumber}</td>
-                <td className="px-4 py-3 font-medium text-nia-navy-dark">{b.member?.firstName} {b.member?.lastName}</td>
-                <td className="px-4 py-3 text-nia-text-muted">{b.event?.title}</td>
-                <td className="pl-4 pr-8 py-3 font-semibold text-nia-navy-dark text-right tabular-nums">€{b.amount.toFixed(2)}</td>
-                <td className="px-4 py-3"><StatusBadge status={b.status} /></td>
-                <td className="px-4 py-3 text-nia-text-faint whitespace-nowrap">{new Date(b.createdAt).toLocaleDateString()}</td>
-                <td className="px-4 py-3 text-right whitespace-nowrap">
-                  <div className="flex gap-2 justify-end">
-                    {b.status === 'paid' && (
-                      <button onClick={() => downloadPdf(b)} title="Download PDF" className="rounded-nia-btn border border-nia-border px-2.5 py-1.5 hover:bg-nia-panel"><Download /></button>
-                    )}
-                    {b.status === 'paid' && (
-                      <button onClick={() => handleRefund(b)} className="rounded-nia-btn border border-nia-error px-3 py-1.5 text-xs font-semibold text-nia-error hover:bg-red-50">Refund</button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <Table>
+        <Table.Head>
+          <Table.HeaderRow>
+            <Table.Th>Reference</Table.Th>
+            <Table.Th>Member</Table.Th>
+            <Table.Th>Event</Table.Th>
+            <Table.Th align="right">Amount</Table.Th>
+            <Table.Th>Status</Table.Th>
+            <Table.Th>Booked</Table.Th>
+            <Table.Th></Table.Th>
+          </Table.HeaderRow>
+        </Table.Head>
+        <Table.Body>
+          {!loading && bookings.length === 0 && <Table.Empty colSpan={7}>No bookings found.</Table.Empty>}
+          {bookings.map((b) => (
+            <Table.Row key={b._id}>
+              <Table.Cell className="font-mono text-xs text-nia-text-faint">{b.bookingNumber}</Table.Cell>
+              <Table.Cell className="font-medium text-nia-navy-dark">{b.member?.firstName} {b.member?.lastName}</Table.Cell>
+              <Table.Cell className="text-nia-text-muted">{b.event?.title}</Table.Cell>
+              <Table.Cell align="right" className="font-semibold text-nia-navy-dark tabular-nums">€{b.amount.toFixed(2)}</Table.Cell>
+              <Table.Cell><StatusBadge status={b.status} /></Table.Cell>
+              <Table.Cell className="text-nia-text-faint whitespace-nowrap">{new Date(b.createdAt).toLocaleDateString()}</Table.Cell>
+              <Table.Cell align="right" className="whitespace-nowrap">
+                <div className="flex gap-2 justify-end">
+                  {b.status === 'paid' && (
+                    <Button variant="secondary" size="sm" icon title="Download PDF" onClick={() => downloadPdf(b)}><Download /></Button>
+                  )}
+                  {b.status === 'paid' && (
+                    <Button variant="danger" size="sm" onClick={() => handleRefund(b)}>Refund</Button>
+                  )}
+                </div>
+              </Table.Cell>
+            </Table.Row>
+          ))}
+        </Table.Body>
+      </Table>
 
       {showManual && (
         <ManualBookingModal events={events} onClose={() => setShowManual(false)} onCreated={() => { setShowManual(false); fetchBookings(); }} />
@@ -181,8 +178,8 @@ function ManualBookingModal({ events, onClose, onCreated }) {
         <input className={inputCls} type="email" placeholder="Email" required value={customer.email} onChange={(e) => setCustomer((c) => ({ ...c, email: e.target.value }))} />
         <p className="text-xs text-nia-text-faint">Existing members are matched by email; new customers get an account with a password-setup email.</p>
         <div className="flex justify-end gap-2 mt-2">
-          <button type="button" onClick={onClose} className={btnSecondary}>Cancel</button>
-          <button type="submit" disabled={saving} className={btnPrimary}>{saving ? 'Creating…' : 'Create Booking (Paid)'}</button>
+          <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
+          <Button type="submit" variant="primary" disabled={saving}>{saving ? 'Creating…' : 'Create Booking (Paid)'}</Button>
         </div>
       </form>
     </Modal>

@@ -3,6 +3,7 @@ import { Outlet, NavLink, Link } from 'react-router-dom';
 import { Home, IdCard, Calendar, Ticket, UserCircle, Bell, LogOut } from 'lucide-react';
 import { useMemberAuth } from '../context/MemberAuthContext';
 import memberApi from '../services/memberApi';
+import Button from '../components/admin/Button';
 import '../styles/admin-tailwind.css';
 
 const NAV_ITEMS = [
@@ -46,12 +47,7 @@ export default function DashboardLayout() {
           </nav>
           <div className="flex items-center gap-3 text-sm">
             <span className="text-nia-text-muted hidden sm:inline">Hi, {member?.firstName}</span>
-            <button
-              onClick={logout}
-              className="flex items-center gap-1.5 rounded-nia-btn border border-nia-border bg-nia-panel px-3 py-1.5 font-semibold text-nia-navy-dark hover:bg-nia-panel-alt transition-colors"
-            >
-              <LogOut /> Logout
-            </button>
+            <Button variant="secondary" size="sm" onClick={logout}><LogOut /> Logout</Button>
           </div>
         </div>
       </header>

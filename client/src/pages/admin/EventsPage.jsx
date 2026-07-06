@@ -3,10 +3,11 @@ import { Link } from 'react-router-dom';
 import { Search, Plus, Copy, Download } from 'lucide-react';
 import adminApi from '../../services/adminApi';
 import StatusBadge from '../../components/admin/StatusBadge';
+import PageHeader from '../../components/admin/PageHeader';
+import Table from '../../components/admin/Table';
+import Button from '../../components/admin/Button';
 
 const CATEGORIES = ['Cultural', 'Community', 'Workshop', 'Festival', 'Exhibition', 'Performance', 'Other'];
-const btnPrimary = 'rounded-nia-btn bg-nia-orange px-4 py-2 text-sm font-semibold text-white hover:bg-nia-orange-dark transition-colors';
-const btnSecondary = 'rounded-nia-btn border border-nia-border bg-white px-4 py-2 text-sm font-semibold text-nia-navy-dark hover:bg-nia-panel transition-colors';
 const selectFilterCls = 'rounded-nia-btn border border-nia-border px-3 py-2 text-sm focus:border-nia-orange focus:outline-none focus:ring-2 focus:ring-nia-orange/20 w-auto';
 
 export default function AdminEventsPage() {
@@ -63,10 +64,10 @@ export default function AdminEventsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-5">
-        <h1 className="text-2xl font-extrabold text-nia-navy-dark">Events</h1>
-        <Link to="/admin/events/new" className={btnPrimary}><Plus className="inline mr-1.5" />Create Event</Link>
-      </div>
+      <PageHeader
+        title="Events"
+        actions={<Button as={Link} to="/admin/events/new" variant="primary"><Plus /> Create Event</Button>}
+      />
 
       <div className="flex flex-wrap gap-3 mb-4">
         <div className="relative flex-1 min-w-[200px]">
@@ -86,46 +87,42 @@ export default function AdminEventsPage() {
         </select>
       </div>
 
-      <div className="rounded-nia-card border border-nia-border bg-white overflow-hidden overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="bg-nia-panel-alt text-left text-xs font-bold uppercase tracking-wide text-nia-text-muted">
-              <th className="px-4 py-3">Title</th>
-              <th className="px-4 py-3">Date</th>
-              <th className="px-4 py-3">Category</th>
-              <th className="px-4 py-3">Tickets</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {!loading && events.length === 0 && (
-              <tr><td colSpan={6} className="px-4 py-8 text-center text-nia-text-faint">No events found.</td></tr>
-            )}
-            {events.map((e) => (
-              <tr key={e._id} className="border-t border-nia-border hover:bg-nia-panel/40">
-                <td className="px-4 py-3 font-medium">
-                  <Link to={`/admin/events/${e._id}`} className="text-nia-navy-dark hover:underline hover:text-nia-orange">{e.title}</Link>
-                </td>
-                <td className="px-4 py-3 text-nia-text-muted whitespace-nowrap">{new Date(e.startDate).toLocaleDateString()}</td>
-                <td className="px-4 py-3 text-nia-text-muted">{e.category}</td>
-                <td className="px-4 py-3 text-nia-text-muted whitespace-nowrap">{e.ticketsSold}/{e.ticketsTotal || '—'}</td>
-                <td className="px-4 py-3"><StatusBadge status={e.displayStatus} /></td>
-                <td className="px-4 py-3 text-right whitespace-nowrap">
-                  <div className="flex gap-2 justify-end">
-                    <button onClick={() => handlePublishToggle(e)} className={btnSecondary}>
-                      {e.status === 'published' ? 'Unpublish' : 'Publish'}
-                    </button>
-                    <button onClick={() => handleDuplicate(e)} title="Duplicate" className="rounded-nia-btn border border-nia-border px-2.5 py-2 hover:bg-nia-panel"><Copy /></button>
-                    <button onClick={() => exportAttendees(e)} title="Export attendees" className="rounded-nia-btn border border-nia-border px-2.5 py-2 hover:bg-nia-panel"><Download /></button>
-                    <button onClick={() => handleDelete(e)} className="rounded-nia-btn border border-nia-error px-2.5 py-2 text-nia-error hover:bg-red-50">Delete</button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <Table>
+        <Table.Head>
+          <Table.HeaderRow>
+            <Table.Th>Title</Table.Th>
+            <Table.Th>Date</Table.Th>
+            <Table.Th>Category</Table.Th>
+            <Table.Th>Tickets</Table.Th>
+            <Table.Th>Status</Table.Th>
+            <Table.Th></Table.Th>
+          </Table.HeaderRow>
+        </Table.Head>
+        <Table.Body>
+          {!loading && events.length === 0 && <Table.Empty colSpan={6}>No events found.</Table.Empty>}
+          {events.map((e) => (
+            <Table.Row key={e._id}>
+              <Table.Cell className="font-medium">
+                <Link to={`/admin/events/${e._id}`} className="text-nia-navy-dark hover:underline hover:text-nia-orange">{e.title}</Link>
+              </Table.Cell>
+              <Table.Cell className="text-nia-text-muted whitespace-nowrap">{new Date(e.startDate).toLocaleDateString()}</Table.Cell>
+              <Table.Cell className="text-nia-text-muted">{e.category}</Table.Cell>
+              <Table.Cell className="text-nia-text-muted whitespace-nowrap">{e.ticketsSold}/{e.ticketsTotal || '—'}</Table.Cell>
+              <Table.Cell><StatusBadge status={e.displayStatus} /></Table.Cell>
+              <Table.Cell align="right" className="whitespace-nowrap">
+                <div className="flex gap-2 justify-end">
+                  <Button variant="secondary" size="sm" onClick={() => handlePublishToggle(e)}>
+                    {e.status === 'published' ? 'Unpublish' : 'Publish'}
+                  </Button>
+                  <Button variant="secondary" size="sm" icon title="Duplicate" onClick={() => handleDuplicate(e)}><Copy /></Button>
+                  <Button variant="secondary" size="sm" icon title="Export attendees" onClick={() => exportAttendees(e)}><Download /></Button>
+                  <Button variant="danger" size="sm" onClick={() => handleDelete(e)}>Delete</Button>
+                </div>
+              </Table.Cell>
+            </Table.Row>
+          ))}
+        </Table.Body>
+      </Table>
     </div>
   );
 }

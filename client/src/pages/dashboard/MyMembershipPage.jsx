@@ -3,9 +3,10 @@ import { Download, CheckCircle2 } from 'lucide-react';
 import memberApi from '../../services/memberApi';
 import { useMemberAuth } from '../../context/MemberAuthContext';
 import StatusBadge from '../../components/admin/StatusBadge';
-
-const btnPrimary = 'rounded-nia-btn bg-nia-orange px-4 py-2 text-sm font-semibold text-white hover:bg-nia-orange-dark transition-colors disabled:bg-nia-border disabled:text-nia-text-faint';
-const btnSecondary = 'rounded-nia-btn border border-nia-border bg-white px-4 py-2 text-sm font-semibold text-nia-navy-dark hover:bg-nia-panel transition-colors';
+import PageHeader from '../../components/admin/PageHeader';
+import Card from '../../components/admin/Card';
+import Button from '../../components/admin/Button';
+import Table from '../../components/admin/Table';
 
 function goToCheckout(paymentId, checkoutUrl) {
   sessionStorage.setItem('nia_pending_payment_id', paymentId);
@@ -69,11 +70,11 @@ export default function MyMembershipPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-extrabold text-nia-navy-dark">My Membership</h1>
+      <PageHeader title="My Membership" />
       {error && <div className="rounded bg-red-50 border-l-4 border-nia-error px-3 py-2 text-sm text-red-700">{error}</div>}
 
       {status.membershipTier ? (
-        <div className="rounded-nia-card border border-nia-border bg-white p-5">
+        <Card>
           <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
             <div>
               <p className="text-xs font-semibold text-nia-text-faint uppercase">Current Tier</p>
@@ -88,52 +89,61 @@ export default function MyMembershipPage() {
             <input type="checkbox" checked={status.autoRenew} onChange={toggleAutoRenew} /> Auto-renewal enabled
           </label>
           <div className="flex flex-wrap gap-3">
-            <button onClick={handleRenew} disabled={busy} className={btnPrimary}>Renew Membership</button>
-            <button onClick={downloadCard} className={btnSecondary}><Download className="inline mr-1.5" />Download Card</button>
+            <Button variant="primary" disabled={busy} onClick={handleRenew}>Renew Membership</Button>
+            <Button variant="secondary" onClick={downloadCard}><Download />Download Card</Button>
           </div>
-        </div>
+        </Card>
       ) : (
-        <div className="rounded-nia-card border border-nia-border bg-white p-5">
+        <Card>
           <p className="text-nia-text-muted">You don't have an active membership yet. Choose a tier below to join.</p>
-        </div>
+        </Card>
       )}
 
       <div>
         <h2 className="font-bold text-nia-navy-dark mb-3">{status.membershipTier ? 'Upgrade Your Tier' : 'Available Tiers'}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {tiers.filter((t) => t._id !== status.membershipTier?._id).map((t) => (
-            <div key={t._id} className="rounded-nia-card border border-nia-border bg-white p-5 flex flex-col gap-2" style={{ borderTop: `4px solid ${t.color}` }}>
+            <Card key={t._id} className="flex flex-col gap-2" style={{ borderTop: `4px solid ${t.color}` }}>
               <h3 className="font-bold text-nia-navy-dark">{t.name}</h3>
               <p className="text-2xl font-extrabold text-nia-orange">€{t.price}<span className="text-sm font-medium text-nia-text-faint">/{t.billingPeriod === 'annual' ? 'yr' : 'mo'}</span></p>
               <p className="text-sm text-nia-text-muted">{t.description}</p>
               <ul className="text-sm text-nia-text-muted flex flex-col gap-1 flex-1">
                 {t.benefits.map((b, i) => <li key={i} className="flex items-start gap-1.5"><CheckCircle2 className="text-nia-success mt-0.5 flex-shrink-0 text-xs" />{b}</li>)}
               </ul>
-              <button onClick={() => handleJoinOrUpgrade(t._id)} disabled={busy} className={btnPrimary + ' mt-2'}>
+              <Button variant="primary" disabled={busy} onClick={() => handleJoinOrUpgrade(t._id)} className="mt-2">
                 {status.membershipTier ? 'Upgrade' : 'Join'}
-              </button>
-            </div>
+              </Button>
+            </Card>
           ))}
         </div>
       </div>
 
       {status.history.length > 0 && (
-        <div className="rounded-nia-card border border-nia-border bg-white p-5">
-          <h2 className="font-bold text-nia-navy-dark mb-3">Membership History</h2>
-          <table className="w-full text-sm">
-            <thead><tr className="text-left text-xs font-bold uppercase text-nia-text-muted"><th className="py-2">Tier</th><th className="py-2">Type</th><th className="py-2">Amount</th><th className="py-2">Date</th></tr></thead>
-            <tbody>
+        <Card padded={false}>
+          <div className="p-5 pb-0">
+            <h2 className="font-bold text-nia-navy-dark mb-3">Membership History</h2>
+          </div>
+          <Table bare>
+            <Table.Head>
+              <Table.HeaderRow>
+                <Table.Th>Tier</Table.Th>
+                <Table.Th>Type</Table.Th>
+                <Table.Th align="right">Amount</Table.Th>
+                <Table.Th>Date</Table.Th>
+              </Table.HeaderRow>
+            </Table.Head>
+            <Table.Body>
               {status.history.map((h) => (
-                <tr key={h._id} className="border-t border-nia-border">
-                  <td className="py-2">{h.membershipTier?.name}</td>
-                  <td className="py-2 capitalize">{h.type}</td>
-                  <td className="py-2">€{h.amount.toFixed(2)}</td>
-                  <td className="py-2">{new Date(h.paid_at).toLocaleDateString()}</td>
-                </tr>
+                <Table.Row key={h._id}>
+                  <Table.Cell>{h.membershipTier?.name}</Table.Cell>
+                  <Table.Cell className="capitalize text-nia-text-muted">{h.type}</Table.Cell>
+                  <Table.Cell align="right" className="font-semibold text-nia-navy-dark tabular-nums">€{h.amount.toFixed(2)}</Table.Cell>
+                  <Table.Cell className="text-nia-text-faint">{new Date(h.paid_at).toLocaleDateString()}</Table.Cell>
+                </Table.Row>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </Table.Body>
+          </Table>
+        </Card>
       )}
     </div>
   );

@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Plug, CheckCircle2 } from 'lucide-react';
 import adminApi from '../../services/adminApi';
+import PageHeader from '../../components/admin/PageHeader';
+import Card from '../../components/admin/Card';
+import Button from '../../components/admin/Button';
 
 const inputCls = 'w-full rounded-nia-btn border border-nia-border px-3 py-2 text-sm focus:border-nia-orange focus:outline-none focus:ring-2 focus:ring-nia-orange/20';
-const btnPrimary = 'rounded-nia-btn bg-nia-orange px-4 py-2 text-sm font-semibold text-white hover:bg-nia-orange-dark transition-colors disabled:bg-nia-border disabled:text-nia-text-faint';
 const label = 'text-xs font-semibold text-nia-text-muted uppercase tracking-wide mb-1 block';
 
 export default function AdminSettingsPage() {
@@ -35,10 +37,9 @@ export default function AdminSettingsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-extrabold text-nia-navy-dark mb-2">Settings</h1>
-      <p className="text-sm text-nia-text-faint mb-5">Organization and integration settings.</p>
+      <PageHeader title="Settings" description="Organization and integration settings." />
 
-      <div className="max-w-xl rounded-nia-card border border-nia-border bg-white p-5">
+      <Card className="max-w-xl">
         <h2 className="font-bold text-nia-navy-dark mb-1 flex items-center gap-2"><Plug /> Mollie Integration</h2>
         <p className="text-xs text-nia-text-faint mb-4">Connect a Mollie API key to enable transaction import and the real-time payment webhook.</p>
 
@@ -66,11 +67,11 @@ export default function AdminSettingsPage() {
             <p className="text-[11px] text-nia-text-faint mt-1">Stored encrypted at rest — never shown again after saving. Mode (live/test) is detected automatically from the key prefix.</p>
           </div>
           {error && <p className="text-sm text-nia-error">{error}</p>}
-          <button type="submit" disabled={connecting} className={`${btnPrimary} self-start`}>
+          <Button type="submit" variant="primary" disabled={connecting} className="self-start">
             {connecting ? 'Connecting…' : status?.connected ? 'Update Connection' : 'Test & Connect'}
-          </button>
+          </Button>
         </form>
-      </div>
+      </Card>
     </div>
   );
 }

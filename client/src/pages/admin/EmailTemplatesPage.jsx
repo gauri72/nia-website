@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Plus, Eye, Pencil, Copy, Trash2, Bot } from 'lucide-react';
+import { Search, Eye, Pencil, Copy, Trash2, Bot } from 'lucide-react';
 import adminApi from '../../services/adminApi';
 import Modal from '../../components/admin/Modal';
 import EmailBroadcastingNav from '../../components/admin/EmailBroadcastingNav';
+import PageHeader from '../../components/admin/PageHeader';
+import Card from '../../components/admin/Card';
+import Button from '../../components/admin/Button';
 
 const TYPES = ['event_announcement', 'newsletter', 'membership_update', 'promotional', 'welcome', 'general'];
 const selectFilterCls = 'rounded-nia-btn border border-nia-border px-3 py-2 text-sm focus:border-nia-orange focus:outline-none focus:ring-2 focus:ring-nia-orange/20 w-auto';
-const btnPrimary = 'rounded-nia-btn bg-nia-orange px-4 py-2 text-sm font-semibold text-white hover:bg-nia-orange-dark transition-colors';
-const btnSecondary = 'rounded-nia-btn border border-nia-border bg-white px-3 py-1.5 text-xs font-semibold text-nia-navy-dark hover:bg-nia-panel transition-colors';
 
 function typeLabel(t) {
   return t.split('_').map((w) => w[0].toUpperCase() + w.slice(1)).join(' ');
@@ -41,10 +42,10 @@ export default function EmailTemplatesPage() {
   return (
     <div>
       <EmailBroadcastingNav />
-      <div className="flex items-center justify-between mb-5">
-        <h1 className="text-2xl font-extrabold text-nia-navy-dark">Email Templates</h1>
-        <Link to="/admin/broadcasting/generate" className={btnPrimary}><Bot className="inline mr-1.5" />Generate with AI</Link>
-      </div>
+      <PageHeader
+        title="Email Templates"
+        actions={<Button as={Link} to="/admin/broadcasting/generate" variant="primary"><Bot /> Generate with AI</Button>}
+      />
 
       <div className="flex flex-wrap gap-3 mb-5">
         <div className="relative flex-1 min-w-[200px]">
@@ -61,14 +62,14 @@ export default function EmailTemplatesPage() {
       </div>
 
       {!loading && templates.length === 0 && (
-        <div className="rounded-nia-card border border-nia-border bg-white p-8 text-center text-nia-text-faint">
+        <Card className="text-center text-nia-text-faint">
           No templates yet. <Link to="/admin/broadcasting/generate" className="text-nia-orange font-semibold">Generate one with AI</Link>.
-        </div>
+        </Card>
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {templates.map((t) => (
-          <div key={t._id} className="rounded-nia-card border border-nia-border bg-white overflow-hidden flex flex-col">
+          <Card key={t._id} padded={false} className="flex flex-col">
             <div className="h-28 bg-nia-panel-alt overflow-hidden relative">
               <iframe title={t.name} srcDoc={t.htmlContent} className="w-[600px] h-[280px] origin-top-left scale-[0.22] pointer-events-none border-0" />
             </div>
@@ -78,13 +79,13 @@ export default function EmailTemplatesPage() {
               <p className="text-xs text-nia-text-faint">Edited {new Date(t.updatedAt).toLocaleDateString()}</p>
               <div className="flex-1" />
               <div className="flex flex-wrap gap-1.5 mt-2">
-                <button onClick={() => setPreviewTemplate(t)} className={btnSecondary}><Eye className="inline mr-1" />Preview</button>
-                <Link to={`/admin/broadcasting/generate?templateId=${t._id}`} className={btnSecondary}><Pencil className="inline mr-1" />Edit</Link>
-                <button onClick={() => handleDuplicate(t)} className={btnSecondary}><Copy className="inline mr-1" />Duplicate</button>
-                <button onClick={() => handleDelete(t)} className="rounded-nia-btn border border-nia-error px-3 py-1.5 text-xs font-semibold text-nia-error hover:bg-red-50"><Trash2 /></button>
+                <Button variant="secondary" size="sm" onClick={() => setPreviewTemplate(t)}><Eye /> Preview</Button>
+                <Button as={Link} to={`/admin/broadcasting/generate?templateId=${t._id}`} variant="secondary" size="sm"><Pencil /> Edit</Button>
+                <Button variant="secondary" size="sm" onClick={() => handleDuplicate(t)}><Copy /> Duplicate</Button>
+                <Button variant="danger" size="sm" icon onClick={() => handleDelete(t)}><Trash2 /></Button>
               </div>
             </div>
-          </div>
+          </Card>
         ))}
       </div>
 

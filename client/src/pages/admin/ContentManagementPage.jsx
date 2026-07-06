@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import adminApi from '../../services/adminApi';
+import PageHeader from '../../components/admin/PageHeader';
+import Card from '../../components/admin/Card';
+import Button from '../../components/admin/Button';
 
 const inputCls = 'w-full rounded-nia-btn border border-nia-border px-3 py-2 text-sm focus:border-nia-orange focus:outline-none focus:ring-2 focus:ring-nia-orange/20';
-const btnPrimary = 'rounded-nia-btn bg-nia-orange px-4 py-2 text-sm font-semibold text-white hover:bg-nia-orange-dark transition-colors disabled:bg-nia-border disabled:text-nia-text-faint';
 const label = 'text-xs font-semibold text-nia-text-muted uppercase tracking-wide mb-1 block';
 
 const SECTIONS = [
@@ -56,12 +58,11 @@ export default function ContentManagementPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-extrabold text-nia-navy-dark mb-2">Content Management</h1>
-      <p className="text-sm text-nia-text-faint mb-5">Edit homepage sections, announcements and footer content stored for the site.</p>
+      <PageHeader title="Content Management" description="Edit homepage sections, announcements and footer content stored for the site." />
 
       <div className="flex flex-col gap-5 max-w-2xl">
         {SECTIONS.map((sectionDef) => (
-          <div key={sectionDef.key} className="rounded-nia-card border border-nia-border bg-white p-5">
+          <Card key={sectionDef.key}>
             <h2 className="font-bold text-nia-navy-dark mb-3">{sectionDef.title}</h2>
             <div className="flex flex-col gap-3 mb-3">
               {sectionDef.fields.map((f) => (
@@ -76,12 +77,12 @@ export default function ContentManagementPage() {
               ))}
             </div>
             <div className="flex items-center gap-3">
-              <button onClick={() => handleSave(sectionDef)} disabled={saving[sectionDef.key]} className={btnPrimary}>
+              <Button variant="primary" disabled={saving[sectionDef.key]} onClick={() => handleSave(sectionDef)}>
                 {saving[sectionDef.key] ? 'Saving…' : 'Save'}
-              </button>
+              </Button>
               {message[sectionDef.key] && <span className="text-sm text-nia-success font-semibold">{message[sectionDef.key]}</span>}
             </div>
-          </div>
+          </Card>
         ))}
       </div>
     </div>

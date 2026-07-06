@@ -3,8 +3,9 @@ import { Download, QrCode, X } from 'lucide-react';
 import memberApi from '../../services/memberApi';
 import StatusBadge from '../../components/admin/StatusBadge';
 import Modal from '../../components/admin/Modal';
-
-const btnSecondary = 'rounded-nia-btn border border-nia-border bg-white px-3 py-1.5 text-xs font-semibold text-nia-navy-dark hover:bg-nia-panel transition-colors';
+import PageHeader from '../../components/admin/PageHeader';
+import Card from '../../components/admin/Card';
+import Button from '../../components/admin/Button';
 
 function statusFor(booking) {
   if (booking.status === 'refunded') return 'Cancelled';
@@ -55,13 +56,13 @@ export default function MyTicketsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-extrabold text-nia-navy-dark mb-5">My Tickets</h1>
+      <PageHeader title="My Tickets" />
 
       {!loading && bookings.length === 0 && <p className="text-nia-text-faint">You haven't booked any tickets yet.</p>}
 
       <div className="flex flex-col gap-3">
         {bookings.map((b) => (
-          <div key={b._id} className="rounded-nia-card border border-nia-border bg-white p-4 flex items-center justify-between flex-wrap gap-3">
+          <Card key={b._id} className="flex items-center justify-between flex-wrap gap-3">
             <div>
               <p className="font-bold text-nia-navy-dark">{b.event?.title}</p>
               <p className="text-sm text-nia-text-muted">{b.event?.startDate && new Date(b.event.startDate).toLocaleString()} · {b.event?.venueCity}</p>
@@ -71,15 +72,15 @@ export default function MyTicketsPage() {
               <StatusBadge status={statusFor(b)} />
               {b.status === 'paid' && (
                 <div className="flex gap-2">
-                  <button onClick={() => showQr(b)} className={btnSecondary}><QrCode className="inline mr-1" />QR</button>
-                  <button onClick={() => downloadPdf(b)} className={btnSecondary}><Download className="inline mr-1" />PDF</button>
+                  <Button variant="secondary" size="sm" onClick={() => showQr(b)}><QrCode />QR</Button>
+                  <Button variant="secondary" size="sm" onClick={() => downloadPdf(b)}><Download />PDF</Button>
                   {b.event && new Date(b.event.startDate) > new Date() && (
-                    <button onClick={() => handleCancel(b)} className="rounded-nia-btn border border-nia-error px-3 py-1.5 text-xs font-semibold text-nia-error hover:bg-red-50"><X className="inline mr-1" />Cancel</button>
+                    <Button variant="danger" size="sm" onClick={() => handleCancel(b)}><X />Cancel</Button>
                   )}
                 </div>
               )}
             </div>
-          </div>
+          </Card>
         ))}
       </div>
 

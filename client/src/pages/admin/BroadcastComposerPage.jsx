@@ -3,10 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Check, Bot } from 'lucide-react';
 import adminApi from '../../services/adminApi';
 import EmailBroadcastingNav from '../../components/admin/EmailBroadcastingNav';
+import PageHeader from '../../components/admin/PageHeader';
+import Card from '../../components/admin/Card';
+import Button from '../../components/admin/Button';
 
 const inputCls = 'w-full rounded-nia-btn border border-nia-border px-3 py-2 text-sm focus:border-nia-orange focus:outline-none focus:ring-2 focus:ring-nia-orange/20';
-const btnPrimary = 'rounded-nia-btn bg-nia-orange px-5 py-2.5 text-sm font-semibold text-white hover:bg-nia-orange-dark transition-colors disabled:bg-nia-border disabled:text-nia-text-faint';
-const btnSecondary = 'rounded-nia-btn border border-nia-border bg-white px-5 py-2.5 text-sm font-semibold text-nia-navy-dark hover:bg-nia-panel transition-colors';
 const label = 'text-xs font-semibold text-nia-text-muted uppercase tracking-wide mb-1 block';
 
 const STEPS = ['Template', 'Audience', 'Personalize', 'Schedule', 'Review'];
@@ -111,9 +112,9 @@ export default function BroadcastComposerPage() {
   return (
     <div>
       <EmailBroadcastingNav />
-      <h1 className="text-2xl font-extrabold text-nia-navy-dark mb-5">Compose Broadcast</h1>
+      <PageHeader title="Compose Broadcast" />
 
-      <div className="flex items-center gap-2 mb-6">
+      <div className="flex items-center gap-2 mb-6 flex-wrap">
         {STEPS.map((s, i) => (
           <div key={s} className="flex items-center gap-2">
             <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${i < step ? 'bg-nia-success text-white' : i === step ? 'bg-nia-orange text-white' : 'bg-nia-panel-alt text-nia-text-faint'}`}>
@@ -127,7 +128,7 @@ export default function BroadcastComposerPage() {
 
       {error && <div className="mb-4 rounded bg-red-50 border-l-4 border-nia-error px-3 py-2 text-sm text-red-700">{error}</div>}
 
-      <div className="rounded-nia-card border border-nia-border bg-white p-6">
+      <Card>
         {/* Step 0 — Template */}
         {step === 0 && (
           <div>
@@ -139,7 +140,7 @@ export default function BroadcastComposerPage() {
               {templates.map((t) => (
                 <button
                   key={t._id} onClick={() => setSelectedTemplate(t)}
-                  className={`text-left rounded-nia-btn border-2 p-3 transition-colors ${selectedTemplate?._id === t._id ? 'border-nia-orange bg-nia-orange/5' : 'border-nia-border hover:border-nia-text-faint'}`}
+                  className={`text-left rounded-nia-btn border-2 p-3 transition-colors bg-white ${selectedTemplate?._id === t._id ? 'border-nia-orange bg-nia-orange/5' : 'border-nia-border hover:border-nia-text-faint'}`}
                 >
                   <p className="font-semibold text-sm text-nia-navy-dark">{t.name}</p>
                   <p className="text-xs text-nia-text-faint">{t.type.replace('_', ' ')}</p>
@@ -148,7 +149,7 @@ export default function BroadcastComposerPage() {
             </div>
             <Link to="/admin/broadcasting/generate" className="inline-flex items-center gap-1.5 text-sm text-nia-orange font-semibold mb-4"><Bot />Generate a new template with AI</Link>
             <div className="flex justify-end">
-              <button onClick={goToAudience} disabled={!selectedTemplate || busy} className={btnPrimary}>{busy ? 'Starting…' : 'Continue'}</button>
+              <Button variant="primary" onClick={goToAudience} disabled={!selectedTemplate || busy}>{busy ? 'Starting…' : 'Continue'}</Button>
             </div>
           </div>
         )}
@@ -203,8 +204,8 @@ export default function BroadcastComposerPage() {
             </div>
 
             <div className="flex justify-between">
-              <button onClick={() => setStep(0)} className={btnSecondary}>Back</button>
-              <button onClick={saveAudienceAndContinue} disabled={busy} className={btnPrimary}>Continue</button>
+              <Button variant="secondary" onClick={() => setStep(0)}>Back</Button>
+              <Button variant="primary" onClick={saveAudienceAndContinue} disabled={busy}>Continue</Button>
             </div>
           </div>
         )}
@@ -222,14 +223,14 @@ export default function BroadcastComposerPage() {
             </div>
             <div className="flex items-end gap-2 mb-4">
               <div className="flex-1"><label className={label}>Send a test to yourself</label><input type="email" className={inputCls} value={testEmail} onChange={(e) => setTestEmail(e.target.value)} placeholder="you@niaonline.org" /></div>
-              <button onClick={handleSendTest} disabled={!testEmail || testStatus === 'sending'} className={btnSecondary}>{testStatus === 'sending' ? 'Sending…' : 'Send Test'}</button>
+              <Button variant="secondary" onClick={handleSendTest} disabled={!testEmail || testStatus === 'sending'}>{testStatus === 'sending' ? 'Sending…' : 'Send Test'}</Button>
             </div>
             {testStatus === 'sent' && <p className="text-sm text-nia-success mb-3">Test email sent!</p>}
             {testStatus === 'error' && <p className="text-sm text-nia-error mb-3">Failed to send test email.</p>}
 
             <div className="flex justify-between">
-              <button onClick={() => setStep(1)} className={btnSecondary}>Back</button>
-              <button onClick={savePersonalizeAndContinue} disabled={busy || !subject.trim()} className={btnPrimary}>Continue</button>
+              <Button variant="secondary" onClick={() => setStep(1)}>Back</Button>
+              <Button variant="primary" onClick={savePersonalizeAndContinue} disabled={busy || !subject.trim()}>Continue</Button>
             </div>
           </div>
         )}
@@ -254,8 +255,8 @@ export default function BroadcastComposerPage() {
               </div>
             )}
             <div className="flex justify-between">
-              <button onClick={() => setStep(2)} className={btnSecondary}>Back</button>
-              <button onClick={() => setStep(4)} disabled={scheduleType === 'schedule' && !scheduledAt} className={btnPrimary}>Continue</button>
+              <Button variant="secondary" onClick={() => setStep(2)}>Back</Button>
+              <Button variant="primary" onClick={() => setStep(4)} disabled={scheduleType === 'schedule' && !scheduledAt}>Continue</Button>
             </div>
           </div>
         )}
@@ -274,14 +275,14 @@ export default function BroadcastComposerPage() {
               </dd>
             </dl>
             <div className="flex justify-between">
-              <button onClick={() => setStep(3)} className={btnSecondary}>Back</button>
-              <button onClick={handleConfirm} disabled={busy} className={btnPrimary}>
+              <Button variant="secondary" onClick={() => setStep(3)}>Back</Button>
+              <Button variant="primary" onClick={handleConfirm} disabled={busy}>
                 {busy ? 'Sending…' : scheduleType === 'now' ? 'Confirm & Send' : 'Confirm & Schedule'}
-              </button>
+              </Button>
             </div>
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

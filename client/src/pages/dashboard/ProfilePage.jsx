@@ -94,7 +94,7 @@ export default function DashboardProfilePage() {
         <label className="flex items-center gap-2 text-sm text-nia-text-muted"><input type="checkbox" checked={prefs.eventReminders} onChange={(e) => setPrefs((p) => ({ ...p, eventReminders: e.target.checked }))} /> Event reminder emails</label>
         <label className="flex items-center gap-2 text-sm text-nia-text-muted"><input type="checkbox" checked={prefs.promotional} onChange={(e) => setPrefs((p) => ({ ...p, promotional: e.target.checked }))} /> Promotional / broadcast emails</label>
         <div className="flex justify-between items-center">
-          <button onClick={handleUnsubscribe} className="text-sm text-nia-error hover:underline">Unsubscribe from all broadcast emails</button>
+          <button onClick={handleUnsubscribe} className="border-0 bg-transparent text-sm text-nia-error hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-nia-orange/40 rounded">Unsubscribe from all broadcast emails</button>
           <button onClick={handleSavePrefs} disabled={saving.prefs} className={btnPrimary}>Save Preferences</button>
         </div>
       </div>

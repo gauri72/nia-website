@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, MapPin, Calendar } from 'lucide-react';
 import memberApi from '../../services/memberApi';
+import PageHeader from '../../components/admin/PageHeader';
 
 const CATEGORIES = ['Cultural', 'Community', 'Workshop', 'Festival', 'Exhibition', 'Performance', 'Other'];
 const selectFilterCls = 'rounded-nia-btn border border-nia-border px-3 py-2 text-sm focus:border-nia-orange focus:outline-none focus:ring-2 focus:ring-nia-orange/20 w-auto';
@@ -21,7 +22,7 @@ export default function DashboardEventsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-extrabold text-nia-navy-dark mb-5">Events</h1>
+      <PageHeader title="Events" />
 
       <div className="flex flex-wrap gap-3 mb-5">
         <div className="relative flex-1 min-w-[200px]">

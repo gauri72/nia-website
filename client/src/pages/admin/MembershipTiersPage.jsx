@@ -4,10 +4,11 @@ import { Plus, Pencil, Trash2, ArrowLeft } from 'lucide-react';
 import adminApi from '../../services/adminApi';
 import { useAdminAuth } from '../../context/AdminAuthContext';
 import Modal from '../../components/admin/Modal';
+import PageHeader from '../../components/admin/PageHeader';
+import Card from '../../components/admin/Card';
+import Button from '../../components/admin/Button';
 
 const inputCls = 'w-full rounded-nia-btn border border-nia-border px-3 py-2 text-sm focus:border-nia-orange focus:outline-none focus:ring-2 focus:ring-nia-orange/20';
-const btnPrimary = 'rounded-nia-btn bg-nia-orange px-4 py-2 text-sm font-semibold text-white hover:bg-nia-orange-dark transition-colors disabled:bg-nia-border disabled:text-nia-text-faint';
-const btnSecondary = 'rounded-nia-btn border border-nia-border bg-white px-4 py-2 text-sm font-semibold text-nia-navy-dark hover:bg-nia-panel transition-colors';
 const label = 'text-xs font-semibold text-nia-text-muted uppercase tracking-wide mb-1 block';
 
 const emptyForm = { name: '', description: '', price: '', billingPeriod: 'annual', benefits: '', maxMembers: '', color: '#1a2b5e', isActive: true, renewalReminderDays: 7, gracePeriodDays: 0 };
@@ -42,12 +43,10 @@ export default function MembershipTiersPage() {
       <Link to="/admin/members" className="inline-flex items-center gap-1.5 text-sm text-nia-text-muted hover:text-nia-navy-dark mb-4">
         <ArrowLeft /> Back to Members
       </Link>
-      <div className="flex items-center justify-between mb-5">
-        <h1 className="text-2xl font-extrabold text-nia-navy-dark">Membership Tiers</h1>
-        {isSuperAdmin && (
-          <button onClick={() => setEditing('new')} className={btnPrimary}><Plus className="inline mr-1.5" />Add Tier</button>
-        )}
-      </div>
+      <PageHeader
+        title="Membership Tiers"
+        actions={isSuperAdmin && <Button variant="primary" onClick={() => setEditing('new')}><Plus /> Add Tier</Button>}
+      />
 
       {error && <div className="mb-4 rounded bg-red-50 border-l-4 border-nia-error px-3 py-2 text-sm text-red-700">{error}</div>}
 
@@ -55,7 +54,7 @@ export default function MembershipTiersPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {tiers.map((t) => (
-          <div key={t._id} className="rounded-nia-card border border-nia-border bg-white p-5 flex flex-col gap-2" style={{ borderTop: `4px solid ${t.color}` }}>
+          <Card key={t._id} className="flex flex-col gap-2" style={{ borderTop: `4px solid ${t.color}` }}>
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-nia-navy-dark">{t.name}</h3>
               {!t.isActive && <span className="text-xs font-semibold text-nia-text-faint bg-nia-panel-alt rounded-full px-2 py-0.5">Inactive</span>}
@@ -68,11 +67,11 @@ export default function MembershipTiersPage() {
             <p className="text-xs text-nia-text-faint">{t.activeMemberCount} active member{t.activeMemberCount === 1 ? '' : 's'}{t.maxMembers ? ` / ${t.maxMembers} max` : ''}</p>
             {isSuperAdmin && (
               <div className="flex gap-2 mt-2">
-                <button onClick={() => setEditing(t)} className={btnSecondary + ' flex-1'}><Pencil className="inline mr-1" />Edit</button>
-                <button onClick={() => handleDelete(t)} className="rounded-nia-btn border border-nia-error px-3 py-2 text-sm font-semibold text-nia-error hover:bg-red-50"><Trash2 /></button>
+                <Button variant="secondary" className="flex-1" onClick={() => setEditing(t)}><Pencil /> Edit</Button>
+                <Button variant="danger" icon onClick={() => handleDelete(t)}><Trash2 /></Button>
               </div>
             )}
-          </div>
+          </Card>
         ))}
       </div>
 
@@ -153,8 +152,8 @@ function TierFormModal({ tier, onClose, onSaved }) {
           <input type="checkbox" checked={form.isActive} onChange={update('isActive')} /> Active (available for assignment)
         </label>
         <div className="flex justify-end gap-2 mt-2">
-          <button type="button" onClick={onClose} className={btnSecondary}>Cancel</button>
-          <button type="submit" disabled={saving} className={btnPrimary}>{saving ? 'Saving…' : 'Save Tier'}</button>
+          <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
+          <Button type="submit" variant="primary" disabled={saving}>{saving ? 'Saving…' : 'Save Tier'}</Button>
         </div>
       </form>
     </Modal>

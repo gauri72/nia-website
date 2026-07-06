@@ -4,9 +4,9 @@ import { Calendar, Ticket, IdCard } from 'lucide-react';
 import memberApi from '../../services/memberApi';
 import { useMemberAuth } from '../../context/MemberAuthContext';
 import StatusBadge from '../../components/admin/StatusBadge';
-
-const btnPrimary = 'rounded-nia-btn bg-nia-orange px-4 py-2 text-sm font-semibold text-white hover:bg-nia-orange-dark transition-colors';
-const btnSecondary = 'rounded-nia-btn border border-nia-border bg-white px-4 py-2 text-sm font-semibold text-nia-navy-dark hover:bg-nia-panel transition-colors';
+import PageHeader from '../../components/admin/PageHeader';
+import Card from '../../components/admin/Card';
+import Button from '../../components/admin/Button';
 
 export default function DashboardHomePage() {
   const { member } = useMemberAuth();
@@ -16,13 +16,13 @@ export default function DashboardHomePage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-extrabold text-nia-navy-dark">Welcome, {member?.firstName}! 👋</h1>
-        <p className="text-nia-text-muted">Here's what's happening with your NIA membership.</p>
-      </div>
+      <PageHeader
+        title={`Welcome, ${member?.firstName}! \u{1F44B}`}
+        description="Here's what's happening with your NIA membership."
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <div className="rounded-nia-card border border-nia-border bg-white p-5">
+        <Card>
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-bold text-nia-navy-dark flex items-center gap-2"><IdCard className="text-nia-orange" />Membership</h2>
             {data && <StatusBadge status={data.member.membershipStatus} />}
@@ -37,10 +37,10 @@ export default function DashboardHomePage() {
           ) : (
             <p className="text-sm text-nia-text-faint">You don't have an active membership yet.</p>
           )}
-          <Link to="/dashboard/membership" className={btnSecondary + ' inline-block mt-3'}>Manage Membership</Link>
-        </div>
+          <Button as={Link} to="/dashboard/membership" variant="secondary" className="mt-3">Manage Membership</Button>
+        </Card>
 
-        <div className="rounded-nia-card border border-nia-border bg-white p-5">
+        <Card>
           <h2 className="font-bold text-nia-navy-dark flex items-center gap-2 mb-3"><Ticket className="text-nia-orange" />Upcoming Events</h2>
           {data?.upcomingBookings?.length ? (
             <ul className="flex flex-col gap-2">
@@ -54,23 +54,23 @@ export default function DashboardHomePage() {
           ) : (
             <p className="text-sm text-nia-text-faint">No upcoming bookings.</p>
           )}
-          <Link to="/dashboard/tickets" className={btnSecondary + ' inline-block mt-3'}>View My Tickets</Link>
-        </div>
+          <Button as={Link} to="/dashboard/tickets" variant="secondary" className="mt-3">View My Tickets</Button>
+        </Card>
       </div>
 
-      <div className="rounded-nia-card border border-nia-border bg-white p-5">
+      <Card>
         <h2 className="font-bold text-nia-navy-dark mb-3">Quick Actions</h2>
         <div className="flex flex-wrap gap-3">
-          <Link to="/dashboard/events" className={btnPrimary}><Calendar className="inline mr-1.5" />Browse Events</Link>
-          <Link to="/dashboard/membership" className={btnSecondary}>Renew Membership</Link>
-          <Link to="/dashboard/tickets" className={btnSecondary}>View My Tickets</Link>
+          <Button as={Link} to="/dashboard/events" variant="primary"><Calendar />Browse Events</Button>
+          <Button as={Link} to="/dashboard/membership" variant="secondary">Renew Membership</Button>
+          <Button as={Link} to="/dashboard/tickets" variant="secondary">View My Tickets</Button>
         </div>
-      </div>
+      </Card>
 
-      <div className="rounded-nia-card border border-nia-border bg-white p-5">
+      <Card>
         <h2 className="font-bold text-nia-navy-dark mb-2">Latest Announcements</h2>
         <p className="text-sm text-nia-text-faint">Announcements are coming in a later milestone.</p>
-      </div>
+      </Card>
     </div>
   );
 }

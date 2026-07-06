@@ -4,9 +4,11 @@ import adminApi from '../../services/adminApi';
 import StatusBadge from '../../components/admin/StatusBadge';
 import StatCard from '../../components/admin/StatCard';
 import Modal from '../../components/admin/Modal';
+import PageHeader from '../../components/admin/PageHeader';
+import Table from '../../components/admin/Table';
+import Button from '../../components/admin/Button';
 
 const inputCls = 'rounded-nia-btn border border-nia-border px-3 py-2 text-sm focus:border-nia-orange focus:outline-none focus:ring-2 focus:ring-nia-orange/20';
-const btnAction = 'rounded-nia-btn border border-nia-border bg-white px-3 py-2 text-xs font-semibold text-nia-navy-dark hover:bg-nia-panel transition-colors disabled:opacity-50 flex items-center gap-1.5';
 
 function useToasts() {
   const [toasts, setToasts] = useState([]);
@@ -120,10 +122,10 @@ export default function TicketSalesPage() {
   return (
     <div>
       <ToastStack toasts={toasts} />
-      <div className="mb-5">
-        <h1 className="text-2xl font-extrabold text-nia-navy-dark">Ticket Sales</h1>
-        <p className="text-sm text-nia-text-faint mt-0.5">Paid tickets booked through the public website&rsquo;s event page (niaonline.org/events).</p>
-      </div>
+      <PageHeader
+        title="Ticket Sales"
+        description="Paid tickets booked through the public website's event page (niaonline.org/events)."
+      />
 
       {data && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
@@ -144,7 +146,7 @@ export default function TicketSalesPage() {
             onKeyDown={(e) => e.key === 'Enter' && load()}
           />
         </div>
-        <button onClick={load} className="rounded-nia-btn border border-nia-border bg-white px-4 py-2 text-sm font-semibold text-nia-navy-dark hover:bg-nia-panel transition-colors">Search</button>
+        <Button variant="secondary" onClick={load}>Search</Button>
       </div>
 
       {!data && (
@@ -154,41 +156,37 @@ export default function TicketSalesPage() {
       )}
 
       {data && (
-        <div className="rounded-nia-card border border-nia-border bg-white overflow-hidden overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-nia-panel-alt text-left text-xs font-bold uppercase tracking-wide text-nia-text-muted">
-                <th className="px-4 py-3">Ticket #</th>
-                <th className="px-4 py-3">Name</th>
-                <th className="px-4 py-3">Email</th>
-                <th className="px-4 py-3">Event</th>
-                <th className="px-4 py-3">Tickets</th>
-                <th className="pl-4 pr-8 py-3 text-right">Amount</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Booked</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.items.map((t) => (
-                <tr key={t._id} className="border-t border-nia-border">
-                  <td className="px-4 py-3">
-                    <button onClick={() => openDetail(t._id)} className="font-mono text-xs text-nia-text-faint hover:text-nia-navy-dark transition-colors focus:outline-none">{t.ticketNumber}</button>
-                  </td>
-                  <td className="px-4 py-3 font-medium text-nia-navy-dark">{t.name}</td>
-                  <td className="px-4 py-3 text-nia-text-faint">{t.email}</td>
-                  <td className="px-4 py-3 text-nia-text-muted">{t.eventLabel}</td>
-                  <td className="px-4 py-3 text-nia-text-muted">{t.tickets.map((l) => `${l.quantity}× ${l.ticket_type}`).join(', ')}</td>
-                  <td className="pl-4 pr-8 py-3 font-semibold text-nia-navy-dark text-right tabular-nums">€{t.amount.toFixed(2)}</td>
-                  <td className="px-4 py-3"><StatusBadge status={t.ticket_status} /></td>
-                  <td className="px-4 py-3 text-nia-text-faint">{new Date(t.createdAt).toLocaleDateString()}</td>
-                </tr>
-              ))}
-              {data.items.length === 0 && (
-                <tr><td colSpan={8} className="px-4 py-8 text-center text-nia-text-faint">No ticket bookings found.</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <Table>
+          <Table.Head>
+            <Table.HeaderRow>
+              <Table.Th>Ticket #</Table.Th>
+              <Table.Th>Name</Table.Th>
+              <Table.Th>Email</Table.Th>
+              <Table.Th>Event</Table.Th>
+              <Table.Th>Tickets</Table.Th>
+              <Table.Th align="right">Amount</Table.Th>
+              <Table.Th>Status</Table.Th>
+              <Table.Th>Booked</Table.Th>
+            </Table.HeaderRow>
+          </Table.Head>
+          <Table.Body>
+            {data.items.map((t) => (
+              <Table.Row key={t._id}>
+                <Table.Cell>
+                  <button onClick={() => openDetail(t._id)} className="border-0 bg-transparent font-mono text-xs text-nia-text-faint hover:text-nia-navy-dark transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-nia-orange/40 rounded">{t.ticketNumber}</button>
+                </Table.Cell>
+                <Table.Cell className="font-medium text-nia-navy-dark">{t.name}</Table.Cell>
+                <Table.Cell className="text-nia-text-faint">{t.email}</Table.Cell>
+                <Table.Cell className="text-nia-text-muted">{t.eventLabel}</Table.Cell>
+                <Table.Cell className="text-nia-text-muted">{t.tickets.map((l) => `${l.quantity}× ${l.ticket_type}`).join(', ')}</Table.Cell>
+                <Table.Cell align="right" className="font-semibold text-nia-navy-dark tabular-nums">€{t.amount.toFixed(2)}</Table.Cell>
+                <Table.Cell><StatusBadge status={t.ticket_status} /></Table.Cell>
+                <Table.Cell className="text-nia-text-faint">{new Date(t.createdAt).toLocaleDateString()}</Table.Cell>
+              </Table.Row>
+            ))}
+            {data.items.length === 0 && <Table.Empty colSpan={8}>No ticket bookings found.</Table.Empty>}
+          </Table.Body>
+        </Table>
       )}
 
       {detail && (
@@ -227,9 +225,9 @@ export default function TicketSalesPage() {
 
             <hr className="border-nia-border my-1" />
             <div className="flex flex-wrap gap-2">
-              <button onClick={() => handleDownloadPdf(detail)} className={btnAction}><FileText /> Download PDF</button>
-              <button onClick={() => handleDownloadQr(detail)} className={btnAction}><QrCode /> Download QR</button>
-              <button onClick={() => handleResendEmail(detail)} disabled={busy} className={btnAction}><Send /> Resend Email</button>
+              <Button variant="secondary" size="sm" onClick={() => handleDownloadPdf(detail)}><FileText /> Download PDF</Button>
+              <Button variant="secondary" size="sm" onClick={() => handleDownloadQr(detail)}><QrCode /> Download QR</Button>
+              <Button variant="secondary" size="sm" disabled={busy} onClick={() => handleResendEmail(detail)}><Send /> Resend Email</Button>
             </div>
 
             {detail.ticket_status !== 'refunded' && (
@@ -241,9 +239,7 @@ export default function TicketSalesPage() {
                     type="number" min="0.01" step="0.01" className={`${inputCls} w-28`}
                     value={refundAmount} onChange={(e) => setRefundAmount(e.target.value)}
                   />
-                  <button onClick={() => handleRefund(detail)} disabled={busy} className={`${btnAction} bg-nia-error/10 text-nia-error border-nia-error/30 hover:bg-nia-error/20`}>
-                    <Undo2 /> Refund
-                  </button>
+                  <Button variant="danger" size="sm" disabled={busy} onClick={() => handleRefund(detail)}><Undo2 /> Refund</Button>
                 </div>
                 <p className="text-[11px] text-nia-text-faint mt-1.5">
                   Remaining refundable: €{(detail.amount - (detail.refund_amount || 0)).toFixed(2)}. Enter a lower amount for a partial refund.

@@ -2,6 +2,11 @@ import { useEffect, useState, useCallback } from 'react';
 import { RefreshCw, Download, Check, X, AlertTriangle, History } from 'lucide-react';
 import adminApi from '../../services/adminApi';
 import StatusBadge from '../../components/admin/StatusBadge';
+import PageHeader from '../../components/admin/PageHeader';
+import Tabs from '../../components/admin/Tabs';
+import Table from '../../components/admin/Table';
+import Card from '../../components/admin/Card';
+import Button from '../../components/admin/Button';
 
 const TABS = [
   { key: 'sync', label: 'Sync & Import' },
@@ -12,8 +17,6 @@ const TABS = [
   { key: 'tiers', label: 'Tier Mapping' },
 ];
 
-const btnPrimary = 'rounded-nia-btn bg-nia-orange px-4 py-2 text-sm font-semibold text-white hover:bg-nia-orange-dark transition-colors disabled:bg-nia-border disabled:text-nia-text-faint';
-const btnSecondary = 'rounded-nia-btn border border-nia-border bg-white px-3 py-1.5 text-xs font-semibold text-nia-navy-dark hover:bg-nia-panel transition-colors disabled:opacity-50';
 const inputCls = 'rounded-nia-btn border border-nia-border px-3 py-2 text-sm focus:border-nia-orange focus:outline-none focus:ring-2 focus:ring-nia-orange/20';
 
 function Skeleton({ rows = 4 }) {
@@ -65,28 +68,14 @@ export default function AdminMollieImportPage() {
       .catch(() => {});
   }, [tab]);
 
+  const tabsWithBadge = TABS.map((t) => (t.key === 'review' ? { ...t, badge: reviewCount } : t));
+
   return (
     <div>
       <ToastStack toasts={toasts} />
-      <h1 className="text-2xl font-extrabold text-nia-navy-dark mb-2">Mollie Import</h1>
-      <p className="text-sm text-nia-text-faint mb-5">Fetch past Mollie transactions and turn them into real member accounts.</p>
+      <PageHeader title="Mollie Import" description="Fetch past Mollie transactions and turn them into real member accounts." />
 
-      <div className="flex gap-1 border-b border-nia-border mb-5 overflow-x-auto">
-        {TABS.map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            className={`px-3 py-2 text-sm font-semibold border-b-2 -mb-px whitespace-nowrap transition-colors flex items-center gap-1.5 focus:outline-none ${
-              tab === t.key ? 'border-nia-orange text-nia-navy-dark' : 'border-transparent text-nia-text-muted hover:text-nia-navy-dark'
-            }`}
-          >
-            {t.label}
-            {t.key === 'review' && reviewCount > 0 && (
-              <span className="bg-nia-warning text-white text-[10px] font-bold rounded-full min-w-[16px] h-[16px] px-1 flex items-center justify-center">{reviewCount}</span>
-            )}
-          </button>
-        ))}
-      </div>
+      <Tabs tabs={tabsWithBadge} active={tab} onChange={setTab} />
 
       {tab === 'sync' && <SyncTab push={push} />}
       {tab === 'history' && <HistoryTab push={push} />}
@@ -161,63 +150,59 @@ function SyncTab({ push }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <button onClick={handleSync} disabled={syncing || connected === null} className={btnPrimary}>
-          <RefreshCw className={`inline mr-2 ${syncing ? 'animate-spin' : ''}`} />
+        <Button variant="primary" disabled={syncing || connected === null} onClick={handleSync}>
+          <RefreshCw className={syncing ? 'animate-spin' : ''} />
           {syncing ? 'Fetching from Mollie…' : 'Sync Now'}
-        </button>
+        </Button>
         {rows && (
-          <button onClick={handleImport} disabled={importing || selected.size === 0} className={btnPrimary}>
+          <Button variant="primary" disabled={importing || selected.size === 0} onClick={handleImport}>
             {importing ? 'Importing…' : `Confirm Import (${selected.size} selected)`}
-          </button>
+          </Button>
         )}
       </div>
 
       {syncing && <Skeleton rows={6} />}
 
       {rows && !syncing && (
-        <div className="rounded-nia-card border border-nia-border bg-white overflow-hidden overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-nia-panel-alt text-left text-xs font-bold uppercase text-nia-text-muted">
-                <th className="px-3 py-3"></th>
-                <th className="px-3 py-3">Name</th>
-                <th className="px-3 py-3">Email</th>
-                <th className="px-3 py-3">Type</th>
-                <th className="pl-3 pr-6 py-3 text-right">Amount</th>
-                <th className="px-3 py-3">Description</th>
-                <th className="px-3 py-3">Paid At</th>
-                <th className="px-3 py-3">Match</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((t) => (
-                <tr key={t.paymentId} className={`border-t border-nia-border ${t.alreadyImported ? 'opacity-40' : ''}`}>
-                  <td className="px-3 py-2.5">
-                    <input
-                      type="checkbox"
-                      checked={selected.has(t.paymentId)}
-                      disabled={t.alreadyImported}
-                      onChange={() => toggle(t.paymentId)}
-                    />
-                  </td>
-                  <td className="px-3 py-2.5 font-medium text-nia-navy-dark">{t.name || '—'}</td>
-                  <td className="px-3 py-2.5 text-nia-text-faint">{t.email || '—'}</td>
-                  <td className="px-3 py-2.5 text-nia-text-muted">{t.type || 'unknown'}</td>
-                  <td className="pl-3 pr-6 py-2.5 font-semibold text-nia-navy-dark text-right tabular-nums">€{t.amount.toFixed(2)}</td>
-                  <td className="px-3 py-2.5 text-nia-text-muted">{t.description}</td>
-                  <td className="px-3 py-2.5 text-nia-text-muted">{t.paidAt ? new Date(t.paidAt).toLocaleDateString() : '—'}</td>
-                  <td className="px-3 py-2.5">
-                    {t.alreadyImported ? <StatusBadge status="canceled" /> // reuse neutral "already" styling
-                      : t.localMatch ? <StatusBadge status="active" /> : <StatusBadge status="pending" />}
-                  </td>
-                </tr>
-              ))}
-              {rows.length === 0 && (
-                <tr><td colSpan={8} className="px-3 py-6 text-center text-nia-text-faint">No paid transactions found.</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <Table>
+          <Table.Head>
+            <Table.HeaderRow>
+              <Table.Th></Table.Th>
+              <Table.Th>Name</Table.Th>
+              <Table.Th>Email</Table.Th>
+              <Table.Th>Type</Table.Th>
+              <Table.Th align="right">Amount</Table.Th>
+              <Table.Th>Description</Table.Th>
+              <Table.Th>Paid At</Table.Th>
+              <Table.Th>Match</Table.Th>
+            </Table.HeaderRow>
+          </Table.Head>
+          <Table.Body>
+            {rows.map((t) => (
+              <Table.Row key={t.paymentId} className={t.alreadyImported ? 'opacity-40' : ''}>
+                <Table.Cell>
+                  <input
+                    type="checkbox"
+                    checked={selected.has(t.paymentId)}
+                    disabled={t.alreadyImported}
+                    onChange={() => toggle(t.paymentId)}
+                  />
+                </Table.Cell>
+                <Table.Cell className="font-medium text-nia-navy-dark">{t.name || '—'}</Table.Cell>
+                <Table.Cell className="text-nia-text-faint">{t.email || '—'}</Table.Cell>
+                <Table.Cell className="text-nia-text-muted">{t.type || 'unknown'}</Table.Cell>
+                <Table.Cell align="right" className="font-semibold text-nia-navy-dark tabular-nums">€{t.amount.toFixed(2)}</Table.Cell>
+                <Table.Cell className="text-nia-text-muted">{t.description}</Table.Cell>
+                <Table.Cell className="text-nia-text-muted">{t.paidAt ? new Date(t.paidAt).toLocaleDateString() : '—'}</Table.Cell>
+                <Table.Cell>
+                  {t.alreadyImported ? <StatusBadge status="canceled" /> // reuse neutral "already" styling
+                    : t.localMatch ? <StatusBadge status="active" /> : <StatusBadge status="pending" />}
+                </Table.Cell>
+              </Table.Row>
+            ))}
+            {rows.length === 0 && <Table.Empty colSpan={8}>No paid transactions found.</Table.Empty>}
+          </Table.Body>
+        </Table>
       )}
     </div>
   );
@@ -242,59 +227,60 @@ function HistoryTab() {
   if (detail) {
     return (
       <div>
-        <button onClick={() => setDetail(null)} className={`${btnSecondary} mb-4`}>&larr; Back to history</button>
+        <Button variant="secondary" size="sm" className="mb-4" onClick={() => setDetail(null)}>&larr; Back to history</Button>
         <h2 className="font-bold text-nia-navy-dark mb-3">Run detail — {new Date(detail.log.createdAt).toLocaleString()}</h2>
-        <div className="rounded-nia-card border border-nia-border bg-white overflow-hidden overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead><tr className="bg-nia-panel-alt text-left text-xs font-bold uppercase text-nia-text-muted"><th className="px-3 py-3">Payment ID</th><th className="px-3 py-3">Email</th><th className="pl-3 pr-6 py-3 text-right">Amount</th><th className="px-3 py-3">Result</th></tr></thead>
-            <tbody>
-              {detail.transactions.map((t) => (
-                <tr key={t._id} className="border-t border-nia-border">
-                  <td className="px-3 py-2.5 font-mono text-xs text-nia-text-faint">{t.paymentId}</td>
-                  <td className="px-3 py-2.5 text-nia-text-faint">{t.email || '—'}</td>
-                  <td className="pl-3 pr-6 py-2.5 font-semibold text-nia-navy-dark text-right tabular-nums">€{t.amount.toFixed(2)}</td>
-                  <td className="px-3 py-2.5"><StatusBadge status={t.importStatus === 'created' || t.importStatus === 'updated' ? 'active' : t.importStatus === 'flagged' ? 'pending' : 'canceled'} /> <span className="text-xs text-nia-text-faint ml-1 capitalize">{t.importStatus}</span></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <Table>
+          <Table.Head>
+            <Table.HeaderRow>
+              <Table.Th>Payment ID</Table.Th>
+              <Table.Th>Email</Table.Th>
+              <Table.Th align="right">Amount</Table.Th>
+              <Table.Th>Result</Table.Th>
+            </Table.HeaderRow>
+          </Table.Head>
+          <Table.Body>
+            {detail.transactions.map((t) => (
+              <Table.Row key={t._id}>
+                <Table.Cell className="font-mono text-xs text-nia-text-faint">{t.paymentId}</Table.Cell>
+                <Table.Cell className="text-nia-text-faint">{t.email || '—'}</Table.Cell>
+                <Table.Cell align="right" className="font-semibold text-nia-navy-dark tabular-nums">€{t.amount.toFixed(2)}</Table.Cell>
+                <Table.Cell><StatusBadge status={t.importStatus === 'created' || t.importStatus === 'updated' ? 'active' : t.importStatus === 'flagged' ? 'pending' : 'canceled'} /> <span className="text-xs text-nia-text-faint ml-1 capitalize">{t.importStatus}</span></Table.Cell>
+              </Table.Row>
+            ))}
+          </Table.Body>
+        </Table>
       </div>
     );
   }
 
   return (
-    <div className="rounded-nia-card border border-nia-border bg-white overflow-hidden overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="bg-nia-panel-alt text-left text-xs font-bold uppercase text-nia-text-muted">
-            <th className="px-3 py-3">Date</th><th className="px-3 py-3">Triggered By</th><th className="px-3 py-3">Fetched</th>
-            <th className="px-3 py-3">Created</th><th className="px-3 py-3">Updated</th><th className="px-3 py-3">Flagged</th>
-            <th className="px-3 py-3">Skipped</th><th className="px-3 py-3">Status</th><th className="px-3 py-3"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {logs.map((l) => (
-            <tr key={l._id} className="border-t border-nia-border">
-              <td className="px-3 py-2.5 text-nia-text-muted">{new Date(l.createdAt).toLocaleString()}</td>
-              <td className="px-3 py-2.5 text-nia-text-muted capitalize">{l.triggeredBy}</td>
-              <td className="px-3 py-2.5 text-nia-text-muted">{l.totalFetched}</td>
-              <td className="px-3 py-2.5 text-nia-success font-semibold">{l.created}</td>
-              <td className="px-3 py-2.5 text-nia-text-muted">{l.updated}</td>
-              <td className="px-3 py-2.5 text-nia-warning font-semibold">{l.flagged}</td>
-              <td className="px-3 py-2.5 text-nia-text-muted">{l.skipped}</td>
-              <td className="px-3 py-2.5"><StatusBadge status={l.status === 'completed' ? 'active' : l.status === 'failed' ? 'suspended' : 'pending'} /></td>
-              <td className="px-3 py-2.5">
-                <button onClick={() => openDetail(l._id)} className="text-xs font-semibold text-nia-orange hover:underline focus:outline-none">View</button>
-              </td>
-            </tr>
-          ))}
-          {logs.length === 0 && (
-            <tr><td colSpan={9} className="px-3 py-6 text-center text-nia-text-faint">No import runs yet.</td></tr>
-          )}
-        </tbody>
-      </table>
-    </div>
+    <Table>
+      <Table.Head>
+        <Table.HeaderRow>
+          <Table.Th>Date</Table.Th><Table.Th>Triggered By</Table.Th><Table.Th>Fetched</Table.Th>
+          <Table.Th>Created</Table.Th><Table.Th>Updated</Table.Th><Table.Th>Flagged</Table.Th>
+          <Table.Th>Skipped</Table.Th><Table.Th>Status</Table.Th><Table.Th></Table.Th>
+        </Table.HeaderRow>
+      </Table.Head>
+      <Table.Body>
+        {logs.map((l) => (
+          <Table.Row key={l._id}>
+            <Table.Cell className="text-nia-text-muted">{new Date(l.createdAt).toLocaleString()}</Table.Cell>
+            <Table.Cell className="text-nia-text-muted capitalize">{l.triggeredBy}</Table.Cell>
+            <Table.Cell className="text-nia-text-muted">{l.totalFetched}</Table.Cell>
+            <Table.Cell className="text-nia-success font-semibold">{l.created}</Table.Cell>
+            <Table.Cell className="text-nia-text-muted">{l.updated}</Table.Cell>
+            <Table.Cell className="text-nia-warning font-semibold">{l.flagged}</Table.Cell>
+            <Table.Cell className="text-nia-text-muted">{l.skipped}</Table.Cell>
+            <Table.Cell><StatusBadge status={l.status === 'completed' ? 'active' : l.status === 'failed' ? 'suspended' : 'pending'} /></Table.Cell>
+            <Table.Cell>
+              <Button variant="ghost" size="sm" onClick={() => openDetail(l._id)}>View</Button>
+            </Table.Cell>
+          </Table.Row>
+        ))}
+        {logs.length === 0 && <Table.Empty colSpan={9}>No import runs yet.</Table.Empty>}
+      </Table.Body>
+    </Table>
   );
 }
 
@@ -334,13 +320,13 @@ function ReviewTab({ push, onResolved }) {
   if (!items) return <Skeleton rows={4} />;
 
   if (items.length === 0) {
-    return <div className="rounded-nia-card border border-nia-border bg-white p-6 text-center text-nia-text-faint">Nothing needs manual review.</div>;
+    return <Card className="text-center text-nia-text-faint">Nothing needs manual review.</Card>;
   }
 
   return (
     <div className="flex flex-col gap-4">
       {items.map((item) => (
-        <div key={item._id} className="rounded-nia-card border border-nia-border bg-white p-4">
+        <Card key={item._id} padded={false} className="p-4">
           <div className="flex items-start justify-between mb-3">
             <div>
               <p className="font-semibold text-nia-navy-dark">€{item.amount?.toFixed(2)} — {item.transaction?.paymentId}</p>
@@ -357,11 +343,11 @@ function ReviewTab({ push, onResolved }) {
             </select>
           </div>
           <div className="flex gap-2">
-            <button onClick={() => resolve(item._id, 'assign_tier')} className={btnSecondary}><Check className="inline mr-1" />Assign Tier & Create Member</button>
-            <button onClick={() => resolve(item._id, 'mark_processed')} className={btnSecondary}>Mark Processed</button>
-            <button onClick={() => resolve(item._id, 'ignore')} className={btnSecondary}><X className="inline mr-1" />Ignore</button>
+            <Button variant="secondary" size="sm" onClick={() => resolve(item._id, 'assign_tier')}><Check /> Assign Tier & Create Member</Button>
+            <Button variant="secondary" size="sm" onClick={() => resolve(item._id, 'mark_processed')}>Mark Processed</Button>
+            <Button variant="secondary" size="sm" onClick={() => resolve(item._id, 'ignore')}><X /> Ignore</Button>
           </div>
-        </div>
+        </Card>
       ))}
     </div>
   );
@@ -378,27 +364,27 @@ function WebhookTab() {
   if (!logs) return <Skeleton rows={4} />;
 
   return (
-    <div className="rounded-nia-card border border-nia-border bg-white overflow-hidden overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead><tr className="bg-nia-panel-alt text-left text-xs font-bold uppercase text-nia-text-muted"><th className="px-3 py-3">Received</th><th className="px-3 py-3">Payment ID</th><th className="px-3 py-3">Action</th><th className="px-3 py-3">Status</th><th className="px-3 py-3">Attempts</th></tr></thead>
-        <tbody>
-          {logs.map((l) => (
-            <tr key={l._id} className="border-t border-nia-border">
-              <td className="px-3 py-2.5 text-nia-text-muted">{new Date(l.receivedAt).toLocaleString()}</td>
-              <td className="px-3 py-2.5 font-mono text-xs text-nia-text-faint">{l.paymentId}</td>
-              <td className="px-3 py-2.5 text-nia-text-muted capitalize">{l.action}</td>
-              <td className="px-3 py-2.5"><StatusBadge status={l.status === 'success' ? 'active' : l.status === 'retrying' ? 'pending' : 'suspended'} /></td>
-              <td className="px-3 py-2.5 text-nia-text-muted">{l.attempts}</td>
-            </tr>
-          ))}
-          {logs.length === 0 && (
-            <tr><td colSpan={5} className="px-3 py-6 text-center text-nia-text-faint">
-              <History className="inline mr-2" />No webhook events received yet.
-            </td></tr>
-          )}
-        </tbody>
-      </table>
-    </div>
+    <Table>
+      <Table.Head>
+        <Table.HeaderRow>
+          <Table.Th>Received</Table.Th><Table.Th>Payment ID</Table.Th><Table.Th>Action</Table.Th><Table.Th>Status</Table.Th><Table.Th>Attempts</Table.Th>
+        </Table.HeaderRow>
+      </Table.Head>
+      <Table.Body>
+        {logs.map((l) => (
+          <Table.Row key={l._id}>
+            <Table.Cell className="text-nia-text-muted">{new Date(l.receivedAt).toLocaleString()}</Table.Cell>
+            <Table.Cell className="font-mono text-xs text-nia-text-faint">{l.paymentId}</Table.Cell>
+            <Table.Cell className="text-nia-text-muted capitalize">{l.action}</Table.Cell>
+            <Table.Cell><StatusBadge status={l.status === 'success' ? 'active' : l.status === 'retrying' ? 'pending' : 'suspended'} /></Table.Cell>
+            <Table.Cell className="text-nia-text-muted">{l.attempts}</Table.Cell>
+          </Table.Row>
+        ))}
+        {logs.length === 0 && (
+          <Table.Empty colSpan={5}><History className="inline mr-2" />No webhook events received yet.</Table.Empty>
+        )}
+      </Table.Body>
+    </Table>
   );
 }
 
@@ -437,34 +423,35 @@ function TransactionsTab() {
           onKeyDown={(e) => e.key === 'Enter' && load()}
         />
         <div className="flex gap-2">
-          <button onClick={() => load()} className={btnSecondary}>Search</button>
-          <button onClick={handleExport} className={btnSecondary}><Download className="inline mr-1.5" />Export CSV</button>
+          <Button variant="secondary" size="sm" onClick={() => load()}>Search</Button>
+          <Button variant="secondary" size="sm" onClick={handleExport}><Download /> Export CSV</Button>
         </div>
       </div>
 
       {!data && <Skeleton rows={6} />}
 
       {data && (
-        <div className="rounded-nia-card border border-nia-border bg-white overflow-hidden overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead><tr className="bg-nia-panel-alt text-left text-xs font-bold uppercase text-nia-text-muted"><th className="px-3 py-3">Email</th><th className="px-3 py-3">Name</th><th className="px-3 py-3">Type</th><th className="pl-3 pr-6 py-3 text-right">Amount</th><th className="px-3 py-3">Result</th><th className="px-3 py-3">Date</th></tr></thead>
-            <tbody>
-              {data.items.map((t) => (
-                <tr key={t._id} className="border-t border-nia-border">
-                  <td className="px-3 py-2.5 text-nia-navy-dark font-medium">{t.email || '—'}</td>
-                  <td className="px-3 py-2.5 text-nia-text-muted">{t.name || '—'}</td>
-                  <td className="px-3 py-2.5 text-nia-text-muted">{t.type || 'unknown'}</td>
-                  <td className="pl-3 pr-6 py-2.5 font-semibold text-nia-navy-dark text-right tabular-nums">€{t.amount.toFixed(2)}</td>
-                  <td className="px-3 py-2.5"><StatusBadge status={t.importStatus === 'created' || t.importStatus === 'updated' ? 'active' : t.importStatus === 'flagged' ? 'pending' : 'canceled'} /></td>
-                  <td className="px-3 py-2.5 text-nia-text-muted">{new Date(t.createdAt).toLocaleDateString()}</td>
-                </tr>
-              ))}
-              {data.items.length === 0 && (
-                <tr><td colSpan={6} className="px-3 py-6 text-center text-nia-text-faint">No transactions imported yet.</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <Table>
+          <Table.Head>
+            <Table.HeaderRow>
+              <Table.Th>Email</Table.Th><Table.Th>Name</Table.Th><Table.Th>Type</Table.Th>
+              <Table.Th align="right">Amount</Table.Th><Table.Th>Result</Table.Th><Table.Th>Date</Table.Th>
+            </Table.HeaderRow>
+          </Table.Head>
+          <Table.Body>
+            {data.items.map((t) => (
+              <Table.Row key={t._id}>
+                <Table.Cell className="text-nia-navy-dark font-medium">{t.email || '—'}</Table.Cell>
+                <Table.Cell className="text-nia-text-muted">{t.name || '—'}</Table.Cell>
+                <Table.Cell className="text-nia-text-muted">{t.type || 'unknown'}</Table.Cell>
+                <Table.Cell align="right" className="font-semibold text-nia-navy-dark tabular-nums">€{t.amount.toFixed(2)}</Table.Cell>
+                <Table.Cell><StatusBadge status={t.importStatus === 'created' || t.importStatus === 'updated' ? 'active' : t.importStatus === 'flagged' ? 'pending' : 'canceled'} /></Table.Cell>
+                <Table.Cell className="text-nia-text-muted">{new Date(t.createdAt).toLocaleDateString()}</Table.Cell>
+              </Table.Row>
+            ))}
+            {data.items.length === 0 && <Table.Empty colSpan={6}>No transactions imported yet.</Table.Empty>}
+          </Table.Body>
+        </Table>
       )}
     </div>
   );
@@ -530,32 +517,32 @@ function TiersTab({ push }) {
             {tiers.map((t) => <option key={t._id} value={t._id}>{t.name}</option>)}
           </select>
         </div>
-        <button type="submit" className={btnPrimary}>Add Rule</button>
+        <Button type="submit" variant="primary">Add Rule</Button>
       </form>
 
       {!rules && <Skeleton rows={3} />}
 
       {rules && (
-        <div className="rounded-nia-card border border-nia-border bg-white overflow-hidden overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead><tr className="bg-nia-panel-alt text-left text-xs font-bold uppercase text-nia-text-muted"><th className="px-3 py-3">Match Type</th><th className="px-3 py-3">Value</th><th className="px-3 py-3">Tier</th><th className="px-3 py-3"></th></tr></thead>
-            <tbody>
-              {rules.map((r) => (
-                <tr key={r._id} className="border-t border-nia-border">
-                  <td className="px-3 py-2.5 text-nia-text-muted capitalize">{r.matchType}</td>
-                  <td className="px-3 py-2.5 text-nia-navy-dark font-medium">{r.matchValue}</td>
-                  <td className="px-3 py-2.5 text-nia-text-muted">{r.membershipTier?.name}</td>
-                  <td className="px-3 py-2.5">
-                    <button onClick={() => handleDelete(r._id)} className="text-xs font-semibold text-nia-error hover:underline focus:outline-none">Delete</button>
-                  </td>
-                </tr>
-              ))}
-              {rules.length === 0 && (
-                <tr><td colSpan={4} className="px-3 py-6 text-center text-nia-text-faint">No mapping rules configured.</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <Table>
+          <Table.Head>
+            <Table.HeaderRow>
+              <Table.Th>Match Type</Table.Th><Table.Th>Value</Table.Th><Table.Th>Tier</Table.Th><Table.Th></Table.Th>
+            </Table.HeaderRow>
+          </Table.Head>
+          <Table.Body>
+            {rules.map((r) => (
+              <Table.Row key={r._id}>
+                <Table.Cell className="text-nia-text-muted capitalize">{r.matchType}</Table.Cell>
+                <Table.Cell className="text-nia-navy-dark font-medium">{r.matchValue}</Table.Cell>
+                <Table.Cell className="text-nia-text-muted">{r.membershipTier?.name}</Table.Cell>
+                <Table.Cell>
+                  <Button variant="ghost" size="sm" className="text-nia-error hover:bg-nia-error/10" onClick={() => handleDelete(r._id)}>Delete</Button>
+                </Table.Cell>
+              </Table.Row>
+            ))}
+            {rules.length === 0 && <Table.Empty colSpan={4}>No mapping rules configured.</Table.Empty>}
+          </Table.Body>
+        </Table>
       )}
     </div>
   );
