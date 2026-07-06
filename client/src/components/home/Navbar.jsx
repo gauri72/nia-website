@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { FaBars, FaTimes, FaUserPlus, FaTicketAlt } from 'react-icons/fa';
+import { FaBars, FaTimes, FaUserPlus, FaTicketAlt, FaSignInAlt } from 'react-icons/fa';
 import navbarLogo from '../../assets/home/NavbarLogo.png';
 import './Navbar.css';
 
@@ -57,13 +57,17 @@ export default function Navbar() {
         </nav>
 
         <div className="navbar__actions">
-          <a href="/events#tickets" className="navbar__cta">
+          <a href="/events#tickets" className="navbar__cta" aria-label="Buy Tickets">
             <FaTicketAlt />
             <span>Buy Tickets</span>
           </a>
-          <a href="/membership" className="navbar__cta">
+          <a href="/membership" className="navbar__cta" aria-label="Get Membership">
             <FaUserPlus />
-            <span>Get NIA Membership</span>
+            <span>Get Membership</span>
+          </a>
+          <a href="/dashboard" className="navbar__cta" aria-label="Log In">
+            <FaSignInAlt />
+            <span>Log In</span>
           </a>
         </div>
       </div>
