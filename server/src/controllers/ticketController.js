@@ -252,4 +252,4 @@ async function getById(req, res, next) {
   }
 }
 
-module.exports = { create, getById, previewDiscount };
+module.exports = { create, getById, previewDiscount, TICKET_PRICES, EVENT_ID };

@@ -107,6 +107,8 @@ router.post('/legacy-tickets/:id/refund',      requireRole(['super_admin']), leg
 // ── Sponsorships ──────────────────────────────────────────────────
 router.get(   '/sponsorships',            sponsorshipAdminController.list);
 router.get(   '/sponsorships/:id',        sponsorshipAdminController.getById);
+router.post(  '/sponsorships/:id/resend-email',         sponsorshipAdminController.resendEmail);
+router.post(  '/sponsorships/:id/complimentary-tickets', requireRole(['super_admin']), sponsorshipAdminController.sendComplimentaryTickets);
 router.get(   '/sponsorship-tiers',       sponsorshipTierController.list);
 router.post(  '/sponsorship-tiers',       requireRole(['super_admin']), sponsorshipTierController.create);
 router.put(   '/sponsorship-tiers/:id',   requireRole(['super_admin']), sponsorshipTierController.update);

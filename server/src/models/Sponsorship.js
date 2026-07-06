@@ -36,6 +36,14 @@ const SponsorshipSchema = new mongoose.Schema({
   mollie_payment_id: { type: String },
   paid_at: { type: Date },
   member: { type: mongoose.Schema.Types.ObjectId, ref: 'Member' },
+  // Admin-issued complimentary event tickets (separate from the sponsorship
+  // payment itself) — kept as an audit trail of what's been sent so far.
+  complimentaryTickets: [{
+    ticket: { type: mongoose.Schema.Types.ObjectId, ref: 'Ticket' },
+    ticketType: { type: String },
+    quantity: { type: Number },
+    sentAt: { type: Date, default: Date.now },
+  }],
 }, { timestamps: true });
 
 module.exports = mongoose.model('Sponsorship', SponsorshipSchema);

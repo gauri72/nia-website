@@ -872,6 +872,7 @@ module.exports = {
   sendTicketConfirmation,
   sendTicketRefundConfirmation,
   sendMembershipPaymentConfirmation,
+  sendSponsorshipConfirmation,
   generateTicketPDF,
   generateQRDataURL,
 };
