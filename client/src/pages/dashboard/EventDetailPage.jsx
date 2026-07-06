@@ -42,6 +42,31 @@ export default function DashboardEventDetailPage() {
   }, 0);
   const total = discount?.valid ? discount.finalAmount : subtotal;
 
+  // No email-guessing surface here (the member is already authenticated), so unlike
+  // the public guest flow, it's safe to check the automatic tier discount live as
+  // quantities change — keeps the total shown here matching what Mollie will
+  // actually charge. Only runs when no discount code is in play; the manual
+  // "Apply" flow below owns that case.
+  useEffect(() => {
+    if (!event || lines.length === 0 || discountCode.trim()) { if (!discountCode.trim()) setDiscount(null); return; }
+    let cancelled = false;
+    memberApi.post('/bookings/preview-discount', {
+      eventId: event._id,
+      lines: lines.map((l) => ({ ticketTypeId: l.tt._id, quantity: l.qty })),
+    }).then(({ data }) => {
+      if (cancelled) return;
+      if (data.finalAmount < data.subtotal) {
+        setDiscount({ valid: true, discount_amount: data.discount_amount, finalAmount: data.finalAmount, source: data.source });
+      } else if (data.message) {
+        setDiscount({ valid: false, message: data.message });
+      } else {
+        setDiscount(null);
+      }
+    }).catch(() => {});
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(quantities), discountCode, event?._id]);
+
   async function handleApplyDiscount() {
     if (!discountCode.trim() || !member?.email) return;
     setApplyingDiscount(true);
@@ -141,7 +166,11 @@ export default function DashboardEventDetailPage() {
                     <Tag /> {applyingDiscount ? '…' : 'Apply'}
                   </Button>
                 </div>
-                {discount?.valid && <p className="text-xs text-nia-success mt-1">✓ €{discount.discount_amount} discount applied</p>}
+                {discount?.valid && (
+                  <p className="text-xs text-nia-success mt-1">
+                    ✓ {discount.source === 'membership' ? 'Membership discount' : 'Discount'} applied: −€{discount.discount_amount}
+                  </p>
+                )}
                 {discount && !discount.valid && <p className="text-xs text-nia-error mt-1">{discount.message}</p>}
               </div>
 

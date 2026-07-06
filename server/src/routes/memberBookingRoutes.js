@@ -8,6 +8,7 @@ const { paymentLimiter } = require('../middleware/rateLimiter');
 router.use(requireMemberAuth);
 
 router.post('/create', paymentLimiter, memberBookingController.create);
+router.post('/preview-discount', paymentLimiter, memberBookingController.previewDiscount);
 router.get( '/mine',                   memberBookingController.listMine);
 router.get( '/:id',                    memberBookingController.getById);
 router.get( '/:id/ticket.pdf',         memberBookingController.downloadTicketPdf);

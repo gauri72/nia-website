@@ -39,6 +39,7 @@ router.get( '/membership/:id',                     membershipController.getById)
 
 // ── Event Tickets ─────────────────────────────────────────────
 router.post('/tickets/create',     paymentLimiter, ticketController.create);
+router.post('/tickets/preview-discount', paymentLimiter, ticketController.previewDiscount);
 router.get( '/tickets/:id',                        ticketController.getById);
 
 // ── Donations ─────────────────────────────────────────────────

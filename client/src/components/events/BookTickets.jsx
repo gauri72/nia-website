@@ -90,6 +90,34 @@ export default function BookTickets() {
   const canProceedStep1 = attendee.name.trim() && attendee.email.trim()
     && (totalTickets <= 1 || attendeeNames.trim());
 
+  // If a discount code was already applied above, that wins server-side too — no
+  // need to also check for an automatic membership discount. Otherwise, check once
+  // here (now that the email is known) so the Review/Pay screens show the buyer's
+  // real total instead of only finding out at Mollie's checkout.
+  async function handleContinueToReview() {
+    if (!discount?.valid) {
+      setApplyingDiscount(true);
+      try {
+        const { data } = await api.post('/tickets/preview-discount', {
+          email: attendee.email.trim(),
+          tickets: selectedTickets.map(t => ({ ticket_type: t.id, quantity: qtys[t.id] })),
+          discountCode: discountCode.trim() || undefined,
+        });
+        if (data.finalAmount < data.subtotal) {
+          setDiscount({ valid: true, discount_amount: data.discount_amount, finalAmount: data.finalAmount, source: data.source });
+        } else if (data.message) {
+          setDiscount({ valid: false, message: data.message });
+        }
+      } catch {
+        // Preview is best-effort — the real charge is always computed correctly
+        // server-side at final submission regardless of whether this succeeded.
+      } finally {
+        setApplyingDiscount(false);
+      }
+    }
+    setStep(2);
+  }
+
   async function handlePay() {
     setPayError('');
     setPaying(true);
@@ -267,8 +295,8 @@ export default function BookTickets() {
 
             <div className="bt-nav">
               <button className="bt-back-btn" onClick={() => setStep(0)}><FaArrowLeft /> Back</button>
-              <button className="bt-continue-btn" disabled={!canProceedStep1} onClick={() => setStep(2)}>
-                Continue <FaArrowRight />
+              <button className="bt-continue-btn" disabled={!canProceedStep1 || applyingDiscount} onClick={handleContinueToReview}>
+                {applyingDiscount ? 'Checking…' : <>Continue <FaArrowRight /></>}
               </button>
             </div>
           </div>
@@ -305,10 +333,16 @@ export default function BookTickets() {
               })}
               {discount?.valid && (
                 <div className="bt-review__discount-row">
-                  <span>Discount ({discountCode.trim().toUpperCase()})</span>
+                  <span>{discount.source === 'membership' ? 'Membership Discount' : `Discount (${discountCode.trim().toUpperCase()})`}</span>
                   <span />
                   <span />
                   <span className="bt-review__saved-amt">−€{totalSaved}</span>
+                </div>
+              )}
+              {discount && !discount.valid && discount.message && (
+                <div className="bt-review__discount-row">
+                  <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>{discount.message}</span>
+                  <span /><span /><span />
                 </div>
               )}
               <div className="bt-review__total-row">
