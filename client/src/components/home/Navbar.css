@@ -222,12 +222,22 @@
   .navbar__event-pill__date { font-size: 0.78rem; }
   .navbar__event-pill__name { font-size: 0.58rem; }
 
-  /* Three CTAs no longer fit with labels at this width — icon-only pills,
-     kept accessible via the aria-label already on each anchor. */
   .navbar__actions { gap: 0.3rem; }
   .navbar__actions .navbar__cta {
-    padding: 0.55rem;
-    font-size: 0.9rem;
+    font-size: 0.66rem;
+    padding: 0.4rem 0.55rem;
+    gap: 0.3rem;
+  }
+}
+
+/* ── Extra-narrow (≤360px, e.g. iPhone SE) — labels no longer fit even at the
+   tightened sizing above, so fall back to icon-only pills here only. The
+   aria-label already on each anchor keeps these accessible. ── */
+@media (max-width: 360px) {
+  .navbar__actions { gap: 0.25rem; }
+  .navbar__actions .navbar__cta {
+    padding: 0.5rem;
+    font-size: 0.85rem;
   }
   .navbar__actions .navbar__cta span { display: none; }
 }
