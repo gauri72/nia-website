@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Outlet, NavLink, Link } from 'react-router-dom';
-import { LayoutDashboard, Users, Calendar, Ticket, FileText, Images, MailOpen, BarChart3, MessageCircle, Bell, Settings, LogOut, RefreshCw, Receipt, Tag } from 'lucide-react';
+import { LayoutDashboard, Users, Calendar, Ticket, FileText, Images, MailOpen, BarChart3, MessageCircle, Bell, Settings, LogOut, RefreshCw, Receipt, Tag, Layers } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import adminApi from '../services/adminApi';
 import Button from '../components/admin/Button';
@@ -18,6 +18,7 @@ const NAV_GROUPS = [
     label: 'Members & Events',
     items: [
       { to: '/admin/members', label: 'Members', icon: Users },
+      { to: '/admin/membership-tiers', label: 'Membership Tiers', icon: Layers },
       { to: '/admin/events', label: 'Events', icon: Calendar },
       { to: '/admin/bookings', label: 'Tickets & Bookings', icon: Ticket },
       { to: '/admin/ticket-sales', label: 'Ticket Sales', icon: Receipt },

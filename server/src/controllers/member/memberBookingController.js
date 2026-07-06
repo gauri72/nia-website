@@ -38,11 +38,12 @@ async function create(req, res, next) {
     let tierDiscountEligible = false;
     let message;
     if (!validCode && isEligibleForMemberPrice && member.membershipTier?.ticketDiscountType) {
-      const alreadyUsed = await Booking.exists({
+      const usedCount = await Booking.countDocuments({
         member: member._id, event: event._id, status: 'paid', membershipDiscountApplied: true,
       });
-      if (alreadyUsed) {
-        message = 'A membership discount has already been used for this event with this account — tickets are charged at full price.';
+      const maxPerEvent = member.membershipTier.ticketDiscountMaxPerEvent || 1;
+      if (usedCount >= maxPerEvent) {
+        message = `A membership discount has already been used the maximum ${maxPerEvent} time${maxPerEvent === 1 ? '' : 's'} allowed for this event with this account — tickets are charged at full price.`;
       } else {
         tierDiscountEligible = true;
       }

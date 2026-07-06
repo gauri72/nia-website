@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Download, Plus, Layers } from 'lucide-react';
+import { Search, Download, Plus } from 'lucide-react';
 import adminApi from '../../services/adminApi';
 import StatusBadge from '../../components/admin/StatusBadge';
 import Modal from '../../components/admin/Modal';
@@ -62,7 +62,6 @@ export default function MembersPage() {
         title="Members"
         actions={(
           <>
-            <Button as={Link} to="/admin/membership-tiers" variant="secondary"><Layers /> Membership Tiers</Button>
             <Button variant="secondary" onClick={exportCsv}><Download /> Export CSV</Button>
             <Button variant="primary" onClick={() => setShowAdd(true)}><Plus /> Add Member</Button>
           </>

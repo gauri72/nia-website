@@ -13,7 +13,7 @@ const label = 'text-xs font-semibold text-nia-text-muted uppercase tracking-wide
 
 const emptyForm = {
   name: '', description: '', price: '', billingPeriod: 'annual', benefits: '', maxMembers: '', color: '#1a2b5e', isActive: true, renewalReminderDays: 7, gracePeriodDays: 0,
-  ticketDiscountType: '', ticketDiscountValue: '',
+  ticketDiscountType: '', ticketDiscountValue: '', ticketDiscountMaxPerEvent: 1,
 };
 
 export default function MembershipTiersPage() {
@@ -95,6 +95,7 @@ function TierFormModal({ tier, onClose, onSaved }) {
     benefits: tier.benefits.join('\n'), maxMembers: tier.maxMembers || '', color: tier.color, isActive: tier.isActive,
     renewalReminderDays: tier.renewalReminderDays, gracePeriodDays: tier.gracePeriodDays,
     ticketDiscountType: tier.ticketDiscountType || '', ticketDiscountValue: tier.ticketDiscountValue ?? '',
+    ticketDiscountMaxPerEvent: tier.ticketDiscountMaxPerEvent ?? 1,
   } : emptyForm);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -115,6 +116,7 @@ function TierFormModal({ tier, onClose, onSaved }) {
       gracePeriodDays: Number(form.gracePeriodDays),
       ticketDiscountType: form.ticketDiscountType || null,
       ticketDiscountValue: form.ticketDiscountType ? Number(form.ticketDiscountValue) : undefined,
+      ticketDiscountMaxPerEvent: form.ticketDiscountType ? Number(form.ticketDiscountMaxPerEvent) || 1 : undefined,
     };
     try {
       if (tier) await adminApi.put(`/admin/membership-tiers/${tier._id}`, payload);
@@ -177,6 +179,13 @@ function TierFormModal({ tier, onClose, onSaved }) {
               </div>
             )}
           </div>
+          {form.ticketDiscountType && (
+            <div className="mt-3">
+              <label className={label}>Max Discounted Tickets Per Event</label>
+              <input type="number" min="1" className={inputCls + ' max-w-[140px]'} required value={form.ticketDiscountMaxPerEvent} onChange={update('ticketDiscountMaxPerEvent')} />
+              <p className="text-[11px] text-nia-text-faint mt-1">How many times one member can get this discount for the same event (default 1). Raise this to allow repeat bookings at the discounted rate.</p>
+            </div>
+          )}
         </div>
 
         <div className="flex justify-end gap-2 mt-2">

@@ -18,6 +18,7 @@ const MembershipTierSchema = new mongoose.Schema({
   // null/undefined type = no automatic discount for this tier.
   ticketDiscountType: { type: String, enum: ['percentage', 'fixed'] },
   ticketDiscountValue: { type: Number, min: 0 },
+  ticketDiscountMaxPerEvent: { type: Number, default: 1, min: 1 }, // how many discounted tickets one member can get per event
 }, { timestamps: true });
 
 module.exports = mongoose.model('MembershipTier', MembershipTierSchema);

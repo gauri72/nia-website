@@ -25,7 +25,7 @@ async function list(req, res, next) {
 // ── POST /api/admin/membership-tiers ─────────────────────────────
 async function create(req, res, next) {
   try {
-    const { name, description, price, billingPeriod, benefits, maxMembers, color, isActive, renewalReminderDays, gracePeriodDays, ticketDiscountType, ticketDiscountValue } = req.body;
+    const { name, description, price, billingPeriod, benefits, maxMembers, color, isActive, renewalReminderDays, gracePeriodDays, ticketDiscountType, ticketDiscountValue, ticketDiscountMaxPerEvent } = req.body;
     if (!name?.trim() || price === undefined || price === null) {
       return res.status(400).json({ error: 'name and price are required' });
     }
@@ -48,6 +48,7 @@ async function create(req, res, next) {
       gracePeriodDays,
       ticketDiscountType: ticketDiscountType || undefined,
       ticketDiscountValue: ticketDiscountType ? ticketDiscountValue : undefined,
+      ticketDiscountMaxPerEvent: ticketDiscountMaxPerEvent || 1,
     });
 
     return res.status(201).json(tier);
@@ -59,7 +60,7 @@ async function create(req, res, next) {
 // ── PUT /api/admin/membership-tiers/:id ───────────────────────────
 async function update(req, res, next) {
   try {
-    const { name, description, price, billingPeriod, benefits, maxMembers, color, isActive, sortOrder, renewalReminderDays, gracePeriodDays, ticketDiscountType, ticketDiscountValue } = req.body;
+    const { name, description, price, billingPeriod, benefits, maxMembers, color, isActive, sortOrder, renewalReminderDays, gracePeriodDays, ticketDiscountType, ticketDiscountValue, ticketDiscountMaxPerEvent } = req.body;
 
     const update = {};
     if (name !== undefined) { update.name = name.trim(); update.slug = slugify(name); }
@@ -77,6 +78,7 @@ async function update(req, res, next) {
       update.ticketDiscountType = ticketDiscountType || null;
       update.ticketDiscountValue = ticketDiscountType ? ticketDiscountValue : null;
     }
+    if (ticketDiscountMaxPerEvent !== undefined) update.ticketDiscountMaxPerEvent = ticketDiscountMaxPerEvent || 1;
 
     const tier = await MembershipTier.findByIdAndUpdate(req.params.id, update, { new: true, runValidators: true });
     if (!tier) return res.status(404).json({ error: 'Membership tier not found' });

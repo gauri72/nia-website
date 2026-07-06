@@ -68,14 +68,15 @@ async function create(req, res, next) {
       const member = await Member.findOne({ email: normalizedEmail, membershipStatus: 'active' }).populate('membershipTier');
       const tier = member?.membershipTier;
       if (tier?.ticketDiscountType) {
-        const alreadyUsed = await Ticket.exists({
+        const usedCount = await Ticket.countDocuments({
           email: normalizedEmail,
           event_id: EVENT_ID,
           ticket_status: 'paid',
           membershipDiscountApplied: true,
         });
-        if (alreadyUsed) {
-          message = 'A membership discount has already been used for this event with this email — this ticket is charged at full price.';
+        const maxPerEvent = tier.ticketDiscountMaxPerEvent || 1;
+        if (usedCount >= maxPerEvent) {
+          message = `A membership discount has already been used the maximum ${maxPerEvent} time${maxPerEvent === 1 ? '' : 's'} allowed for this event with this email — this ticket is charged at full price.`;
         } else {
           const applied = applyDiscount({ type: tier.ticketDiscountType, value: tier.ticketDiscountValue }, subtotal);
           total = applied.finalAmount;
