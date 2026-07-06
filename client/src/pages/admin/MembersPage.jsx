@@ -138,11 +138,23 @@ export default function MembersPage() {
 }
 
 function AddMemberModal({ tiers, onClose, onCreated }) {
-  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', phone: '', membershipTier: '' });
+  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', phone: '', membershipTier: '', membershipExpiresAt: '' });
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
   function update(field) { return (e) => setForm((f) => ({ ...f, [field]: e.target.value })); }
+
+  function updateTier(e) {
+    const tierId = e.target.value;
+    setForm((f) => {
+      if (!tierId) return { ...f, membershipTier: '', membershipExpiresAt: '' };
+      // Default the validity date to a full billing period from today — admin can still edit it.
+      const tier = tiers.find((t) => t._id === tierId);
+      const days = tier?.billingPeriod === 'monthly' ? 30 : 365;
+      const defaultExpiry = f.membershipExpiresAt || new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+      return { ...f, membershipTier: tierId, membershipExpiresAt: defaultExpiry };
+    });
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -168,11 +180,17 @@ function AddMemberModal({ tiers, onClose, onCreated }) {
         </div>
         <input className={inputCls} type="email" placeholder="Email" required value={form.email} onChange={update('email')} />
         <input className={inputCls} placeholder="Phone (optional)" value={form.phone} onChange={update('phone')} />
-        <select className={inputCls} value={form.membershipTier} onChange={update('membershipTier')}>
+        <select className={inputCls} value={form.membershipTier} onChange={updateTier}>
           <option value="">No tier assigned</option>
           {tiers.map((t) => <option key={t._id} value={t._id}>{t.name}</option>)}
         </select>
-        <p className="text-xs text-nia-text-faint">The member will receive an email to set their own password.</p>
+        {form.membershipTier && (
+          <div>
+            <label className="text-xs font-semibold text-nia-text-muted uppercase tracking-wide mb-1 block">Membership Valid Until</label>
+            <input type="date" className={inputCls} required value={form.membershipExpiresAt} onChange={update('membershipExpiresAt')} />
+          </div>
+        )}
+        <p className="text-xs text-nia-text-faint">The member will receive an email to set their own password{form.membershipTier ? ', plus a membership confirmation with their tier benefits' : ''}.</p>
         <div className="flex justify-end gap-2 mt-2">
           <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
           <Button type="submit" variant="primary" disabled={saving}>{saving ? 'Adding…' : 'Add Member'}</Button>

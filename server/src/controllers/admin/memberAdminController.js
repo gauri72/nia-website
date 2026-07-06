@@ -105,7 +105,7 @@ async function getById(req, res, next) {
 // ── POST /api/admin/members ───────────────────────────────────────
 async function create(req, res, next) {
   try {
-    const { firstName, lastName, email, phone, membershipTier } = req.body;
+    const { firstName, lastName, email, phone, membershipTier, membershipExpiresAt } = req.body;
     if (!firstName?.trim() || !lastName?.trim() || !email?.trim()) {
       return res.status(400).json({ error: 'firstName, lastName and email are required' });
     }
@@ -113,9 +113,10 @@ async function create(req, res, next) {
     const existing = await Member.findOne({ email: email.trim().toLowerCase() });
     if (existing) return res.status(409).json({ error: 'A member with this email already exists' });
 
+    let tier = null;
     if (membershipTier) {
-      const tierExists = await MembershipTier.findById(membershipTier);
-      if (!tierExists) return res.status(400).json({ error: 'Invalid membership tier' });
+      tier = await MembershipTier.findById(membershipTier);
+      if (!tier) return res.status(400).json({ error: 'Invalid membership tier' });
     }
 
     // Admin-added members skip email verification; a random password is set and
@@ -132,6 +133,7 @@ async function create(req, res, next) {
       emailVerified: true,
       membershipTier: membershipTier || undefined,
       membershipStatus: membershipTier ? 'active' : 'none',
+      membershipExpiresAt: membershipTier && membershipExpiresAt ? new Date(membershipExpiresAt) : undefined,
       passwordResetToken: resetToken,
       passwordResetExpires: new Date(Date.now() + RESET_TOKEN_TTL_MS),
     });
@@ -140,6 +142,15 @@ async function create(req, res, next) {
     sendMemberPasswordResetEmail(member, resetUrl).catch((err) =>
       console.error('[MemberAdmin] Failed to send welcome/reset email:', err.message)
     );
+
+    // A tier assigned right at creation is a real membership grant, same as the
+    // manual-assignment path in update() below — send the same confirmation
+    // (benefits, Membership ID, QR, validity) rather than leaving it to a
+    // separate manual "resend" click.
+    if (tier) {
+      sendMembershipPaymentConfirmation({ member, membershipTier: tier, type: 'manual' })
+        .catch((err) => console.error('[MemberAdmin] Failed to send membership confirmation email:', err.message));
+    }
 
     const safeMember = await Member.findById(member._id).select(SENSITIVE_FIELDS);
     return res.status(201).json(safeMember);
