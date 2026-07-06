@@ -16,6 +16,9 @@ const bookingAdminController = require('../controllers/admin/bookingAdminControl
 const mollieImportController = require('../controllers/admin/mollieImportController');
 const legacyTicketController = require('../controllers/admin/legacyTicketController');
 const discountCodeController = require('../controllers/admin/discountCodeController');
+const sponsorshipAdminController = require('../controllers/admin/sponsorshipAdminController');
+const sponsorshipTierController = require('../controllers/admin/sponsorshipTierController');
+const donationAdminController = require('../controllers/admin/donationAdminController');
 const { requireAdminAuth, requireRole } = require('../middleware/adminAuth');
 const { mollieSyncLimiter } = require('../middleware/rateLimiter');
 
@@ -98,6 +101,18 @@ router.get( '/legacy-tickets/:id/pdf',         legacyTicketController.downloadPd
 router.get( '/legacy-tickets/:id/qr',          legacyTicketController.downloadQr);
 router.post('/legacy-tickets/:id/resend-email', legacyTicketController.resendEmail);
 router.post('/legacy-tickets/:id/refund',      requireRole(['super_admin']), legacyTicketController.refund);
+
+// ── Sponsorships ──────────────────────────────────────────────────
+router.get(   '/sponsorships',            sponsorshipAdminController.list);
+router.get(   '/sponsorships/:id',        sponsorshipAdminController.getById);
+router.get(   '/sponsorship-tiers',       sponsorshipTierController.list);
+router.post(  '/sponsorship-tiers',       requireRole(['super_admin']), sponsorshipTierController.create);
+router.put(   '/sponsorship-tiers/:id',   requireRole(['super_admin']), sponsorshipTierController.update);
+router.delete('/sponsorship-tiers/:id',   requireRole(['super_admin']), sponsorshipTierController.remove);
+
+// ── Donations ───────────────────────────────────────────────────
+router.get('/donations',     donationAdminController.list);
+router.get('/donations/:id', donationAdminController.getById);
 
 // ── Mollie Import ──────────────────────────────────────────────
 router.post('/mollie/connect',   requireRole(['super_admin']), mollieImportController.connect);

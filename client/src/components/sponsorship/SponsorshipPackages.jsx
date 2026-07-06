@@ -1,43 +1,14 @@
-import { useState } from 'react';
-import { FaMedal, FaStar, FaCrown, FaGem, FaUsers, FaArrowRight, FaArrowLeft, FaLock, FaShieldAlt, FaTag, FaCheckCircle } from 'react-icons/fa';
+import { useEffect, useState } from 'react';
+import { FaMedal, FaStar, FaCrown, FaGem, FaTrophy, FaAward, FaUsers, FaArrowRight, FaArrowLeft, FaLock, FaShieldAlt, FaTag, FaCheckCircle } from 'react-icons/fa';
 import { startSponsorshipPayment } from '../../services/paymentService';
 import api from '../../services/api';
 import './SponsorshipPackages.css';
 
-const PACKAGES = [
-  {
-    id: 'bronze',
-    tier: 'BRONZE',
-    price: 250,
-    icon: <FaMedal />,
-    color: 'bronze',
-    tickets: 2,
-  },
-  {
-    id: 'silver',
-    tier: 'SILVER',
-    price: 500,
-    icon: <FaStar />,
-    color: 'silver',
-    tickets: 4,
-  },
-  {
-    id: 'gold',
-    tier: 'GOLD',
-    price: 1000,
-    icon: <FaCrown />,
-    color: 'gold',
-    tickets: 8,
-  },
-  {
-    id: 'platinum',
-    tier: 'PLATINUM',
-    price: 2500,
-    icon: <FaGem />,
-    color: 'platinum',
-    tickets: 12,
-  },
-];
+const ICONS = { medal: <FaMedal />, star: <FaStar />, crown: <FaCrown />, gem: <FaGem />, trophy: <FaTrophy />, award: <FaAward /> };
+// The 4 packages that shipped with the original hand-styled CSS (fancy gradients/shadows per
+// name) keep that exact look. Any other admin-created tier falls back to a flat accent built
+// from its own `color` field, so new/renamed packages still look intentional, not broken.
+const KNOWN_COLOR_SLUGS = ['bronze', 'silver', 'gold', 'platinum'];
 
 const STEPS = ['Choose Package', 'Your Details', 'Review Order', 'Payment'];
 
@@ -56,6 +27,7 @@ function StepBar({ step }) {
 }
 
 export default function SponsorshipPackages() {
+  const [tiers, setTiers] = useState(null);
   const [step, setStep]         = useState(0);
   const [selected, setSelected] = useState(null);
   const [sponsor, setSponsor]   = useState({ name: '', email: '', org: '', phone: '' });
@@ -66,7 +38,9 @@ export default function SponsorshipPackages() {
   const [payError, setPayError] = useState('');
   const [freeSuccess, setFreeSuccess] = useState('');
 
-  const pkg = PACKAGES.find(p => p.id === selected);
+  useEffect(() => { api.get('/sponsorship-tiers').then((r) => setTiers(r.data)); }, []);
+
+  const pkg = tiers?.find(p => p.slug === selected);
   const canProceedStep1 = sponsor.name.trim() && sponsor.email.trim();
   const total = discount?.valid ? discount.finalAmount : pkg?.price;
 
@@ -106,7 +80,7 @@ export default function SponsorshipPackages() {
         companyName:   sponsor.org.trim() || undefined,
         email:         sponsor.email.trim(),
         phone:         sponsor.phone.trim() || undefined,
-        packageName:   selected,
+        tierSlug:      selected,
         discountCode:  discountCode.trim() || undefined,
       });
       if (result.free) {
@@ -135,43 +109,61 @@ export default function SponsorshipPackages() {
             ══════════════════════════════ */}
         {step === 0 && (
           <>
-            <div className="spp-cards">
-              {PACKAGES.map((p) => (
-                <div
-                  key={p.id}
-                  className={`spp-card spp-card--${p.color}${selected === p.id ? ' spp-card--selected' : ''}`}
-                  onClick={() => setSelected(p.id)}
-                >
-                  <div className="spp-card__top">
-                    <div className={`spp-card__badge spp-card__badge--${p.color}`}>
-                      <span className="spp-card__badge-icon">{p.icon}</span>
+            {!tiers && <p style={{ textAlign: 'center', padding: '2rem' }}>Loading packages…</p>}
+            {tiers && (
+              <div className="spp-cards">
+                {tiers.map((p) => {
+                  const colorSlug = KNOWN_COLOR_SLUGS.includes(p.slug) ? p.slug : null;
+                  return (
+                    <div
+                      key={p._id}
+                      className={`spp-card${colorSlug ? ` spp-card--${colorSlug}` : ''}${selected === p.slug ? ' spp-card--selected' : ''}`}
+                      style={!colorSlug ? { borderTop: `4px solid ${p.color}` } : undefined}
+                      onClick={() => setSelected(p.slug)}
+                    >
+                      <div className="spp-card__top">
+                        <div
+                          className={`spp-card__badge${colorSlug ? ` spp-card__badge--${colorSlug}` : ''}`}
+                          style={!colorSlug ? { background: p.color, color: '#fff' } : undefined}
+                        >
+                          <span className="spp-card__badge-icon">{ICONS[p.icon] || <FaMedal />}</span>
+                        </div>
+                        <div className="spp-card__info">
+                          <p className="spp-card__tier" style={!colorSlug ? { color: p.color } : undefined}>{p.name.toUpperCase()}</p>
+                          <p className="spp-card__sublabel">SPONSORSHIP</p>
+                        </div>
+                      </div>
+
+                      <div
+                        className={`spp-card__ribbon${colorSlug ? ` spp-card__ribbon--${colorSlug}` : ''}`}
+                        style={!colorSlug ? { background: p.color } : undefined}
+                      >
+                        <span className="spp-card__price" style={!colorSlug ? { color: '#fff' } : undefined}>€{p.price.toLocaleString()}</span>
+                      </div>
+
+                      <div className="spp-card__guests">
+                        <FaUsers />
+                        <span className="spp-card__guest-label">{p.ticketCount} complimentary tickets</span>
+                      </div>
+                      {p.perks?.length > 0 && (
+                        <ul className="spp-card__perks">
+                          {p.perks.map((perk, i) => <li key={i}>{perk}</li>)}
+                        </ul>
+                      )}
+
+                      {selected === p.slug && (
+                        <span className="spp-card__selected-badge">✓ Selected</span>
+                      )}
                     </div>
-                    <div className="spp-card__info">
-                      <p className="spp-card__tier">{p.tier}</p>
-                      <p className="spp-card__sublabel">SPONSORSHIP</p>
-                    </div>
-                  </div>
-
-                  <div className={`spp-card__ribbon spp-card__ribbon--${p.color}`}>
-                    <span className="spp-card__price">€{p.price.toLocaleString()}</span>
-                  </div>
-
-                  <div className="spp-card__guests">
-                    <FaUsers />
-                    <span className="spp-card__guest-label">{p.tickets} complimentary tickets</span>
-                  </div>
-
-                  {selected === p.id && (
-                    <span className="spp-card__selected-badge">✓ Selected</span>
-                  )}
-                </div>
-              ))}
-            </div>
+                  );
+                })}
+              </div>
+            )}
 
             <div className="spp-bottom">
               {selected && (
                 <p className="spp-bottom__summary">
-                  <strong>{pkg?.tier} Sponsorship</strong> — €{pkg?.price.toLocaleString()}
+                  <strong>{pkg?.name} Sponsorship</strong> — €{pkg?.price.toLocaleString()}
                 </p>
               )}
               <button
@@ -249,10 +241,13 @@ export default function SponsorshipPackages() {
                   </div>
                   <div className="spp-review__row">
                     <span className="spp-review__plan-name">
-                      <span className={`spp-review__dot spp-review__dot--${pkg?.color}`} />
-                      {pkg?.tier} Sponsorship
+                      <span
+                        className={`spp-review__dot${KNOWN_COLOR_SLUGS.includes(pkg?.slug) ? ` spp-review__dot--${pkg.slug}` : ''}`}
+                        style={!KNOWN_COLOR_SLUGS.includes(pkg?.slug) ? { background: pkg?.color } : undefined}
+                      />
+                      {pkg?.name} Sponsorship
                     </span>
-                    <span>{pkg?.tickets} tickets</span>
+                    <span>{pkg?.ticketCount} tickets</span>
                     <span className="spp-review__line-total">€{pkg?.price.toLocaleString()}</span>
                   </div>
                   {discount?.valid && (
@@ -299,7 +294,7 @@ export default function SponsorshipPackages() {
               <div className="spp-payment-step">
                 <h3 className="spp-form-step__heading">Confirm &amp; Pay</h3>
                 <p className="spp-form-step__sub">
-                  You will be redirected to Mollie's secure checkout to complete your <strong>{pkg?.tier}</strong> sponsorship payment of <strong>€{total?.toLocaleString()}</strong>.
+                  You will be redirected to Mollie's secure checkout to complete your <strong>{pkg?.name}</strong> sponsorship payment of <strong>€{total?.toLocaleString()}</strong>.
                   All major payment methods are accepted.
                 </p>
 

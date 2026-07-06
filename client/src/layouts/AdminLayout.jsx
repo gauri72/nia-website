@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Outlet, NavLink, Link } from 'react-router-dom';
-import { LayoutDashboard, Users, Calendar, Ticket, FileText, Images, MailOpen, BarChart3, MessageCircle, Bell, Settings, LogOut, RefreshCw, Receipt, Tag, Layers } from 'lucide-react';
+import { LayoutDashboard, Users, Calendar, Ticket, FileText, Images, MailOpen, BarChart3, MessageCircle, Bell, Settings, LogOut, RefreshCw, Receipt, Tag, Layers, Handshake, Heart } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import adminApi from '../services/adminApi';
 import Button from '../components/admin/Button';
@@ -23,6 +23,8 @@ const NAV_GROUPS = [
       { to: '/admin/bookings', label: 'Tickets & Bookings', icon: Ticket },
       { to: '/admin/ticket-sales', label: 'Ticket Sales', icon: Receipt },
       { to: '/admin/discount-codes', label: 'Discount Codes', icon: Tag },
+      { to: '/admin/sponsorships', label: 'Sponsorships', icon: Handshake },
+      { to: '/admin/donations', label: 'Donations', icon: Heart },
     ],
   },
   {

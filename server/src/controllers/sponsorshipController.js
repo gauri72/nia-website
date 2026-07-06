@@ -1,24 +1,24 @@
 const Sponsorship = require('../models/Sponsorship');
+const SponsorshipTier = require('../models/SponsorshipTier');
 const { createPayment } = require('../services/mollieService');
 const { computeDiscount } = require('../services/discountService');
 const { finalizeFreeOrder } = require('../services/databaseService');
 
-const PACKAGE_AMOUNTS = { bronze: 250, silver: 500, gold: 1000, platinum: 2500 };
-
 // ── POST /api/sponsorships/create ────────────────────────────
 async function create(req, res, next) {
   try {
-    const { sponsorName, contactPerson, companyName, email, phone, packageName, eventId, remarks, discountCode } = req.body;
+    const { sponsorName, contactPerson, companyName, email, phone, tierSlug, eventId, remarks, discountCode } = req.body;
 
     if (!sponsorName?.trim() || !contactPerson?.trim() || !email?.trim()) {
       return res.status(400).json({ error: 'sponsorName, contactPerson, and email are required' });
     }
-    const pkg = packageName?.toLowerCase();
-    if (!PACKAGE_AMOUNTS[pkg]) {
-      return res.status(400).json({ error: 'Invalid package. Must be bronze, silver, gold, or platinum' });
+    if (!tierSlug?.trim()) {
+      return res.status(400).json({ error: 'tierSlug is required' });
     }
+    const tier = await SponsorshipTier.findOne({ slug: tierSlug.trim().toLowerCase(), isActive: true });
+    if (!tier) return res.status(400).json({ error: 'Invalid or inactive sponsorship package' });
 
-    const originalAmount = PACKAGE_AMOUNTS[pkg];
+    const originalAmount = tier.price;
     let amount = originalAmount;
     let discount = null;
     if (discountCode?.trim()) {
@@ -36,7 +36,8 @@ async function create(req, res, next) {
       companyName: companyName?.trim(),
       email: email.trim().toLowerCase(),
       phone: phone?.trim(),
-      packageName: pkg,
+      sponsorshipTier: tier._id,
+      packageName: tier.name,
       discountCode: discount?.discountCodeId,
       discount_code: discount?.discount_code,
       discount_type: discount?.discount_type,
@@ -51,7 +52,7 @@ async function create(req, res, next) {
 
     if (amount <= 0) {
       await finalizeFreeOrder('sponsorship', sponsorship._id.toString());
-      console.log(`[Sponsorship] Created ${sponsorship._id} | pkg=${pkg} | free (fully discounted)`);
+      console.log(`[Sponsorship] Created ${sponsorship._id} | tier=${tier.name} | free (fully discounted)`);
       return res.status(201).json({
         sponsorshipId: sponsorship._id,
         referenceNumber: sponsorship.referenceNumber,
@@ -63,12 +64,12 @@ async function create(req, res, next) {
 
     const payment = await createPayment({
       amount,
-      description: `NIA Sponsorship — ${pkg.charAt(0).toUpperCase() + pkg.slice(1)} Package`,
+      description: `NIA Sponsorship — ${tier.name} Package`,
       type: 'sponsorship',
       referenceId: sponsorship._id.toString(),
     });
 
-    console.log(`[Sponsorship] Created ${sponsorship._id} | pkg=${pkg} | payment=${payment.paymentId}`);
+    console.log(`[Sponsorship] Created ${sponsorship._id} | tier=${tier.name} | payment=${payment.paymentId}`);
 
     return res.status(201).json({
       sponsorshipId: sponsorship._id,

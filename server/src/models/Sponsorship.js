@@ -12,11 +12,8 @@ const SponsorshipSchema = new mongoose.Schema({
   companyName: { type: String, trim: true },
   email: { type: String, required: true, trim: true, lowercase: true },
   phone: { type: String, trim: true },
-  packageName: {
-    type: String,
-    enum: ['silver', 'gold', 'platinum', 'diamond'],
-    required: true,
-  },
+  sponsorshipTier: { type: mongoose.Schema.Types.ObjectId, ref: 'SponsorshipTier' },
+  packageName: { type: String, required: true }, // snapshot of the tier name/slug at purchase time — free text since tiers are now admin-defined, not a fixed enum
   discountCode: { type: mongoose.Schema.Types.ObjectId, ref: 'DiscountCode' },
   discount_code: { type: String },
   discount_type: { type: String, enum: ['percentage', 'fixed'] },
