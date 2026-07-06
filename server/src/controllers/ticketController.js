@@ -53,7 +53,7 @@ async function resolveAutomaticDiscount(normalizedEmail, ticketLines) {
   if (remaining <= 0) {
     return {
       eligible: false,
-      message: `You've already used your full membership discount allowance (${maxUnits} ticket${maxUnits === 1 ? '' : 's'}) for this event with this email — this order is charged at full price.`,
+      message: `Maximum per-event membership discount usage (${maxUnits} ticket${maxUnits === 1 ? '' : 's'}) for this email has been reached — this order is charged at full price.`,
     };
   }
   if (eligibleRequestedQty === 0) return { eligible: false }; // e.g. child-only order — nothing to discount, not an "already used" case

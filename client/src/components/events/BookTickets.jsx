@@ -82,6 +82,15 @@ export default function BookTickets() {
     }
   }
 
+  // Ticket composition changed — any previously computed discount (code or
+  // automatic membership) no longer matches the new subtotal, so it must be
+  // invalidated here. This also makes handleContinueToReview's `!discount?.valid`
+  // guard re-fetch a fresh preview instead of reusing a stale one.
+  function changeQty(id, delta) {
+    setQtys(q => ({ ...q, [id]: Math.max(0, q[id] + delta) }));
+    setDiscount(null);
+  }
+
   function handleAttendeeField(e) {
     setAttendee(a => ({ ...a, [e.target.name]: e.target.value }));
     if (e.target.name === 'email') setDiscount(null); // re-validate against the new email if changed
@@ -196,9 +205,9 @@ export default function BookTickets() {
                       <div className="bt-field bt-field--qty">
                         <label className="bt-field__label">Qty</label>
                         <div className="bt-qty">
-                          <button className="bt-qty__btn" onClick={() => setQtys(q => ({ ...q, [t.id]: Math.max(0, q[t.id] - 1) }))} aria-label="Decrease">−</button>
+                          <button className="bt-qty__btn" onClick={() => changeQty(t.id, -1)} aria-label="Decrease">−</button>
                           <span className="bt-qty__num">{qty}</span>
-                          <button className="bt-qty__btn" onClick={() => setQtys(q => ({ ...q, [t.id]: q[t.id] + 1 }))} aria-label="Increase">+</button>
+                          <button className="bt-qty__btn" onClick={() => changeQty(t.id, 1)} aria-label="Increase">+</button>
                         </div>
                       </div>
                       <AIHint ticket={t} qty={qty} discount={0} />

@@ -60,7 +60,7 @@ async function computePricing(member, event, lines, discountCode) {
     const usedUnits = usedAgg[0]?.total || 0;
     allowance = Math.max(0, maxPerEvent - usedUnits);
     if (allowance <= 0) {
-      message = `You've already used your full membership discount allowance (${maxPerEvent} ticket${maxPerEvent === 1 ? '' : 's'}) for this event — tickets are charged at full price.`;
+      message = `Maximum per-event membership discount usage (${maxPerEvent} ticket${maxPerEvent === 1 ? '' : 's'}) for this email has been reached — tickets are charged at full price.`;
     }
   }
 
