@@ -19,10 +19,15 @@ const BookingSchema = new mongoose.Schema({
   event: { type: mongoose.Schema.Types.ObjectId, ref: 'Event', required: true },
   lines: [BookingLineSchema],
   subtotal: { type: Number, required: true },
+  discountCode: { type: mongoose.Schema.Types.ObjectId, ref: 'DiscountCode' },
   discount_code: { type: String },
   discount_pct: { type: Number, default: 0 },
   discount_amount: { type: Number, default: 0 },
   amount: { type: Number, required: true },
+  // Feature B — automatic per-tier membership discount, distinct from a Feature A discount code
+  membershipDiscountApplied: { type: Boolean, default: false },
+  membershipDiscountTier: { type: mongoose.Schema.Types.ObjectId, ref: 'MembershipTier' },
+  membershipDiscountAmount: { type: Number },
   status: {
     type: String,
     enum: ['pending_payment', 'paid', 'failed', 'expired', 'canceled', 'refunded'],

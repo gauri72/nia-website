@@ -18,6 +18,11 @@ const MembershipSchema = new mongoose.Schema({
   partnerName: { type: String, trim: true },
   partnerEmail: { type: String, trim: true, lowercase: true },
   partnerPhone: { type: String, trim: true },
+  discountCode: { type: mongoose.Schema.Types.ObjectId, ref: 'DiscountCode' },
+  discount_code: { type: String },
+  discount_type: { type: String, enum: ['percentage', 'fixed'] },
+  discount_value: { type: Number },
+  discount_amount: { type: Number, default: 0 },
   amount: { type: Number, required: true },
   status: {
     type: String,

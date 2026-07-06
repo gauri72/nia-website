@@ -8,6 +8,7 @@ const membershipController  = require('../controllers/membershipController');
 const ticketController      = require('../controllers/ticketController');
 const donationController    = require('../controllers/donationController');
 const sponsorshipController = require('../controllers/sponsorshipController');
+const discountCodeController = require('../controllers/admin/discountCodeController');
 
 const { paymentLimiter, webhookLimiter } = require('../middleware/rateLimiter');
 
@@ -52,6 +53,7 @@ router.use('/member-auth', memberAuthRoutes);
 router.use('/admin-auth',  adminAuthRoutes);
 router.use('/admin',       adminRoutes);
 router.get('/membership-tiers', membershipTierController.publicList);
+router.post('/discount-codes/preview', discountCodeController.preview);
 
 router.use('/events',      publicEventRoutes);
 router.use('/bookings',    memberBookingRoutes);

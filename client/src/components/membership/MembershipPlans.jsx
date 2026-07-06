@@ -5,6 +5,7 @@ import {
   FaLock, FaShieldAlt, FaCheckCircle, FaIdCard,
 } from 'react-icons/fa';
 import { startMembershipPayment } from '../../services/paymentService';
+import api from '../../services/api';
 import './MembershipPlans.css';
 
 /* ── Plan data ── */
@@ -71,14 +72,20 @@ export default function MembershipPlans() {
   const [member, setMember]       = useState({ name: '', email: '', phone: '' });
   const [partner, setPartner]     = useState({ name: '', email: '', phone: '' });
   const [memberCode, setMemberCode] = useState('');
+  const [discountCode, setDiscountCode] = useState('');
+  const [discount, setDiscount] = useState(null);
+  const [applyingDiscount, setApplyingDiscount] = useState(false);
   const [paying, setPaying]   = useState(false);
   const [payError, setPayError] = useState('');
+  const [freeSuccess, setFreeSuccess] = useState('');
 
   const plan = PLANS.find(p => p.id === selected);
   const canProceedStep1 = member.name.trim() && member.email.trim() && partner.name.trim();
+  const total = discount?.valid ? discount.finalAmount : plan?.price;
 
   function handleField(e) {
     setMember(m => ({ ...m, [e.target.name]: e.target.value }));
+    if (e.target.name === 'email') setDiscount(null);
   }
 
   function handlePartnerField(e) {
@@ -89,14 +96,29 @@ export default function MembershipPlans() {
     setStep(0); setSelected(null);
     setMember({ name: '', email: '', phone: '' });
     setPartner({ name: '', email: '', phone: '' });
-    setMemberCode(''); setPaying(false); setPayError('');
+    setMemberCode(''); setDiscountCode(''); setDiscount(null); setPaying(false); setPayError(''); setFreeSuccess('');
+  }
+
+  async function handleApplyDiscount() {
+    if (!discountCode.trim() || !member.email.trim() || !plan) return;
+    setApplyingDiscount(true);
+    try {
+      const { data } = await api.post('/discount-codes/preview', {
+        code: discountCode.trim(), productType: 'membership', email: member.email.trim(), originalAmount: plan.price,
+      });
+      setDiscount(data);
+    } catch {
+      setDiscount({ valid: false, message: 'Could not validate this code right now.' });
+    } finally {
+      setApplyingDiscount(false);
+    }
   }
 
   async function handlePay() {
     setPayError('');
     setPaying(true);
     try {
-      await startMembershipPayment({
+      const result = await startMembershipPayment({
         plan: selected,
         name: member.name.trim(),
         email: member.email.trim(),
@@ -104,8 +126,14 @@ export default function MembershipPlans() {
         partnerName: partner.name.trim() || undefined,
         partnerEmail: partner.email.trim() || undefined,
         partnerPhone: partner.phone.trim() || undefined,
+        discountCode: discountCode.trim() || undefined,
       });
-      // redirects to Mollie — code below only runs on error
+      // A fully-discounted membership is finalized immediately server-side — there's
+      // no Mollie checkout to redirect to. Anything else redirects the browser away.
+      if (result.free) {
+        setFreeSuccess(result.message || 'Your membership is fully covered by the discount — no payment required.');
+        setPaying(false);
+      }
     } catch (err) {
       setPayError(err?.response?.data?.error || 'Payment failed. Please try again.');
       setPaying(false);
@@ -227,6 +255,23 @@ export default function MembershipPlans() {
               <input className="mp-pfield__input" name="phone" type="tel" placeholder="+31 6 12345678" value={member.phone} onChange={handleField} />
             </div>
 
+            <div className="mp-pfield">
+              <label className="mp-pfield__label"><FaTag /> Discount Code <span className="mp-optional">(optional)</span></label>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <input
+                  className="mp-pfield__input" placeholder="e.g. code from a promotion"
+                  value={discountCode}
+                  onChange={e => { setDiscountCode(e.target.value); setDiscount(null); }}
+                />
+                <button type="button" className="mp-continue-btn" disabled={!discountCode.trim() || !member.email.trim() || applyingDiscount} onClick={handleApplyDiscount}>
+                  {applyingDiscount ? 'Checking…' : 'Apply'}
+                </button>
+              </div>
+              {discount?.valid && <span style={{ color: '#2ecc71', fontSize: '0.85rem' }}>✓ €{discount.discount_amount} discount applied</span>}
+              {discount && !discount.valid && <span style={{ color: '#e74c3c', fontSize: '0.85rem' }}>{discount.message}</span>}
+              {!member.email.trim() && <span className="mp-pfield__hint">Enter your email above first.</span>}
+            </div>
+
             <div className="mp-section-divider">
               <span className="mp-section-divider__line" />
               <span className="mp-section-divider__label">Partner Details</span>
@@ -277,10 +322,17 @@ export default function MembershipPlans() {
                 <span>1 year</span>
                 <span className="mp-review__line-total">€{plan?.price}</span>
               </div>
+              {discount?.valid && (
+                <div className="mp-review__row">
+                  <span>Discount ({discountCode.trim().toUpperCase()})</span>
+                  <span />
+                  <span className="mp-review__line-total">−€{discount.discount_amount}</span>
+                </div>
+              )}
               <div className="mp-review__total-row">
                 <span>Total Payable</span>
                 <span />
-                <span className="mp-review__grand-total">€{plan?.price}</span>
+                <span className="mp-review__grand-total">€{total}</span>
               </div>
             </div>
 
@@ -303,7 +355,7 @@ export default function MembershipPlans() {
             <div className="mp-nav">
               <button className="mp-back-btn" onClick={() => setStep(1)}><FaArrowLeft /> Back</button>
               <button className="mp-continue-btn" onClick={() => setStep(3)}>
-                Pay €{plan?.price} <FaArrowRight />
+                Pay €{total} <FaArrowRight />
               </button>
             </div>
           </div>
@@ -312,11 +364,19 @@ export default function MembershipPlans() {
         {/* ══════════════════════════════
             STEP 3 — Confirm & Pay
             ══════════════════════════════ */}
-        {step === 3 && (
+        {step === 3 && freeSuccess && (
+          <div className="mp-payment-step">
+            <h3 className="mp-form-step__heading"><FaCheckCircle style={{ color: '#2ecc71' }} /> You're all set!</h3>
+            <p className="mp-form-step__sub">{freeSuccess}</p>
+            <p className="mp-payment__disclaimer">Your membership confirmation has been emailed to {member.email}.</p>
+          </div>
+        )}
+
+        {step === 3 && !freeSuccess && (
           <div className="mp-payment-step">
             <h3 className="mp-form-step__heading">Confirm &amp; Pay</h3>
             <p className="mp-form-step__sub">
-              You will be redirected to Mollie's secure checkout to pay <strong>€{plan?.price}</strong>.
+              You will be redirected to Mollie's secure checkout to pay <strong>€{total}</strong>.
               All major payment methods are accepted (iDEAL, card, PayPal and more).
             </p>
 
@@ -335,7 +395,7 @@ export default function MembershipPlans() {
                 disabled={paying}
                 onClick={handlePay}
               >
-                {paying ? 'Redirecting…' : <><FaLock /> Pay €{plan?.price} securely</>}
+                {paying ? 'Processing…' : <><FaLock /> Pay €{total} securely</>}
               </button>
             </div>
           </div>

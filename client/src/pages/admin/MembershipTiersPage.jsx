@@ -11,7 +11,10 @@ import Button from '../../components/admin/Button';
 const inputCls = 'w-full rounded-nia-btn border border-nia-border px-3 py-2 text-sm focus:border-nia-orange focus:outline-none focus:ring-2 focus:ring-nia-orange/20';
 const label = 'text-xs font-semibold text-nia-text-muted uppercase tracking-wide mb-1 block';
 
-const emptyForm = { name: '', description: '', price: '', billingPeriod: 'annual', benefits: '', maxMembers: '', color: '#1a2b5e', isActive: true, renewalReminderDays: 7, gracePeriodDays: 0 };
+const emptyForm = {
+  name: '', description: '', price: '', billingPeriod: 'annual', benefits: '', maxMembers: '', color: '#1a2b5e', isActive: true, renewalReminderDays: 7, gracePeriodDays: 0,
+  ticketDiscountType: '', ticketDiscountValue: '',
+};
 
 export default function MembershipTiersPage() {
   const { admin } = useAdminAuth();
@@ -91,6 +94,7 @@ function TierFormModal({ tier, onClose, onSaved }) {
     name: tier.name, description: tier.description || '', price: tier.price, billingPeriod: tier.billingPeriod,
     benefits: tier.benefits.join('\n'), maxMembers: tier.maxMembers || '', color: tier.color, isActive: tier.isActive,
     renewalReminderDays: tier.renewalReminderDays, gracePeriodDays: tier.gracePeriodDays,
+    ticketDiscountType: tier.ticketDiscountType || '', ticketDiscountValue: tier.ticketDiscountValue ?? '',
   } : emptyForm);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -109,6 +113,8 @@ function TierFormModal({ tier, onClose, onSaved }) {
       benefits: form.benefits.split('\n').map((b) => b.trim()).filter(Boolean),
       renewalReminderDays: Number(form.renewalReminderDays),
       gracePeriodDays: Number(form.gracePeriodDays),
+      ticketDiscountType: form.ticketDiscountType || null,
+      ticketDiscountValue: form.ticketDiscountType ? Number(form.ticketDiscountValue) : undefined,
     };
     try {
       if (tier) await adminApi.put(`/admin/membership-tiers/${tier._id}`, payload);
@@ -151,6 +157,28 @@ function TierFormModal({ tier, onClose, onSaved }) {
         <label className="flex items-center gap-2 text-sm text-nia-text-muted">
           <input type="checkbox" checked={form.isActive} onChange={update('isActive')} /> Active (available for assignment)
         </label>
+
+        <div className="border-t border-nia-border pt-3 mt-1">
+          <p className={label}>Ticket Discount</p>
+          <p className="text-[11px] text-nia-text-faint mb-2">Automatically applied at ticket checkout for active members of this tier — no code needed. Separate from Discount Codes.</p>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={label}>Type</label>
+              <select className={inputCls} value={form.ticketDiscountType} onChange={update('ticketDiscountType')}>
+                <option value="">None</option>
+                <option value="percentage">Percentage</option>
+                <option value="fixed">Fixed Amount</option>
+              </select>
+            </div>
+            {form.ticketDiscountType && (
+              <div>
+                <label className={label}>Value ({form.ticketDiscountType === 'percentage' ? '%' : '€'})</label>
+                <input type="number" min="0" step="0.01" className={inputCls} required value={form.ticketDiscountValue} onChange={update('ticketDiscountValue')} />
+              </div>
+            )}
+          </div>
+        </div>
+
         <div className="flex justify-end gap-2 mt-2">
           <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
           <Button type="submit" variant="primary" disabled={saving}>{saving ? 'Saving…' : 'Save Tier'}</Button>

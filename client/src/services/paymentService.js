@@ -21,25 +21,25 @@ export async function getPaymentStatus(paymentId) {
 
 export async function startMembershipPayment(details) {
   const { data } = await api.post('/membership/create', details);
-  storeAndRedirect(data.paymentId, data.checkoutUrl);
+  if (!data.free) storeAndRedirect(data.paymentId, data.checkoutUrl);
   return data;
 }
 
 export async function startTicketPayment(details) {
   const { data } = await api.post('/tickets/create', details);
-  storeAndRedirect(data.paymentId, data.checkoutUrl);
+  if (!data.free) storeAndRedirect(data.paymentId, data.checkoutUrl);
   return data;
 }
 
 export async function startDonationPayment(details) {
   const { data } = await api.post('/donations/create', details);
-  storeAndRedirect(data.paymentId, data.checkoutUrl);
+  if (!data.free) storeAndRedirect(data.paymentId, data.checkoutUrl);
   return data;
 }
 
 export async function startSponsorshipPayment(details) {
   const { data } = await api.post('/sponsorships/create', details);
-  storeAndRedirect(data.paymentId, data.checkoutUrl);
+  if (!data.free) storeAndRedirect(data.paymentId, data.checkoutUrl);
   return data;
 }
 

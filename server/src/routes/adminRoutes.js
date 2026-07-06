@@ -15,6 +15,7 @@ const ticketTypeController = require('../controllers/admin/ticketTypeController'
 const bookingAdminController = require('../controllers/admin/bookingAdminController');
 const mollieImportController = require('../controllers/admin/mollieImportController');
 const legacyTicketController = require('../controllers/admin/legacyTicketController');
+const discountCodeController = require('../controllers/admin/discountCodeController');
 const { requireAdminAuth, requireRole } = require('../middleware/adminAuth');
 const { mollieSyncLimiter } = require('../middleware/rateLimiter');
 
@@ -37,6 +38,12 @@ router.get(   '/membership-tiers',      membershipTierController.list);
 router.post(  '/membership-tiers',      requireRole(['super_admin']), membershipTierController.create);
 router.put(   '/membership-tiers/:id',  requireRole(['super_admin']), membershipTierController.update);
 router.delete('/membership-tiers/:id',  requireRole(['super_admin']), membershipTierController.remove);
+
+// ── Discount Codes ──────────────────────────────────────────────
+router.get(   '/discount-codes',      discountCodeController.list);
+router.post(  '/discount-codes',      requireRole(['super_admin']), discountCodeController.create);
+router.put(   '/discount-codes/:id',  requireRole(['super_admin']), discountCodeController.update);
+router.delete('/discount-codes/:id',  requireRole(['super_admin']), discountCodeController.remove);
 
 // ── Events ────────────────────────────────────────────────────
 router.get(   '/events',                       eventAdminController.list);

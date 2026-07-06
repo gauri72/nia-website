@@ -14,6 +14,10 @@ const MembershipTierSchema = new mongoose.Schema({
   autoRenewDefault: { type: Boolean, default: false },
   renewalReminderDays: { type: Number, default: 7 },
   gracePeriodDays: { type: Number, default: 0 },
+  // Feature B — automatic ticket discount for active members of this tier, applied without a code.
+  // null/undefined type = no automatic discount for this tier.
+  ticketDiscountType: { type: String, enum: ['percentage', 'fixed'] },
+  ticketDiscountValue: { type: Number, min: 0 },
 }, { timestamps: true });
 
 module.exports = mongoose.model('MembershipTier', MembershipTierSchema);

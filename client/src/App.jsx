@@ -23,6 +23,7 @@ import AdminDashboardPage      from './pages/admin/DashboardPage';
 import AdminMembersPage           from './pages/admin/MembersPage';
 import AdminMemberDetailPage      from './pages/admin/MemberDetailPage';
 import AdminMembershipTiersPage   from './pages/admin/MembershipTiersPage';
+import AdminDiscountCodesPage     from './pages/admin/DiscountCodesPage';
 import AdminEventsPage            from './pages/admin/EventsPage';
 import AdminEventFormPage         from './pages/admin/EventFormPage';
 import AdminBookingsPage          from './pages/admin/BookingsPage';
@@ -82,6 +83,7 @@ export default function App() {
               <Route path="members" element={<AdminMembersPage />} />
               <Route path="members/:id" element={<AdminMemberDetailPage />} />
               <Route path="membership-tiers" element={<AdminMembershipTiersPage />} />
+              <Route path="discount-codes" element={<AdminDiscountCodesPage />} />
               <Route path="events" element={<AdminEventsPage />} />
               <Route path="events/new" element={<AdminEventFormPage />} />
               <Route path="events/:id" element={<AdminEventFormPage />} />

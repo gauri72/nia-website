@@ -8,6 +8,8 @@ const MembershipPayment = require('../models/MembershipPayment');
 const Member       = require('../models/Member');
 const MembershipTier = require('../models/MembershipTier');
 const { notifyAdmins, notifyMember } = require('./notificationService');
+const { recordRedemption } = require('./discountService');
+const { sendPostPaymentEmails } = require('./emailService');
 
 const TERMINAL_STATUSES = ['paid', 'failed', 'expired', 'canceled'];
 
@@ -25,10 +27,6 @@ function isAlreadyProcessed(record, newStatus) {
 async function updateMembership(referenceId, molliePaymentId, status, paidAt) {
   const record = await Membership.findById(referenceId);
   if (!record) throw new Error(`Membership not found: ${referenceId}`);
-  if (isAlreadyProcessed(record, status)) {
-    console.log(`[DB] Membership ${referenceId} already processed — skipping`);
-    return null;
-  }
 
   const update = {
     mollie_payment_id: molliePaymentId,
@@ -41,8 +39,24 @@ async function updateMembership(referenceId, molliePaymentId, status, paidAt) {
     update.activated_at = new Date();
   }
 
-  const updated = await Membership.findByIdAndUpdate(referenceId, update, { new: true });
+  // Atomic conditional update — the filter (not a separate read-then-write) is what
+  // actually prevents double-processing under concurrent/redelivered webhooks; only
+  // one concurrent caller can ever match `payment_status: { $nin: TERMINAL }`.
+  const updated = await Membership.findOneAndUpdate(
+    { _id: referenceId, payment_status: { $nin: TERMINAL_STATUSES } },
+    update,
+    { new: true },
+  );
+  if (!updated) {
+    console.log(`[DB] Membership ${referenceId} already processed — skipping`);
+    return null;
+  }
   console.log(`[DB] Membership ${referenceId} updated → status=${status}`);
+
+  if (status === 'paid' && updated.discountCode) {
+    await recordRedemption({ discountCodeId: updated.discountCode, email: updated.email, productType: 'membership', referenceId: updated._id });
+  }
+
   return updated;
 }
 
@@ -50,10 +64,6 @@ async function updateMembership(referenceId, molliePaymentId, status, paidAt) {
 async function updateTicket(referenceId, molliePaymentId, status, paidAt) {
   const record = await Ticket.findById(referenceId);
   if (!record) throw new Error(`Ticket not found: ${referenceId}`);
-  if (isAlreadyProcessed(record, status)) {
-    console.log(`[DB] Ticket ${referenceId} already processed — skipping`);
-    return null;
-  }
 
   const update = {
     mollie_payment_id: molliePaymentId,
@@ -64,8 +74,21 @@ async function updateTicket(referenceId, molliePaymentId, status, paidAt) {
     update.paid_at = paidAt ? new Date(paidAt) : new Date();
   }
 
-  const updated = await Ticket.findByIdAndUpdate(referenceId, update, { new: true });
+  const updated = await Ticket.findOneAndUpdate(
+    { _id: referenceId, ticket_status: { $nin: TERMINAL_STATUSES } },
+    update,
+    { new: true },
+  );
+  if (!updated) {
+    console.log(`[DB] Ticket ${referenceId} already processed — skipping`);
+    return null;
+  }
   console.log(`[DB] Ticket ${referenceId} updated → status=${status}`);
+
+  if (status === 'paid' && updated.discountCode) {
+    await recordRedemption({ discountCodeId: updated.discountCode, email: updated.email, productType: 'ticket', referenceId: updated._id });
+  }
+
   return updated;
 }
 
@@ -96,10 +119,6 @@ async function updateDonation(referenceId, molliePaymentId, status, paidAt) {
 async function updateSponsorship(referenceId, molliePaymentId, status, paidAt) {
   const record = await Sponsorship.findById(referenceId);
   if (!record) throw new Error(`Sponsorship not found: ${referenceId}`);
-  if (isAlreadyProcessed(record, status)) {
-    console.log(`[DB] Sponsorship ${referenceId} already processed — skipping`);
-    return null;
-  }
 
   const update = {
     mollie_payment_id: molliePaymentId,
@@ -111,8 +130,21 @@ async function updateSponsorship(referenceId, molliePaymentId, status, paidAt) {
     update.paid_at = paidAt ? new Date(paidAt) : new Date();
   }
 
-  const updated = await Sponsorship.findByIdAndUpdate(referenceId, update, { new: true });
+  const updated = await Sponsorship.findOneAndUpdate(
+    { _id: referenceId, payment_status: { $nin: TERMINAL_STATUSES } },
+    update,
+    { new: true },
+  );
+  if (!updated) {
+    console.log(`[DB] Sponsorship ${referenceId} already processed — skipping`);
+    return null;
+  }
   console.log(`[DB] Sponsorship ${referenceId} updated → status=${status}`);
+
+  if (status === 'paid' && updated.discountCode) {
+    await recordRedemption({ discountCodeId: updated.discountCode, email: updated.email, productType: 'sponsorship', referenceId: updated._id });
+  }
+
   return updated;
 }
 
@@ -120,10 +152,6 @@ async function updateSponsorship(referenceId, molliePaymentId, status, paidAt) {
 async function updateBooking(referenceId, molliePaymentId, status, paidAt) {
   const record = await Booking.findById(referenceId);
   if (!record) throw new Error(`Booking not found: ${referenceId}`);
-  if (isAlreadyProcessed(record, status)) {
-    console.log(`[DB] Booking ${referenceId} already processed — skipping`);
-    return null;
-  }
 
   const update = {
     mollie_payment_id: molliePaymentId,
@@ -132,20 +160,35 @@ async function updateBooking(referenceId, molliePaymentId, status, paidAt) {
   };
   if (status === 'paid') {
     update.paid_at = paidAt ? new Date(paidAt) : new Date();
-    // Increment sold counts now that payment is confirmed — never before, to avoid holding inventory hostage on abandoned checkouts.
+  }
+
+  const updated = await Booking.findOneAndUpdate(
+    { _id: referenceId, status: { $nin: TERMINAL_STATUSES } },
+    update,
+    { new: true },
+  ).populate('member').populate('event');
+  if (!updated) {
+    console.log(`[DB] Booking ${referenceId} already processed — skipping`);
+    return null;
+  }
+  console.log(`[DB] Booking ${referenceId} updated → status=${status}`);
+
+  if (status === 'paid') {
+    // Increment sold counts now that payment is confirmed — never before, to avoid
+    // holding inventory hostage on abandoned checkouts. Only runs once per booking
+    // thanks to the atomic guard above.
     await Promise.all(record.lines.map((line) =>
       TicketType.findByIdAndUpdate(line.ticketType, { $inc: { quantitySold: line.quantity } })
     ));
-  }
 
-  const updated = await Booking.findByIdAndUpdate(referenceId, update, { new: true })
-    .populate('member')
-    .populate('event');
-  console.log(`[DB] Booking ${referenceId} updated → status=${status}`);
+    if (updated.discountCode && updated.member) {
+      await recordRedemption({ discountCodeId: updated.discountCode, email: updated.member.email, productType: 'ticket', referenceId: updated._id });
+    }
 
-  if (status === 'paid' && updated.member && updated.event) {
-    notifyMember(updated.member._id, 'Booking Confirmed', `Your booking for ${updated.event.title} is confirmed.`, '/dashboard/tickets').catch(() => {});
-    notifyAdmins('New Booking', `${updated.member.firstName} ${updated.member.lastName} booked ${updated.event.title}.`, '/admin/bookings').catch(() => {});
+    if (updated.member && updated.event) {
+      notifyMember(updated.member._id, 'Booking Confirmed', `Your booking for ${updated.event.title} is confirmed.`, '/dashboard/tickets').catch(() => {});
+      notifyAdmins('New Booking', `${updated.member.firstName} ${updated.member.lastName} booked ${updated.event.title}.`, '/admin/bookings').catch(() => {});
+    }
   }
 
   return updated;
@@ -155,10 +198,6 @@ async function updateBooking(referenceId, molliePaymentId, status, paidAt) {
 async function updateMembershipPayment(referenceId, molliePaymentId, status, paidAt) {
   const record = await MembershipPayment.findById(referenceId);
   if (!record) throw new Error(`MembershipPayment not found: ${referenceId}`);
-  if (isAlreadyProcessed(record, status)) {
-    console.log(`[DB] MembershipPayment ${referenceId} already processed — skipping`);
-    return null;
-  }
 
   const update = { mollie_payment_id: molliePaymentId, payment_provider: 'mollie', status };
   if (status === 'paid') {
@@ -178,10 +217,21 @@ async function updateMembershipPayment(referenceId, molliePaymentId, status, pai
     });
   }
 
-  const updated = await MembershipPayment.findByIdAndUpdate(referenceId, update, { new: true })
-    .populate('member')
-    .populate('membershipTier');
+  const updated = await MembershipPayment.findOneAndUpdate(
+    { _id: referenceId, status: { $nin: TERMINAL_STATUSES } },
+    update,
+    { new: true },
+  ).populate('member').populate('membershipTier');
+  if (!updated) {
+    console.log(`[DB] MembershipPayment ${referenceId} already processed — skipping`);
+    return null;
+  }
   console.log(`[DB] MembershipPayment ${referenceId} updated → status=${status}`);
+
+  if (status === 'paid' && updated.discountCode && updated.member) {
+    await recordRedemption({ discountCodeId: updated.discountCode, email: updated.member.email, productType: 'membership', referenceId: updated._id });
+  }
+
   return updated;
 }
 
@@ -210,4 +260,17 @@ async function updateRecordByType(type, referenceId, molliePaymentId, mollieStat
   }
 }
 
-module.exports = { updateRecordByType };
+// ── Free-order finalization ────────────────────────────────────
+// Called by a `create` controller instead of createPayment() when a discount (code
+// or automatic tier discount) brings the final amount to €0 — Mollie rejects €0
+// payments outright, so there is no webhook to wait for. Reuses the exact same
+// finalization + email path a real webhook would trigger, just synchronously.
+async function finalizeFreeOrder(type, referenceId) {
+  const updated = await updateRecordByType(type, referenceId, null, 'paid', new Date());
+  if (updated) {
+    await sendPostPaymentEmails(type, updated);
+  }
+  return updated;
+}
+
+module.exports = { updateRecordByType, finalizeFreeOrder };

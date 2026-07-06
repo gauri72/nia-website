@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { FaMedal, FaStar, FaCrown, FaGem, FaUsers, FaArrowRight, FaArrowLeft, FaLock, FaShieldAlt } from 'react-icons/fa';
+import { FaMedal, FaStar, FaCrown, FaGem, FaUsers, FaArrowRight, FaArrowLeft, FaLock, FaShieldAlt, FaTag, FaCheckCircle } from 'react-icons/fa';
 import { startSponsorshipPayment } from '../../services/paymentService';
+import api from '../../services/api';
 import './SponsorshipPackages.css';
 
 const PACKAGES = [
@@ -58,34 +59,60 @@ export default function SponsorshipPackages() {
   const [step, setStep]         = useState(0);
   const [selected, setSelected] = useState(null);
   const [sponsor, setSponsor]   = useState({ name: '', email: '', org: '', phone: '' });
+  const [discountCode, setDiscountCode] = useState('');
+  const [discount, setDiscount] = useState(null);
+  const [applyingDiscount, setApplyingDiscount] = useState(false);
   const [paying, setPaying]     = useState(false);
   const [payError, setPayError] = useState('');
+  const [freeSuccess, setFreeSuccess] = useState('');
 
   const pkg = PACKAGES.find(p => p.id === selected);
   const canProceedStep1 = sponsor.name.trim() && sponsor.email.trim();
+  const total = discount?.valid ? discount.finalAmount : pkg?.price;
 
   function handleField(e) {
     setSponsor(s => ({ ...s, [e.target.name]: e.target.value }));
+    if (e.target.name === 'email') setDiscount(null);
   }
 
   function reset() {
     setStep(0); setSelected(null);
     setSponsor({ name: '', email: '', org: '', phone: '' });
-    setPaying(false); setPayError('');
+    setDiscountCode(''); setDiscount(null); setPaying(false); setPayError(''); setFreeSuccess('');
+  }
+
+  async function handleApplyDiscount() {
+    if (!discountCode.trim() || !sponsor.email.trim() || !pkg) return;
+    setApplyingDiscount(true);
+    try {
+      const { data } = await api.post('/discount-codes/preview', {
+        code: discountCode.trim(), productType: 'sponsorship', email: sponsor.email.trim(), originalAmount: pkg.price,
+      });
+      setDiscount(data);
+    } catch {
+      setDiscount({ valid: false, message: 'Could not validate this code right now.' });
+    } finally {
+      setApplyingDiscount(false);
+    }
   }
 
   async function handlePay() {
     setPayError('');
     setPaying(true);
     try {
-      await startSponsorshipPayment({
+      const result = await startSponsorshipPayment({
         sponsorName:   sponsor.name.trim(),
         contactPerson: sponsor.name.trim(),
         companyName:   sponsor.org.trim() || undefined,
         email:         sponsor.email.trim(),
         phone:         sponsor.phone.trim() || undefined,
         packageName:   selected,
+        discountCode:  discountCode.trim() || undefined,
       });
+      if (result.free) {
+        setFreeSuccess(result.message || 'This sponsorship is fully covered by the discount — no payment required.');
+        setPaying(false);
+      }
     } catch (err) {
       setPayError(err?.response?.data?.error || 'Payment failed. Please try again.');
       setPaying(false);
@@ -187,6 +214,18 @@ export default function SponsorshipPackages() {
                   <input className="spp-pfield__input" name="phone" type="tel" placeholder="+31 6 12345678" value={sponsor.phone} onChange={handleField} />
                 </div>
 
+                <div className="spp-pfield">
+                  <label className="spp-pfield__label"><FaTag /> Discount Code <span className="spp-optional">(optional)</span></label>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <input className="spp-pfield__input" placeholder="Optional" value={discountCode} onChange={e => { setDiscountCode(e.target.value); setDiscount(null); }} />
+                    <button type="button" className="spp-continue-btn" disabled={!discountCode.trim() || !sponsor.email.trim() || applyingDiscount} onClick={handleApplyDiscount}>
+                      {applyingDiscount ? 'Checking…' : 'Apply'}
+                    </button>
+                  </div>
+                  {discount?.valid && <span style={{ color: '#2ecc71', fontSize: '0.85rem' }}>✓ €{discount.discount_amount} discount applied</span>}
+                  {discount && !discount.valid && <span style={{ color: '#e74c3c', fontSize: '0.85rem' }}>{discount.message}</span>}
+                </div>
+
                 <div className="spp-nav">
                   <button className="spp-back-btn" onClick={() => setStep(0)}><FaArrowLeft /> Back</button>
                   <button className="spp-continue-btn" disabled={!canProceedStep1} onClick={() => setStep(2)}>
@@ -216,10 +255,17 @@ export default function SponsorshipPackages() {
                     <span>{pkg?.tickets} tickets</span>
                     <span className="spp-review__line-total">€{pkg?.price.toLocaleString()}</span>
                   </div>
+                  {discount?.valid && (
+                    <div className="spp-review__row">
+                      <span>Discount ({discountCode.trim().toUpperCase()})</span>
+                      <span />
+                      <span className="spp-review__line-total">−€{discount.discount_amount}</span>
+                    </div>
+                  )}
                   <div className="spp-review__total-row">
                     <span>Total Payable</span>
                     <span />
-                    <span className="spp-review__grand-total">€{pkg?.price.toLocaleString()}</span>
+                    <span className="spp-review__grand-total">€{total?.toLocaleString()}</span>
                   </div>
                 </div>
 
@@ -234,18 +280,26 @@ export default function SponsorshipPackages() {
                 <div className="spp-nav">
                   <button className="spp-back-btn" onClick={() => setStep(1)}><FaArrowLeft /> Back</button>
                   <button className="spp-continue-btn" onClick={() => setStep(3)}>
-                    Pay €{pkg?.price.toLocaleString()} <FaArrowRight />
+                    Pay €{total?.toLocaleString()} <FaArrowRight />
                   </button>
                 </div>
               </div>
             )}
 
             {/* STEP 3 — Confirm & Pay */}
-            {step === 3 && (
+            {step === 3 && freeSuccess && (
+              <div className="spp-payment-step">
+                <h3 className="spp-form-step__heading"><FaCheckCircle style={{ color: '#2ecc71' }} /> You're all set!</h3>
+                <p className="spp-form-step__sub">{freeSuccess}</p>
+                <p className="spp-payment__disclaimer">A confirmation has been emailed to {sponsor.email}.</p>
+              </div>
+            )}
+
+            {step === 3 && !freeSuccess && (
               <div className="spp-payment-step">
                 <h3 className="spp-form-step__heading">Confirm &amp; Pay</h3>
                 <p className="spp-form-step__sub">
-                  You will be redirected to Mollie's secure checkout to complete your <strong>{pkg?.tier}</strong> sponsorship payment of <strong>€{pkg?.price.toLocaleString()}</strong>.
+                  You will be redirected to Mollie's secure checkout to complete your <strong>{pkg?.tier}</strong> sponsorship payment of <strong>€{total?.toLocaleString()}</strong>.
                   All major payment methods are accepted.
                 </p>
 
@@ -264,7 +318,7 @@ export default function SponsorshipPackages() {
                     disabled={paying}
                     onClick={handlePay}
                   >
-                    {paying ? 'Redirecting…' : <><FaLock /> Pay €{pkg?.price.toLocaleString()} securely</>}
+                    {paying ? 'Processing…' : <><FaLock /> Pay €{total?.toLocaleString()} securely</>}
                   </button>
                 </div>
               </div>

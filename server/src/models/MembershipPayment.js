@@ -8,6 +8,11 @@ const MembershipPaymentSchema = new mongoose.Schema({
   membershipTier: { type: mongoose.Schema.Types.ObjectId, ref: 'MembershipTier', required: true },
   previousTier: { type: mongoose.Schema.Types.ObjectId, ref: 'MembershipTier' },
   type: { type: String, enum: ['new', 'renewal', 'upgrade'], default: 'renewal' },
+  discountCode: { type: mongoose.Schema.Types.ObjectId, ref: 'DiscountCode' },
+  discount_code: { type: String },
+  discount_type: { type: String, enum: ['percentage', 'fixed'] },
+  discount_value: { type: Number },
+  discount_amount: { type: Number, default: 0 },
   amount: { type: Number, required: true },
   status: {
     type: String,

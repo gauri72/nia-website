@@ -3,6 +3,8 @@ const MembershipTier = require('../../models/MembershipTier');
 const MembershipPayment = require('../../models/MembershipPayment');
 const { createPayment } = require('../../services/mollieService');
 const { generateMembershipCardPDF } = require('../../services/emailService');
+const { computeDiscount } = require('../../services/discountService');
+const { finalizeFreeOrder } = require('../../services/databaseService');
 
 // ── GET /api/member/membership ───────────────────────────────────
 async function getStatus(req, res, next) {
@@ -37,18 +39,40 @@ async function setAutoRenew(req, res, next) {
 // ── POST /api/member/membership/renew ─────────────────────────────
 async function renew(req, res, next) {
   try {
+    const { discountCode } = req.body;
     const member = await Member.findById(req.member.id);
     if (!member.membershipTier) return res.status(400).json({ error: 'No current membership tier to renew. Choose a tier to join first.' });
 
     const tier = await MembershipTier.findById(member.membershipTier);
     if (!tier || !tier.isActive) return res.status(400).json({ error: 'This membership tier is no longer available' });
 
+    let amount = tier.price;
+    let discount = null;
+    if (discountCode?.trim()) {
+      try {
+        discount = await computeDiscount({ code: discountCode, productType: 'membership', email: member.email, originalAmount: tier.price });
+        amount = discount.finalAmount;
+      } catch (err) {
+        return res.status(400).json({ error: err.message });
+      }
+    }
+
     const payment = await MembershipPayment.create({
-      member: member._id, membershipTier: tier._id, type: 'renewal', amount: tier.price,
+      member: member._id, membershipTier: tier._id, type: 'renewal', amount,
+      discountCode: discount?.discountCodeId,
+      discount_code: discount?.discount_code,
+      discount_type: discount?.discount_type,
+      discount_value: discount?.discount_value,
+      discount_amount: discount?.discount_amount || 0,
     });
 
+    if (amount <= 0) {
+      await finalizeFreeOrder('membership_payment', payment._id.toString());
+      return res.status(201).json({ free: true, message: 'Your renewal is fully covered by the discount — no payment required.' });
+    }
+
     const result = await createPayment({
-      amount: tier.price,
+      amount,
       description: `NIA Membership Renewal — ${tier.name}`,
       type: 'membership_payment',
       referenceId: payment._id.toString(),
@@ -63,7 +87,7 @@ async function renew(req, res, next) {
 // ── POST /api/member/membership/upgrade ───────────────────────────
 async function upgrade(req, res, next) {
   try {
-    const { tierId } = req.body;
+    const { tierId, discountCode } = req.body;
     if (!tierId) return res.status(400).json({ error: 'tierId is required' });
 
     const member = await Member.findById(req.member.id);
@@ -75,13 +99,34 @@ async function upgrade(req, res, next) {
       if (count >= tier.maxMembers) return res.status(409).json({ error: 'This tier has reached its member limit' });
     }
 
+    let amount = tier.price;
+    let discount = null;
+    if (discountCode?.trim()) {
+      try {
+        discount = await computeDiscount({ code: discountCode, productType: 'membership', email: member.email, originalAmount: tier.price });
+        amount = discount.finalAmount;
+      } catch (err) {
+        return res.status(400).json({ error: err.message });
+      }
+    }
+
     const payment = await MembershipPayment.create({
       member: member._id, membershipTier: tier._id, previousTier: member.membershipTier || undefined,
-      type: member.membershipTier ? 'upgrade' : 'new', amount: tier.price,
+      type: member.membershipTier ? 'upgrade' : 'new', amount,
+      discountCode: discount?.discountCodeId,
+      discount_code: discount?.discount_code,
+      discount_type: discount?.discount_type,
+      discount_value: discount?.discount_value,
+      discount_amount: discount?.discount_amount || 0,
     });
 
+    if (amount <= 0) {
+      await finalizeFreeOrder('membership_payment', payment._id.toString());
+      return res.status(201).json({ free: true, message: 'This membership is fully covered by the discount — no payment required.' });
+    }
+
     const result = await createPayment({
-      amount: tier.price,
+      amount,
       description: `NIA Membership — ${tier.name}`,
       type: 'membership_payment',
       referenceId: payment._id.toString(),

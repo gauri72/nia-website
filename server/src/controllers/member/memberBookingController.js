@@ -5,6 +5,8 @@ const Member = require('../../models/Member');
 const QRCode = require('qrcode');
 const { createPayment, refundPayment } = require('../../services/mollieService');
 const { generateBookingPDF } = require('../../services/emailService');
+const { validateDiscountCode, applyDiscount } = require('../../services/discountService');
+const { finalizeFreeOrder } = require('../../services/databaseService');
 
 // ── POST /api/bookings/create ─────────────────────────────────────
 async function create(req, res, next) {
@@ -17,11 +19,38 @@ async function create(req, res, next) {
     const event = await Event.findOne({ _id: eventId, status: 'published' });
     if (!event) return res.status(400).json({ error: 'Event not found or not available' });
 
-    const member = await Member.findById(req.member.id);
+    const member = await Member.findById(req.member.id).populate('membershipTier');
     const isEligibleForMemberPrice = member.membershipStatus === 'active';
+
+    // Validate the discount code (if any) BEFORE the per-line pricing loop — a valid
+    // code always wins over the automatic tier discount, so eligibility for the
+    // per-line fallback below needs to be known in advance, not derived from a
+    // subtotal that doesn't exist yet.
+    let validCode = null;
+    if (discountCode?.trim()) {
+      try {
+        validCode = await validateDiscountCode({ code: discountCode, productType: 'ticket', email: member.email });
+      } catch (err) {
+        return res.status(400).json({ error: err.message });
+      }
+    }
+
+    let tierDiscountEligible = false;
+    let message;
+    if (!validCode && isEligibleForMemberPrice && member.membershipTier?.ticketDiscountType) {
+      const alreadyUsed = await Booking.exists({
+        member: member._id, event: event._id, status: 'paid', membershipDiscountApplied: true,
+      });
+      if (alreadyUsed) {
+        message = 'A membership discount has already been used for this event with this account — tickets are charged at full price.';
+      } else {
+        tierDiscountEligible = true;
+      }
+    }
 
     const bookingLines = [];
     let subtotal = 0;
+    let membershipDiscountAmount = 0;
     for (const l of lines) {
       const tt = await TicketType.findOne({ _id: l.ticketTypeId, event: eventId, isActive: true });
       if (!tt) return res.status(400).json({ error: `Invalid ticket type: ${l.ticketTypeId}` });
@@ -35,19 +64,53 @@ async function create(req, res, next) {
       if (qty > tt.maxPerOrder) return res.status(400).json({ error: `Maximum ${tt.maxPerOrder} per order for ${tt.name}` });
       if (qty > remaining) return res.status(400).json({ error: `Only ${remaining} left for ${tt.name}` });
 
-      const unitPrice = (tt.membershipDiscount && isEligibleForMemberPrice && tt.memberPrice != null) ? tt.memberPrice : tt.price;
+      // Precedence: an explicit per-ticket-type memberPrice always wins; otherwise fall
+      // back to the tier's automatic discount (only when the ticket type opts in via
+      // membershipDiscount); a ticket type with membershipDiscount:false never gets any
+      // member pricing, regardless of tier settings.
+      let unitPrice = tt.price;
+      if (tt.membershipDiscount && isEligibleForMemberPrice && tt.memberPrice != null) {
+        unitPrice = tt.memberPrice;
+      } else if (tt.membershipDiscount && tierDiscountEligible) {
+        unitPrice = applyDiscount({ type: member.membershipTier.ticketDiscountType, value: member.membershipTier.ticketDiscountValue }, tt.price).finalAmount;
+        membershipDiscountAmount += (tt.price - unitPrice) * qty;
+      }
+
       const lineTotal = unitPrice * qty;
       bookingLines.push({ ticketType: tt._id, name: tt.name, quantity: qty, unit_price: unitPrice, line_total: lineTotal });
       subtotal += lineTotal;
     }
 
-    // Discount codes are out of scope for M3 member checkout; reserved for a future pass.
-    const amount = subtotal;
+    let amount = subtotal;
+    let codeDiscount = null;
+    if (validCode) {
+      codeDiscount = applyDiscount(validCode, subtotal);
+      amount = codeDiscount.finalAmount;
+    }
 
     const booking = await Booking.create({
       member: member._id, event: event._id, lines: bookingLines,
-      subtotal, discount_code: discountCode, amount, status: 'pending_payment',
+      subtotal,
+      discountCode: codeDiscount?.discountCodeId,
+      discount_code: codeDiscount?.discount_code,
+      discount_pct: codeDiscount?.discount_type === 'percentage' ? codeDiscount.discount_value : 0,
+      discount_amount: codeDiscount?.discount_amount || 0,
+      membershipDiscountApplied: membershipDiscountAmount > 0,
+      membershipDiscountTier: membershipDiscountAmount > 0 ? member.membershipTier._id : undefined,
+      membershipDiscountAmount: membershipDiscountAmount > 0 ? membershipDiscountAmount : undefined,
+      amount,
+      status: 'pending_payment',
     });
+
+    if (amount <= 0) {
+      await finalizeFreeOrder('booking', booking._id.toString());
+      return res.status(201).json({
+        bookingId: booking._id,
+        bookingReference: booking.bookingNumber,
+        free: true,
+        message: message || 'Your booking is fully covered by the discount — no payment required.',
+      });
+    }
 
     const payment = await createPayment({
       amount,
@@ -61,6 +124,7 @@ async function create(req, res, next) {
       bookingReference: booking.bookingNumber,
       paymentId: payment.paymentId,
       checkoutUrl: payment.checkoutUrl,
+      message,
     });
   } catch (err) {
     next(err);

@@ -4,6 +4,7 @@ import {
   FaRobot, FaArrowRight, FaArrowLeft, FaLock, FaCheckCircle,
 } from 'react-icons/fa';
 import { startTicketPayment } from '../../services/paymentService';
+import api from '../../services/api';
 import './BookTickets.css';
 
 const TICKETS = [
@@ -45,34 +46,45 @@ export default function BookTickets() {
 
   // Step 0 — ticket selection
   const [qtys, setQtys]               = useState({ regular: 0, vip: 0, child: 0 });
-  const [discountCode, setDiscountCode] = useState('');
   const [membershipCode, setMembershipCode] = useState('');
-  const [discountPct, setDiscountPct]   = useState(0);
 
-  // Step 1 — attendee details
+  // Step 1 — attendee details + discount code (needs email, so validated here, not step 0)
   const [attendee, setAttendee] = useState({ name: '', email: '', phone: '' });
   const [attendeeNames, setAttendeeNames] = useState('');
+  const [discountCode, setDiscountCode] = useState('');
+  const [discount, setDiscount] = useState(null); // { valid, discount_amount, finalAmount, message }
+  const [applyingDiscount, setApplyingDiscount] = useState(false);
 
   const [paying, setPaying]   = useState(false);
   const [payError, setPayError] = useState('');
+  const [freeSuccess, setFreeSuccess] = useState('');
 
   // ── Derived totals ──
   const selectedTickets = TICKETS.filter(t => qtys[t.id] > 0);
   const subtotal    = selectedTickets.reduce((sum, t) => sum + t.price * qtys[t.id], 0);
-  const totalSaved  = Math.round(subtotal * discountPct);
-  const grandTotal  = subtotal - totalSaved;
+  const totalSaved  = discount?.valid ? discount.discount_amount : 0;
+  const grandTotal   = discount?.valid ? discount.finalAmount : subtotal;
   const hasTickets  = selectedTickets.length > 0;
   const totalTickets = selectedTickets.reduce((sum, t) => sum + qtys[t.id], 0);
 
-  function applyDiscount() {
-    const code = discountCode.trim().toUpperCase();
-    if (code === 'NIA10')      setDiscountPct(0.10);
-    else if (code === 'NIA20') setDiscountPct(0.20);
-    else                       setDiscountPct(0);
+  async function handleApplyDiscount() {
+    if (!discountCode.trim() || !attendee.email.trim()) return;
+    setApplyingDiscount(true);
+    try {
+      const { data } = await api.post('/discount-codes/preview', {
+        code: discountCode.trim(), productType: 'ticket', email: attendee.email.trim(), originalAmount: subtotal,
+      });
+      setDiscount(data);
+    } catch {
+      setDiscount({ valid: false, message: 'Could not validate this code right now.' });
+    } finally {
+      setApplyingDiscount(false);
+    }
   }
 
   function handleAttendeeField(e) {
     setAttendee(a => ({ ...a, [e.target.name]: e.target.value }));
+    if (e.target.name === 'email') setDiscount(null); // re-validate against the new email if changed
   }
 
   const canProceedStep1 = attendee.name.trim() && attendee.email.trim()
@@ -86,7 +98,7 @@ export default function BookTickets() {
         ticket_type: t.id,
         quantity: qtys[t.id],
       }));
-      await startTicketPayment({
+      const result = await startTicketPayment({
         name: attendee.name.trim(),
         email: attendee.email.trim(),
         phone: attendee.phone.trim() || undefined,
@@ -94,7 +106,12 @@ export default function BookTickets() {
         tickets: ticketLines,
         discountCode: discountCode.trim() || undefined,
       });
-      // startTicketPayment redirects the browser — code below only runs on error
+      // A fully-discounted order is finalized immediately server-side — there's no
+      // Mollie checkout to redirect to. Anything else redirects the browser away.
+      if (result.free) {
+        setFreeSuccess(result.message || 'Your tickets are fully covered by the discount — no payment required.');
+        setPaying(false);
+      }
     } catch (err) {
       setPayError(err?.response?.data?.error || 'Payment failed. Please try again.');
       setPaying(false);
@@ -120,14 +137,6 @@ export default function BookTickets() {
             {/* Shared codes */}
             <div className="bt-codes">
               <div className="bt-codes__field">
-                <label className="bt-field__label"><FaTag /> Discount Code</label>
-                <div className="bt-code-wrap">
-                  <input className="bt-code-input" placeholder="e.g. NIA10" value={discountCode} onChange={e => setDiscountCode(e.target.value)} />
-                  <button className="bt-code-apply" onClick={applyDiscount}>Apply</button>
-                </div>
-                {discountPct > 0 && <span className="bt-codes__applied">✓ {discountPct * 100}% discount applied</span>}
-              </div>
-              <div className="bt-codes__field">
                 <label className="bt-field__label"><FaIdCard /> Membership Code</label>
                 <input className="bt-code-input bt-code-input--full" placeholder="Member ID" value={membershipCode} onChange={e => setMembershipCode(e.target.value)} />
               </div>
@@ -138,8 +147,6 @@ export default function BookTickets() {
               {TICKETS.map((t) => {
                 const qty       = qtys[t.id];
                 const lineTotal = t.price * qty;
-                const lineSaved = Math.round(lineTotal * discountPct);
-                const lineFinal = lineTotal - lineSaved;
 
                 return (
                   <div key={t.id} className={`bt-row${t.highlight ? ' bt-row--highlight' : ''}${qty > 0 ? ' bt-row--active' : ''}`}>
@@ -166,13 +173,12 @@ export default function BookTickets() {
                           <button className="bt-qty__btn" onClick={() => setQtys(q => ({ ...q, [t.id]: q[t.id] + 1 }))} aria-label="Increase">+</button>
                         </div>
                       </div>
-                      <AIHint ticket={t} qty={qty} discount={discountPct} />
+                      <AIHint ticket={t} qty={qty} discount={0} />
                     </div>
 
                     <div className="bt-row__action">
                       <div className="bt-row__total-wrap">
-                        {lineSaved > 0 && <span className="bt-row__saved">−€{lineSaved}</span>}
-                        <span className={`bt-row__total bt-row__total--${t.color}`}>{qty > 0 ? `€${lineFinal}` : '—'}</span>
+                        <span className={`bt-row__total bt-row__total--${t.color}`}>{qty > 0 ? `€${lineTotal}` : '—'}</span>
                       </div>
                     </div>
                   </div>
@@ -182,15 +188,14 @@ export default function BookTickets() {
 
             <p className="book-tickets__note">
               <FaShieldAlt className="book-tickets__note-icon" />
-              Secure Booking &nbsp;|&nbsp; Limited Seats — Book Early!
+              Secure Booking &nbsp;|&nbsp; Limited Seats — Book Early! Have a discount code? You'll enter it on the next step.
             </p>
 
             <div className="bt-bottom">
               {hasTickets && (
                 <p className="bt-bottom__summary">
                   {selectedTickets.map(t => `${t.type} × ${qtys[t.id]}`).join(' + ')}
-                  {' '}&nbsp;=&nbsp; <strong>€{grandTotal}</strong>
-                  {totalSaved > 0 && <span className="bt-bottom__saved"> (saving €{totalSaved})</span>}
+                  {' '}&nbsp;=&nbsp; <strong>€{subtotal}</strong>
                 </p>
               )}
               <button
@@ -225,6 +230,23 @@ export default function BookTickets() {
             <div className="bt-pfield bt-pfield--full">
               <label className="bt-pfield__label">Phone Number <span className="bt-optional">(optional)</span></label>
               <input className="bt-pfield__input" name="phone" type="tel" placeholder="+31 6 12345678" value={attendee.phone} onChange={handleAttendeeField} />
+            </div>
+
+            <div className="bt-pfield bt-pfield--full">
+              <label className="bt-pfield__label"><FaTag /> Discount Code <span className="bt-optional">(optional)</span></label>
+              <div className="bt-code-wrap">
+                <input
+                  className="bt-code-input" placeholder="e.g. NIA10"
+                  value={discountCode}
+                  onChange={e => { setDiscountCode(e.target.value); setDiscount(null); }}
+                />
+                <button className="bt-code-apply" disabled={!discountCode.trim() || !attendee.email.trim() || applyingDiscount} onClick={handleApplyDiscount}>
+                  {applyingDiscount ? 'Checking…' : 'Apply'}
+                </button>
+              </div>
+              {discount?.valid && <span className="bt-codes__applied">✓ €{discount.discount_amount} discount applied</span>}
+              {discount && !discount.valid && <span style={{ color: '#e74c3c', fontSize: '0.85rem' }}>{discount.message}</span>}
+              {!attendee.email.trim() && <span className="bt-pfield__hint">Enter your email above first.</span>}
             </div>
 
             {totalTickets > 1 && (
@@ -269,7 +291,6 @@ export default function BookTickets() {
               </div>
               {selectedTickets.map(t => {
                 const lineTotal = t.price * qtys[t.id];
-                const lineSaved = Math.round(lineTotal * discountPct);
                 return (
                   <div key={t.id} className="bt-review__row">
                     <span className="bt-review__ticket-name">
@@ -278,16 +299,13 @@ export default function BookTickets() {
                     </span>
                     <span>€{t.price}</span>
                     <span>{qtys[t.id]}</span>
-                    <span className="bt-review__line-total">
-                      {lineSaved > 0 && <s className="bt-review__strike">€{lineTotal}</s>}
-                      €{lineTotal - lineSaved}
-                    </span>
+                    <span className="bt-review__line-total">€{lineTotal}</span>
                   </div>
                 );
               })}
-              {discountPct > 0 && (
+              {discount?.valid && (
                 <div className="bt-review__discount-row">
-                  <span>Discount ({discountPct * 100}%)</span>
+                  <span>Discount ({discountCode.trim().toUpperCase()})</span>
                   <span />
                   <span />
                   <span className="bt-review__saved-amt">−€{totalSaved}</span>
@@ -330,7 +348,15 @@ export default function BookTickets() {
         {/* ══════════════════════════════
             STEP 3 — Confirm & Pay
             ══════════════════════════════ */}
-        {step === 3 && (
+        {step === 3 && freeSuccess && (
+          <div className="bt-payment-step">
+            <h3 className="bt-form-step__heading"><FaCheckCircle style={{ color: '#2ecc71' }} /> You're all set!</h3>
+            <p className="bt-form-step__sub">{freeSuccess}</p>
+            <p className="bt-payment__disclaimer">Your tickets have been emailed to {attendee.email}.</p>
+          </div>
+        )}
+
+        {step === 3 && !freeSuccess && (
           <div className="bt-payment-step">
             <h3 className="bt-form-step__heading">Confirm &amp; Pay</h3>
             <p className="bt-form-step__sub">
@@ -353,7 +379,7 @@ export default function BookTickets() {
                 disabled={paying}
                 onClick={handlePay}
               >
-                {paying ? 'Redirecting…' : <><FaLock /> Pay €{grandTotal} securely</>}
+                {paying ? 'Processing…' : <><FaLock /> Pay €{grandTotal} securely</>}
               </button>
             </div>
           </div>

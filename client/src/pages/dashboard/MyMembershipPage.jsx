@@ -19,6 +19,8 @@ export default function MyMembershipPage() {
   const [tiers, setTiers] = useState([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [discountCode, setDiscountCode] = useState('');
+  const [freeSuccess, setFreeSuccess] = useState('');
 
   function load() {
     memberApi.get('/member/membership').then((r) => setStatus(r.data));
@@ -29,8 +31,9 @@ export default function MyMembershipPage() {
   async function handleRenew() {
     setBusy(true); setError('');
     try {
-      const { data } = await memberApi.post('/member/membership/renew');
-      goToCheckout(data.paymentId, data.checkoutUrl);
+      const { data } = await memberApi.post('/member/membership/renew', { discountCode: discountCode.trim() || undefined });
+      if (data.free) { setFreeSuccess(data.message); setBusy(false); load(); }
+      else goToCheckout(data.paymentId, data.checkoutUrl);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to start renewal');
       setBusy(false);
@@ -40,8 +43,9 @@ export default function MyMembershipPage() {
   async function handleJoinOrUpgrade(tierId) {
     setBusy(true); setError('');
     try {
-      const { data } = await memberApi.post('/member/membership/upgrade', { tierId });
-      goToCheckout(data.paymentId, data.checkoutUrl);
+      const { data } = await memberApi.post('/member/membership/upgrade', { tierId, discountCode: discountCode.trim() || undefined });
+      if (data.free) { setFreeSuccess(data.message); setBusy(false); load(); }
+      else goToCheckout(data.paymentId, data.checkoutUrl);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to start payment');
       setBusy(false);
@@ -72,6 +76,7 @@ export default function MyMembershipPage() {
     <div className="flex flex-col gap-6">
       <PageHeader title="My Membership" />
       {error && <div className="rounded bg-red-50 border-l-4 border-nia-error px-3 py-2 text-sm text-red-700">{error}</div>}
+      {freeSuccess && <div className="rounded bg-green-50 border-l-4 border-nia-success px-3 py-2 text-sm text-green-700">{freeSuccess}</div>}
 
       {status.membershipTier ? (
         <Card>
@@ -98,6 +103,15 @@ export default function MyMembershipPage() {
           <p className="text-nia-text-muted">You don't have an active membership yet. Choose a tier below to join.</p>
         </Card>
       )}
+
+      <Card className="max-w-sm">
+        <label className="text-xs font-semibold text-nia-text-muted uppercase tracking-wide mb-1 block">Discount Code</label>
+        <input
+          className="w-full rounded-nia-btn border border-nia-border px-3 py-2 text-sm focus:border-nia-orange focus:outline-none focus:ring-2 focus:ring-nia-orange/20"
+          placeholder="Optional — applied when you renew, join or upgrade below"
+          value={discountCode} onChange={(e) => setDiscountCode(e.target.value)}
+        />
+      </Card>
 
       <div>
         <h2 className="font-bold text-nia-navy-dark mb-3">{status.membershipTier ? 'Upgrade Your Tier' : 'Available Tiers'}</h2>

@@ -20,11 +20,16 @@ const TicketSchema = new mongoose.Schema({
   phone: { type: String, trim: true },
   attendee_names: { type: String, trim: true },
   tickets: [TicketLineSchema],
+  discountCode: { type: mongoose.Schema.Types.ObjectId, ref: 'DiscountCode' },
   discount_code: { type: String },
   discount_pct: { type: Number, default: 0 },
   subtotal: { type: Number, required: true },
   discount_amount: { type: Number, default: 0 },
   amount: { type: Number, required: true }, // final amount after discount
+  // Feature B — automatic per-tier membership discount, distinct from a Feature A discount code
+  membershipDiscountApplied: { type: Boolean, default: false },
+  membershipDiscountTier: { type: mongoose.Schema.Types.ObjectId, ref: 'MembershipTier' },
+  membershipDiscountAmount: { type: Number },
   ticket_status: {
     type: String,
     enum: ['pending_payment', 'paid', 'failed', 'expired', 'canceled', 'refunded'],
