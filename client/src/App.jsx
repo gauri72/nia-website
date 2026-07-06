@@ -20,6 +20,7 @@ import AdminLoginPage          from './pages/admin/LoginPage';
 import AdminForgotPasswordPage from './pages/admin/ForgotPasswordPage';
 import AdminResetPasswordPage  from './pages/admin/ResetPasswordPage';
 import AdminDashboardPage      from './pages/admin/DashboardPage';
+import AdminUsersPage             from './pages/admin/UsersPage';
 import AdminMembersPage           from './pages/admin/MembersPage';
 import AdminMemberDetailPage      from './pages/admin/MemberDetailPage';
 import AdminMembershipTiersPage   from './pages/admin/MembershipTiersPage';
@@ -82,6 +83,7 @@ export default function App() {
               element={<ProtectedAdminRoute><AdminLayout /></ProtectedAdminRoute>}
             >
               <Route index element={<AdminDashboardPage />} />
+              <Route path="users" element={<AdminUsersPage />} />
               <Route path="members" element={<AdminMembersPage />} />
               <Route path="members/:id" element={<AdminMemberDetailPage />} />
               <Route path="membership-tiers" element={<AdminMembershipTiersPage />} />

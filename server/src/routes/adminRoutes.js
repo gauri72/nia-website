@@ -19,6 +19,7 @@ const discountCodeController = require('../controllers/admin/discountCodeControl
 const sponsorshipAdminController = require('../controllers/admin/sponsorshipAdminController');
 const sponsorshipTierController = require('../controllers/admin/sponsorshipTierController');
 const donationAdminController = require('../controllers/admin/donationAdminController');
+const contactAdminController = require('../controllers/admin/contactAdminController');
 const { requireAdminAuth, requireRole } = require('../middleware/adminAuth');
 const { mollieSyncLimiter } = require('../middleware/rateLimiter');
 
@@ -26,6 +27,13 @@ router.use(requireAdminAuth);
 
 // ── Dashboard ─────────────────────────────────────────────────
 router.get('/dashboard', dashboardController.overview);
+
+// ── Users (community contact list — separate from Members) ────
+router.get(   '/contacts',                       contactAdminController.list);
+router.post(  '/contacts',                       contactAdminController.create);
+router.put(   '/contacts/:id',                   contactAdminController.update);
+router.delete('/contacts/:id',                   requireRole(['super_admin']), contactAdminController.remove);
+router.post(  '/contacts/:id/convert-to-member', contactAdminController.convertToMember);
 
 // ── Members ───────────────────────────────────────────────────
 router.get(   '/members/export',    memberAdminController.exportCsv); // before /:id

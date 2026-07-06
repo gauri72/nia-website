@@ -20,6 +20,7 @@ export default function BroadcastComposerPage() {
   const [templates, setTemplates] = useState([]);
   const [tiers, setTiers] = useState([]);
   const [events, setEvents] = useState([]);
+  const [contacts, setContacts] = useState([]);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -38,6 +39,7 @@ export default function BroadcastComposerPage() {
     adminApi.get('/email-templates').then((r) => setTemplates(r.data));
     adminApi.get('/admin/membership-tiers').then((r) => setTiers(r.data));
     adminApi.get('/admin/events', { params: { status: 'published', limit: 100 } }).then((r) => setEvents(r.data.events));
+    adminApi.get('/admin/contacts', { params: { limit: 500 } }).then((r) => setContacts(r.data.items));
   }, []);
 
   useEffect(() => {
@@ -164,6 +166,11 @@ export default function BroadcastComposerPage() {
                 { value: 'tier', label: 'By Membership Tier' },
                 { value: 'event_attendees', label: 'Event Attendees' },
                 { value: 'custom_list', label: 'Custom Segment (join date range)' },
+                { value: 'all_contacts', label: 'All Users' },
+                { value: 'specific_contact', label: 'Specific User' },
+                { value: 'sponsors', label: 'All Sponsors' },
+                { value: 'advisors', label: 'All Advisors' },
+                { value: 'board_members', label: 'NIA Board Members' },
               ].map((opt) => (
                 <label key={opt.value} className="flex items-center gap-2 text-sm">
                   <input type="radio" name="audienceType" checked={audience.type === opt.value} onChange={() => setAudience((a) => ({ ...a, type: opt.value }))} />
@@ -197,6 +204,17 @@ export default function BroadcastComposerPage() {
                 <div><label className={label}>Joined After</label><input type="date" className={inputCls} onChange={(e) => setAudience((a) => ({ ...a, joinedAfter: e.target.value }))} /></div>
                 <div><label className={label}>Joined Before</label><input type="date" className={inputCls} onChange={(e) => setAudience((a) => ({ ...a, joinedBefore: e.target.value }))} /></div>
               </div>
+            )}
+
+            {audience.type === 'specific_contact' && (
+              <select
+                className={inputCls + ' mb-4'}
+                value={audience.contactIds?.[0] || ''}
+                onChange={(e) => setAudience((a) => ({ ...a, contactIds: e.target.value ? [e.target.value] : [] }))}
+              >
+                <option value="">Select a user…</option>
+                {contacts.map((c) => <option key={c._id} value={c._id}>{c.fullName} ({c.email})</option>)}
+              </select>
             )}
 
             <div className="rounded-nia-btn bg-nia-panel px-4 py-3 mb-4 text-sm font-semibold text-nia-navy-dark">

@@ -14,6 +14,7 @@ function sanitizeAudience(audience) {
     tierIds: (audience.tierIds || []).filter(Boolean),
     eventId: audience.eventId || undefined,
     memberIds: (audience.memberIds || []).filter(Boolean),
+    contactIds: (audience.contactIds || []).filter(Boolean),
     joinedAfter: audience.joinedAfter || undefined,
     joinedBefore: audience.joinedBefore || undefined,
   };

@@ -6,10 +6,20 @@ const BroadcastSchema = new mongoose.Schema({
   subject: { type: String, required: true },
   previewText: { type: String },
   audience: {
-    type: { type: String, enum: ['all_members', 'tier', 'event_attendees', 'custom_list'], required: true },
+    type: {
+      type: String,
+      enum: [
+        'all_members', 'tier', 'event_attendees', 'custom_list',
+        // Sourced from the Contact ("Users") list rather than Member —
+        // see broadcastService.js's resolveAudienceMembers for how each resolves.
+        'all_contacts', 'specific_contact', 'sponsors', 'advisors', 'board_members',
+      ],
+      required: true,
+    },
     tierIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'MembershipTier' }],
     eventId: { type: mongoose.Schema.Types.ObjectId, ref: 'Event' },
     memberIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Member' }],
+    contactIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Contact' }],
     joinedAfter: { type: Date },
     joinedBefore: { type: Date },
   },

@@ -1,9 +1,20 @@
 const nodemailer = require('nodemailer');
 const Member = require('../models/Member');
 const Booking = require('../models/Booking');
+const Contact = require('../models/Contact');
 const SuppressionList = require('../models/SuppressionList');
 const BroadcastRecipient = require('../models/BroadcastRecipient');
 const Broadcast = require('../models/Broadcast');
+
+// Contacts aren't Members — most have no linked account at all — so they're
+// represented here as the lightest shape createRecipients/sendBroadcast need:
+// an _id (the linked Member's, if one exists, so BroadcastRecipient.member
+// still points at a real Member and not a Contact) and an email. sendBroadcast
+// already falls back to the raw template with no personalization whenever
+// recipient.member is unset, which is exactly what happens for the rest.
+function contactsToRecipients(contacts) {
+  return contacts.map((c) => ({ _id: c.linkedMember || undefined, email: c.email }));
+}
 
 function createTransporter() {
   return nodemailer.createTransport({
@@ -36,6 +47,16 @@ async function resolveAudienceMembers(audience) {
     if (audience.joinedAfter) filter.createdAt = { ...filter.createdAt, $gte: new Date(audience.joinedAfter) };
     if (audience.joinedBefore) filter.createdAt = { ...filter.createdAt, $lte: new Date(audience.joinedBefore) };
     members = await Member.find(filter);
+  } else if (audience.type === 'all_contacts') {
+    members = contactsToRecipients(await Contact.find({}));
+  } else if (audience.type === 'specific_contact') {
+    members = contactsToRecipients(await Contact.find({ _id: { $in: audience.contactIds || [] } }));
+  } else if (audience.type === 'sponsors') {
+    members = contactsToRecipients(await Contact.find({ userType: 'sponsor_partner' }));
+  } else if (audience.type === 'advisors') {
+    members = contactsToRecipients(await Contact.find({ userType: 'advisory_council' }));
+  } else if (audience.type === 'board_members') {
+    members = contactsToRecipients(await Contact.find({ userType: 'board_member' }));
   }
 
   const suppressed = new Set((await SuppressionList.find().select('email')).map((s) => s.email));
