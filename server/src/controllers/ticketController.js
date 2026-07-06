@@ -6,6 +6,7 @@ const { finalizeFreeOrder } = require('../services/databaseService');
 
 const TICKET_PRICES = { regular: 20, vip: 45, child: 5 };
 const EVENT_ID = 'NIA-EVENT-20260815'; // matches Ticket.event_id's schema default — the one legacy event this flow serves
+const DISCOUNT_INELIGIBLE_TYPES = ['child']; // child tickets are already discounted — never eligible for the membership discount too
 
 function validateTicketLines(tickets) {
   const ticketLines = [];
@@ -23,31 +24,61 @@ function validateTicketLines(tickets) {
   return { ticketLines, subtotal };
 }
 
-// ── Shared by create() and the preview endpoint — same exact eligibility
-// logic (active member, tier has a discount configured, per-event cap not yet
-// reached) so a preview can never show something the real submission wouldn't
-// also do, and vice versa. ──
-async function resolveAutomaticDiscount(normalizedEmail, subtotal) {
+// ── Shared by create() and the preview endpoint — same exact eligibility and
+// allocation logic so a preview can never show something the real submission
+// wouldn't also do, and vice versa.
+//
+// The discount caps at a fixed number of TICKET UNITS per member per event
+// (tier.ticketDiscountMaxPerEvent), not a number of orders — a single order
+// requesting more units than the remaining allowance only gets the discount
+// on the cheapest eligible units up to that allowance; the rest are charged
+// full price. Child tickets are never eligible (already a reduced price). ──
+async function resolveAutomaticDiscount(normalizedEmail, ticketLines) {
   const member = await Member.findOne({ email: normalizedEmail, membershipStatus: 'active' }).populate('membershipTier');
   const tier = member?.membershipTier;
   if (!tier?.ticketDiscountType) return { eligible: false };
 
-  const usedCount = await Ticket.countDocuments({
-    email: normalizedEmail,
-    event_id: EVENT_ID,
-    ticket_status: 'paid',
-    membershipDiscountApplied: true,
-  });
-  const maxPerEvent = tier.ticketDiscountMaxPerEvent || 1;
-  if (usedCount >= maxPerEvent) {
+  const maxUnits = tier.ticketDiscountMaxPerEvent || 1;
+  const usedAgg = await Ticket.aggregate([
+    { $match: { email: normalizedEmail, event_id: EVENT_ID, ticket_status: 'paid', membershipDiscountApplied: true } },
+    { $group: { _id: null, total: { $sum: '$membershipDiscountUnits' } } },
+  ]);
+  const usedUnits = usedAgg[0]?.total || 0;
+  const remaining = Math.max(0, maxUnits - usedUnits);
+
+  const eligibleLines = ticketLines.filter((l) => !DISCOUNT_INELIGIBLE_TYPES.includes(l.ticket_type));
+  const eligibleRequestedQty = eligibleLines.reduce((s, l) => s + l.quantity, 0);
+
+  if (remaining <= 0) {
     return {
       eligible: false,
-      message: `A membership discount has already been used the maximum ${maxPerEvent} time${maxPerEvent === 1 ? '' : 's'} allowed for this event with this email — this ticket is charged at full price.`,
+      message: `You've already used your full membership discount allowance (${maxUnits} ticket${maxUnits === 1 ? '' : 's'}) for this event with this email — this order is charged at full price.`,
     };
   }
+  if (eligibleRequestedQty === 0) return { eligible: false }; // e.g. child-only order — nothing to discount, not an "already used" case
 
-  const applied = applyDiscount({ type: tier.ticketDiscountType, value: tier.ticketDiscountValue }, subtotal);
-  return { eligible: true, tier, applied };
+  // Allocate to the cheapest eligible units first.
+  let allowanceLeft = remaining;
+  let totalDiscountAmount = 0;
+  let unitsDiscounted = 0;
+  for (const line of [...eligibleLines].sort((a, b) => a.unit_price - b.unit_price)) {
+    if (allowanceLeft <= 0) break;
+    const qtyToDiscount = Math.min(allowanceLeft, line.quantity);
+    const perUnitDiscount = applyDiscount({ type: tier.ticketDiscountType, value: tier.ticketDiscountValue }, line.unit_price).discount_amount;
+    totalDiscountAmount += perUnitDiscount * qtyToDiscount;
+    unitsDiscounted += qtyToDiscount;
+    allowanceLeft -= qtyToDiscount;
+  }
+  totalDiscountAmount = Math.round(totalDiscountAmount * 100) / 100;
+
+  if (unitsDiscounted === 0) return { eligible: false };
+
+  let message;
+  if (unitsDiscounted < eligibleRequestedQty) {
+    message = `Your membership discount was applied to ${unitsDiscounted} of your ${eligibleRequestedQty} eligible ticket${eligibleRequestedQty === 1 ? '' : 's'} (your allowance for this event is ${maxUnits}) — the rest are charged full price. Child tickets are never eligible for the membership discount.`;
+  }
+
+  return { eligible: true, tier, totalDiscountAmount, unitsDiscounted, message };
 }
 
 // ── POST /api/tickets/create ──────────────────────────────────
@@ -79,9 +110,10 @@ async function create(req, res, next) {
     // ── Discount resolution ──
     // A Feature A discount code always wins over the automatic Feature B tier
     // discount — never both. Response shape stays identical whether or not a
-    // member discount applied; only the "already used this event" case gets a
-    // distinguishing message, which only fires on a genuine repeat submission
-    // (not a first-time probe), to limit how much a guessed email can reveal.
+    // member discount applied; only the "already used"/"partially applied"
+    // cases get a distinguishing message, which only fire on a genuine repeat
+    // or over-allowance submission (not a first-time probe), to limit how
+    // much a guessed email can reveal.
     let total = subtotal;
     let codeDiscount = null;
     let membershipDiscount = null;
@@ -96,10 +128,11 @@ async function create(req, res, next) {
         return res.status(400).json({ error: err.message });
       }
     } else {
-      const resolved = await resolveAutomaticDiscount(normalizedEmail, subtotal);
+      const resolved = await resolveAutomaticDiscount(normalizedEmail, ticketLines);
       if (resolved.eligible) {
-        total = resolved.applied.finalAmount;
-        membershipDiscount = { tier: resolved.tier._id, amount: resolved.applied.discount_amount };
+        total = Math.round((subtotal - resolved.totalDiscountAmount) * 100) / 100;
+        membershipDiscount = { tier: resolved.tier._id, amount: resolved.totalDiscountAmount, units: resolved.unitsDiscounted };
+        if (resolved.message) message = resolved.message;
       } else if (resolved.message) {
         message = resolved.message;
       }
@@ -120,6 +153,7 @@ async function create(req, res, next) {
       membershipDiscountApplied: !!membershipDiscount,
       membershipDiscountTier: membershipDiscount?.tier,
       membershipDiscountAmount: membershipDiscount?.amount,
+      membershipDiscountUnits: membershipDiscount?.units || 0,
       amount: total,
       ticket_status: 'pending_payment',
     });
@@ -173,9 +207,9 @@ async function previewDiscount(req, res, next) {
     }
     const normalizedEmail = email.trim().toLowerCase();
 
-    let subtotal;
+    let ticketLines, subtotal;
     try {
-      ({ subtotal } = validateTicketLines(tickets));
+      ({ ticketLines, subtotal } = validateTicketLines(tickets));
     } catch (err) {
       return res.status(400).json({ error: err.message });
     }
@@ -190,10 +224,14 @@ async function previewDiscount(req, res, next) {
       }
     }
 
-    const resolved = await resolveAutomaticDiscount(normalizedEmail, subtotal);
+    const resolved = await resolveAutomaticDiscount(normalizedEmail, ticketLines);
     if (resolved.eligible) {
       return res.json({
-        subtotal, discount_amount: resolved.applied.discount_amount, finalAmount: resolved.applied.finalAmount, source: 'membership',
+        subtotal,
+        discount_amount: resolved.totalDiscountAmount,
+        finalAmount: Math.round((subtotal - resolved.totalDiscountAmount) * 100) / 100,
+        source: 'membership',
+        message: resolved.message,
       });
     }
     return res.json({ subtotal, discount_amount: 0, finalAmount: subtotal, message: resolved.message });

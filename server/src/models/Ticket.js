@@ -30,6 +30,7 @@ const TicketSchema = new mongoose.Schema({
   membershipDiscountApplied: { type: Boolean, default: false },
   membershipDiscountTier: { type: mongoose.Schema.Types.ObjectId, ref: 'MembershipTier' },
   membershipDiscountAmount: { type: Number },
+  membershipDiscountUnits: { type: Number, default: 0 }, // how many ticket units in this order got the discount — the actual cap-consumption unit
   ticket_status: {
     type: String,
     enum: ['pending_payment', 'paid', 'failed', 'expired', 'canceled', 'refunded'],

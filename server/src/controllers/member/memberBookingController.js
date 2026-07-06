@@ -11,7 +11,15 @@ const { finalizeFreeOrder } = require('../../services/databaseService');
 // ── Shared by create() and previewDiscount() — identical pricing logic so a
 // preview can never show a different number than the real submission would
 // charge. No privacy concern here (unlike the guest ticket flow): the member
-// is already authenticated, so there's no email to guess. ──
+// is already authenticated, so there's no email to guess.
+//
+// The discount caps at a fixed number of TICKET UNITS per member per event
+// (tier.ticketDiscountMaxPerEvent), not a number of orders — a single order
+// requesting more units than the remaining allowance only gets the discount
+// on the cheapest eligible units up to that allowance; the rest are charged
+// full price. Only ticket types with membershipDiscount:true and no explicit
+// memberPrice override are eligible for this automatic allocation — an
+// explicit memberPrice always wins outright and never consumes the allowance. ──
 async function computePricing(member, event, lines, discountCode) {
   const isEligibleForMemberPrice = member.membershipStatus === 'active';
 
@@ -20,23 +28,8 @@ async function computePricing(member, event, lines, discountCode) {
     validCode = await validateDiscountCode({ code: discountCode, productType: 'ticket', email: member.email }); // throws on invalid — let caller catch
   }
 
-  let tierDiscountEligible = false;
-  let message;
-  if (!validCode && isEligibleForMemberPrice && member.membershipTier?.ticketDiscountType) {
-    const usedCount = await Booking.countDocuments({
-      member: member._id, event: event._id, status: 'paid', membershipDiscountApplied: true,
-    });
-    const maxPerEvent = member.membershipTier.ticketDiscountMaxPerEvent || 1;
-    if (usedCount >= maxPerEvent) {
-      message = `A membership discount has already been used the maximum ${maxPerEvent} time${maxPerEvent === 1 ? '' : 's'} allowed for this event with this account — tickets are charged at full price.`;
-    } else {
-      tierDiscountEligible = true;
-    }
-  }
-
-  const bookingLines = [];
-  let subtotal = 0;
-  let membershipDiscountAmount = 0;
+  // Validate + fetch every ticket type up front — needed before sorting/allocating.
+  const resolvedLines = [];
   for (const l of lines) {
     const tt = await TicketType.findOne({ _id: l.ticketTypeId, event: event._id, isActive: true });
     if (!tt) throw new Error(`Invalid ticket type: ${l.ticketTypeId}`);
@@ -50,21 +43,78 @@ async function computePricing(member, event, lines, discountCode) {
     if (qty > tt.maxPerOrder) throw new Error(`Maximum ${tt.maxPerOrder} per order for ${tt.name}`);
     if (qty > remaining) throw new Error(`Only ${remaining} left for ${tt.name}`);
 
-    // Precedence: an explicit per-ticket-type memberPrice always wins; otherwise fall
-    // back to the tier's automatic discount (only when the ticket type opts in via
-    // membershipDiscount); a ticket type with membershipDiscount:false never gets any
-    // member pricing, regardless of tier settings.
+    resolvedLines.push({ tt, qty });
+  }
+
+  let allowance = 0;
+  let maxPerEvent = 0;
+  let message;
+  const tierDiscountActive = !validCode && isEligibleForMemberPrice && member.membershipTier?.ticketDiscountType;
+  if (tierDiscountActive) {
+    maxPerEvent = member.membershipTier.ticketDiscountMaxPerEvent || 1;
+    const usedAgg = await Booking.aggregate([
+      { $match: { member: member._id, event: event._id, status: 'paid', membershipDiscountApplied: true } },
+      { $group: { _id: null, total: { $sum: '$membershipDiscountUnits' } } },
+    ]);
+    const usedUnits = usedAgg[0]?.total || 0;
+    allowance = Math.max(0, maxPerEvent - usedUnits);
+    if (allowance <= 0) {
+      message = `You've already used your full membership discount allowance (${maxPerEvent} ticket${maxPerEvent === 1 ? '' : 's'}) for this event — tickets are charged at full price.`;
+    }
+  }
+
+  // Allocate remaining allowance to the cheapest auto-discount-eligible lines first.
+  // A line with an explicit memberPrice override is priced separately below and
+  // never competes for this allowance.
+  const autoEligible = resolvedLines.filter(({ tt }) => tt.membershipDiscount && !(isEligibleForMemberPrice && tt.memberPrice != null));
+  const discountQtyByTicketType = new Map();
+  let eligibleRequestedQty = 0;
+  if (allowance > 0) {
+    let allowanceLeft = allowance;
+    for (const { tt, qty } of [...autoEligible].sort((a, b) => a.tt.price - b.tt.price)) {
+      eligibleRequestedQty += qty;
+      if (allowanceLeft <= 0) continue;
+      const take = Math.min(allowanceLeft, qty);
+      discountQtyByTicketType.set(String(tt._id), take);
+      allowanceLeft -= take;
+    }
+  } else {
+    eligibleRequestedQty = autoEligible.reduce((s, { qty }) => s + qty, 0);
+  }
+
+  const bookingLines = [];
+  let subtotal = 0;
+  let membershipDiscountAmount = 0;
+  let membershipDiscountUnits = 0;
+  for (const { tt, qty } of resolvedLines) {
     let unitPrice = tt.price;
+    let lineTotal;
+
     if (tt.membershipDiscount && isEligibleForMemberPrice && tt.memberPrice != null) {
+      // Explicit override always wins outright, applies to the full line, never consumes the allowance.
       unitPrice = tt.memberPrice;
-    } else if (tt.membershipDiscount && tierDiscountEligible) {
-      unitPrice = applyDiscount({ type: member.membershipTier.ticketDiscountType, value: member.membershipTier.ticketDiscountValue }, tt.price).finalAmount;
-      membershipDiscountAmount += (tt.price - unitPrice) * qty;
+      lineTotal = unitPrice * qty;
+    } else {
+      const discountedQty = discountQtyByTicketType.get(String(tt._id)) || 0;
+      const fullQty = qty - discountedQty;
+      if (discountedQty > 0) {
+        const discountedUnitPrice = applyDiscount({ type: member.membershipTier.ticketDiscountType, value: member.membershipTier.ticketDiscountValue }, tt.price).finalAmount;
+        lineTotal = discountedUnitPrice * discountedQty + tt.price * fullQty;
+        unitPrice = Math.round((lineTotal / qty) * 100) / 100; // blended — line_total is what's actually charged/authoritative
+        membershipDiscountAmount += (tt.price - discountedUnitPrice) * discountedQty;
+        membershipDiscountUnits += discountedQty;
+      } else {
+        lineTotal = tt.price * qty;
+      }
     }
 
-    const lineTotal = unitPrice * qty;
     bookingLines.push({ ticketType: tt._id, name: tt.name, quantity: qty, unit_price: unitPrice, line_total: lineTotal });
     subtotal += lineTotal;
+  }
+  membershipDiscountAmount = Math.round(membershipDiscountAmount * 100) / 100;
+
+  if (tierDiscountActive && allowance > 0 && membershipDiscountUnits < eligibleRequestedQty) {
+    message = `Your membership discount was applied to ${membershipDiscountUnits} of your ${eligibleRequestedQty} eligible ticket${eligibleRequestedQty === 1 ? '' : 's'} (your allowance for this event is ${maxPerEvent}) — the rest are charged full price.`;
   }
 
   let amount = subtotal;
@@ -74,7 +124,7 @@ async function computePricing(member, event, lines, discountCode) {
     amount = codeDiscount.finalAmount;
   }
 
-  return { bookingLines, subtotal, amount, codeDiscount, membershipDiscountAmount, message };
+  return { bookingLines, subtotal, amount, codeDiscount, membershipDiscountAmount, membershipDiscountUnits, message };
 }
 
 // ── POST /api/bookings/create ─────────────────────────────────────
@@ -96,7 +146,7 @@ async function create(req, res, next) {
     } catch (err) {
       return res.status(400).json({ error: err.message });
     }
-    const { bookingLines, subtotal, amount, codeDiscount, membershipDiscountAmount, message } = pricing;
+    const { bookingLines, subtotal, amount, codeDiscount, membershipDiscountAmount, membershipDiscountUnits, message } = pricing;
 
     const booking = await Booking.create({
       member: member._id, event: event._id, lines: bookingLines,
@@ -105,9 +155,10 @@ async function create(req, res, next) {
       discount_code: codeDiscount?.discount_code,
       discount_pct: codeDiscount?.discount_type === 'percentage' ? codeDiscount.discount_value : 0,
       discount_amount: codeDiscount?.discount_amount || 0,
-      membershipDiscountApplied: membershipDiscountAmount > 0,
-      membershipDiscountTier: membershipDiscountAmount > 0 ? member.membershipTier._id : undefined,
-      membershipDiscountAmount: membershipDiscountAmount > 0 ? membershipDiscountAmount : undefined,
+      membershipDiscountApplied: membershipDiscountUnits > 0,
+      membershipDiscountTier: membershipDiscountUnits > 0 ? member.membershipTier._id : undefined,
+      membershipDiscountAmount: membershipDiscountUnits > 0 ? membershipDiscountAmount : undefined,
+      membershipDiscountUnits: membershipDiscountUnits || 0,
       amount,
       status: 'pending_payment',
     });
