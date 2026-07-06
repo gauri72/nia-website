@@ -1,8 +1,12 @@
 const Member = require('../../models/Member');
 const MembershipTier = require('../../models/MembershipTier');
 const MollieTransaction = require('../../models/MollieTransaction');
+const MembershipPayment = require('../../models/MembershipPayment');
 const { hashPassword, generateRawToken } = require('../../services/authService');
 const { sendMemberPasswordResetEmail, sendMembershipPaymentConfirmation } = require('../../services/emailService');
+const { createPayment } = require('../../services/mollieService');
+const { finalizeFreeOrder } = require('../../services/databaseService');
+const { computeUpgradeAmount } = require('../../services/membershipUpgradeService');
 
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
 const SENSITIVE_FIELDS = '-passwordHash -emailVerificationToken -emailVerificationExpires -passwordResetToken -passwordResetExpires';
@@ -224,6 +228,72 @@ async function resendMembershipEmail(req, res, next) {
   }
 }
 
+// ── GET /api/admin/members/:id/upgrade-preview/:tierId ───────────────
+// No side effects — same computation the member would see themselves, so an
+// admin can quote the correct amount before generating a real payment link.
+async function previewUpgrade(req, res, next) {
+  try {
+    const member = await Member.findById(req.params.id).populate('membershipTier');
+    if (!member) return res.status(404).json({ error: 'Member not found' });
+    const tier = await MembershipTier.findById(req.params.tierId);
+    if (!tier || !tier.isActive) return res.status(400).json({ error: 'Invalid or inactive membership tier' });
+
+    const result = computeUpgradeAmount(member, tier);
+    return res.json({
+      amount: result.amount,
+      prorationApplied: result.prorationApplied,
+      daysRemaining: result.daysRemaining,
+      message: result.message,
+      currentTier: member.membershipTier ? { name: member.membershipTier.name, price: member.membershipTier.price } : null,
+      targetTier: { name: tier.name, price: tier.price },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// ── POST /api/admin/members/:id/upgrade-membership ────────────────────
+// Generates a real Mollie payment link (same priced flow as self-service) for
+// the admin to send the member — nothing changes on the member's account
+// until it's actually paid, same as if the member had done this themselves.
+async function generateUpgradeLink(req, res, next) {
+  try {
+    const { tierId } = req.body;
+    if (!tierId) return res.status(400).json({ error: 'tierId is required' });
+
+    const member = await Member.findById(req.params.id).populate('membershipTier');
+    if (!member) return res.status(404).json({ error: 'Member not found' });
+    const tier = await MembershipTier.findById(tierId);
+    if (!tier || !tier.isActive) return res.status(400).json({ error: 'Invalid or inactive membership tier' });
+
+    const upgradeCalc = computeUpgradeAmount(member, tier);
+    const amount = upgradeCalc.amount;
+
+    const payment = await MembershipPayment.create({
+      member: member._id, membershipTier: tier._id, previousTier: member.membershipTier?._id || undefined,
+      type: member.membershipTier ? 'upgrade' : 'new', amount,
+    });
+
+    if (amount <= 0) {
+      await finalizeFreeOrder('membership_payment', payment._id.toString());
+      return res.status(201).json({ free: true, message: 'This upgrade is fully covered — no payment required.', amount, explanation: upgradeCalc.message });
+    }
+
+    const result = await createPayment({
+      amount,
+      description: `NIA Membership Upgrade — ${tier.name}`,
+      type: 'membership_payment',
+      referenceId: payment._id.toString(),
+    });
+
+    return res.status(201).json({
+      checkoutUrl: result.checkoutUrl, paymentId: result.paymentId, amount, explanation: upgradeCalc.message,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 // ── PATCH /api/admin/members/:id/status ─────────────────────────────
 async function updateStatus(req, res, next) {
   try {
@@ -241,4 +311,4 @@ async function updateStatus(req, res, next) {
   }
 }
 
-module.exports = { list, exportCsv, getById, create, update, updateStatus, resendMembershipEmail };
+module.exports = { list, exportCsv, getById, create, update, updateStatus, resendMembershipEmail, previewUpgrade, generateUpgradeLink };

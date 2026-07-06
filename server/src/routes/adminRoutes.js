@@ -35,6 +35,8 @@ router.get(   '/members/:id',       memberAdminController.getById);
 router.patch( '/members/:id',       memberAdminController.update);
 router.patch( '/members/:id/status', requireRole(['super_admin']), memberAdminController.updateStatus);
 router.post(  '/members/:id/resend-membership-email', memberAdminController.resendMembershipEmail);
+router.get(   '/members/:id/upgrade-preview/:tierId', memberAdminController.previewUpgrade);
+router.post(  '/members/:id/upgrade-membership',      memberAdminController.generateUpgradeLink);
 
 // ── Membership Tiers ──────────────────────────────────────────
 router.get(   '/membership-tiers',      membershipTierController.list);

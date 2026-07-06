@@ -5,6 +5,7 @@ const { createPayment } = require('../../services/mollieService');
 const { generateMembershipCardPDF } = require('../../services/emailService');
 const { computeDiscount } = require('../../services/discountService');
 const { finalizeFreeOrder } = require('../../services/databaseService');
+const { computeUpgradeAmount } = require('../../services/membershipUpgradeService');
 
 // ── GET /api/member/membership ───────────────────────────────────
 async function getStatus(req, res, next) {
@@ -84,13 +85,36 @@ async function renew(req, res, next) {
   }
 }
 
+// ── GET /api/member/membership/upgrade-preview/:tierId ────────────
+// No side effects — lets the Dashboard show the buyer the real amount and the
+// reasoning (proration rule applied or not) before they commit to checkout.
+async function previewUpgrade(req, res, next) {
+  try {
+    const member = await Member.findById(req.member.id).populate('membershipTier');
+    const tier = await MembershipTier.findById(req.params.tierId);
+    if (!tier || !tier.isActive) return res.status(400).json({ error: 'Invalid or inactive membership tier' });
+
+    const result = computeUpgradeAmount(member, tier);
+    return res.json({
+      amount: result.amount,
+      prorationApplied: result.prorationApplied,
+      daysRemaining: result.daysRemaining,
+      message: result.message,
+      currentTier: member.membershipTier ? { name: member.membershipTier.name, price: member.membershipTier.price } : null,
+      targetTier: { name: tier.name, price: tier.price },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 // ── POST /api/member/membership/upgrade ───────────────────────────
 async function upgrade(req, res, next) {
   try {
     const { tierId, discountCode } = req.body;
     if (!tierId) return res.status(400).json({ error: 'tierId is required' });
 
-    const member = await Member.findById(req.member.id);
+    const member = await Member.findById(req.member.id).populate('membershipTier');
     const tier = await MembershipTier.findById(tierId);
     if (!tier || !tier.isActive) return res.status(400).json({ error: 'Invalid or inactive membership tier' });
 
@@ -99,11 +123,12 @@ async function upgrade(req, res, next) {
       if (count >= tier.maxMembers) return res.status(409).json({ error: 'This tier has reached its member limit' });
     }
 
-    let amount = tier.price;
+    const upgradeCalc = computeUpgradeAmount(member, tier);
+    let amount = upgradeCalc.amount;
     let discount = null;
     if (discountCode?.trim()) {
       try {
-        discount = await computeDiscount({ code: discountCode, productType: 'membership', email: member.email, originalAmount: tier.price });
+        discount = await computeDiscount({ code: discountCode, productType: 'membership', email: member.email, originalAmount: amount });
         amount = discount.finalAmount;
       } catch (err) {
         return res.status(400).json({ error: err.message });
@@ -111,7 +136,7 @@ async function upgrade(req, res, next) {
     }
 
     const payment = await MembershipPayment.create({
-      member: member._id, membershipTier: tier._id, previousTier: member.membershipTier || undefined,
+      member: member._id, membershipTier: tier._id, previousTier: member.membershipTier?._id || undefined,
       type: member.membershipTier ? 'upgrade' : 'new', amount,
       discountCode: discount?.discountCodeId,
       discount_code: discount?.discount_code,
@@ -132,7 +157,7 @@ async function upgrade(req, res, next) {
       referenceId: payment._id.toString(),
     });
 
-    return res.status(201).json({ paymentId: result.paymentId, checkoutUrl: result.checkoutUrl });
+    return res.status(201).json({ paymentId: result.paymentId, checkoutUrl: result.checkoutUrl, amount, message: upgradeCalc.message });
   } catch (err) {
     next(err);
   }
@@ -153,4 +178,4 @@ async function downloadCard(req, res, next) {
   }
 }
 
-module.exports = { getStatus, setAutoRenew, renew, upgrade, downloadCard };
+module.exports = { getStatus, setAutoRenew, renew, upgrade, previewUpgrade, downloadCard };

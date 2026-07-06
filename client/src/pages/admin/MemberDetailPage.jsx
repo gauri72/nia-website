@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Send } from 'lucide-react';
+import { ArrowLeft, Send, ArrowUpCircle, Copy } from 'lucide-react';
 import adminApi from '../../services/adminApi';
 import { useAdminAuth } from '../../context/AdminAuthContext';
 import StatusBadge from '../../components/admin/StatusBadge';
@@ -24,6 +24,12 @@ export default function MemberDetailPage() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [resending, setResending] = useState(false);
+  const [upgradeTierId, setUpgradeTierId] = useState('');
+  const [upgradePreview, setUpgradePreview] = useState(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [generatingLink, setGeneratingLink] = useState(false);
+  const [upgradeLink, setUpgradeLink] = useState(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     adminApi.get(`/admin/members/${id}`).then((r) => {
@@ -77,6 +83,46 @@ export default function MemberDetailPage() {
     } finally {
       setResending(false);
     }
+  }
+
+  async function handleSelectUpgradeTier(e) {
+    const tierId = e.target.value;
+    setUpgradeTierId(tierId);
+    setUpgradeLink(null);
+    if (!tierId) { setUpgradePreview(null); return; }
+    setPreviewLoading(true);
+    try {
+      const { data } = await adminApi.get(`/admin/members/${id}/upgrade-preview/${tierId}`);
+      setUpgradePreview(data);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to calculate upgrade price');
+      setUpgradePreview(null);
+    } finally {
+      setPreviewLoading(false);
+    }
+  }
+
+  async function handleGenerateUpgradeLink() {
+    setError(''); setGeneratingLink(true);
+    try {
+      const { data } = await adminApi.post(`/admin/members/${id}/upgrade-membership`, { tierId: upgradeTierId });
+      if (data.free) {
+        setMessage(data.message);
+        setUpgradeTierId(''); setUpgradePreview(null);
+      } else {
+        setUpgradeLink(data.checkoutUrl);
+      }
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to generate payment link');
+    } finally {
+      setGeneratingLink(false);
+    }
+  }
+
+  function handleCopyLink() {
+    navigator.clipboard.writeText(upgradeLink);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
   }
 
   if (!member || !form) return <div className="text-nia-text-muted">Loading…</div>;
@@ -165,6 +211,40 @@ export default function MemberDetailPage() {
             >
               <Send /> {resending ? 'Sending…' : 'Resend Confirmation Email'}
             </Button>
+          </Card>
+
+          <Card>
+            <h2 className="font-bold text-nia-navy-dark mb-2">Upgrade Membership</h2>
+            <p className="text-sm text-nia-text-faint mb-3">
+              Generates a real payment link for a tier upgrade, applying the same 180-day proration rule as self-service upgrades — nothing changes until it's paid.
+            </p>
+            <label className={label}>Target Tier</label>
+            <select className={inputCls + ' mb-2'} value={upgradeTierId} onChange={handleSelectUpgradeTier}>
+              <option value="">Select a tier…</option>
+              {tiers.filter((t) => t._id !== form.membershipTier).map((t) => <option key={t._id} value={t._id}>{t.name}</option>)}
+            </select>
+
+            {previewLoading && <p className="text-sm text-nia-text-faint">Calculating…</p>}
+
+            {upgradePreview && !previewLoading && (
+              <div className="rounded-nia-btn bg-nia-panel px-3 py-2.5 text-xs text-nia-navy-dark mb-3">
+                <p className="mb-1">{upgradePreview.message}</p>
+                <p className="font-bold text-sm">Amount: €{upgradePreview.amount}</p>
+              </div>
+            )}
+
+            {upgradeTierId && !upgradeLink && (
+              <Button variant="secondary" disabled={generatingLink || previewLoading} onClick={handleGenerateUpgradeLink}>
+                <ArrowUpCircle /> {generatingLink ? 'Generating…' : 'Generate Payment Link'}
+              </Button>
+            )}
+
+            {upgradeLink && (
+              <div className="flex flex-col gap-2">
+                <p className="text-xs text-nia-text-faint break-all">{upgradeLink}</p>
+                <Button variant="secondary" onClick={handleCopyLink}><Copy /> {copied ? 'Copied!' : 'Copy Link'}</Button>
+              </div>
+            )}
           </Card>
 
           <Card>

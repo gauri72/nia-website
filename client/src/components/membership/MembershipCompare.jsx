@@ -1,4 +1,8 @@
-import { FaCheck, FaMinus, FaUsers, FaCalendarAlt, FaTag, FaEnvelope, FaAward, FaCrown } from 'react-icons/fa';
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { FaCheck, FaMinus, FaUsers, FaCalendarAlt, FaTag, FaEnvelope, FaAward, FaCrown, FaArrowRight } from 'react-icons/fa';
+import { useMemberAuth } from '../../context/MemberAuthContext';
+import memberApi from '../../services/memberApi';
 import './MembershipCompare.css';
 
 const ROWS = [
@@ -17,6 +21,30 @@ function Cell({ value, col }) {
 }
 
 export default function MembershipCompare() {
+  const { member } = useMemberAuth();
+  const [patronTier, setPatronTier] = useState(null);
+  const [preview, setPreview] = useState(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+
+  useEffect(() => {
+    memberApi.get('/membership-tiers').then((r) => {
+      setPatronTier(r.data.find((t) => t.slug === 'patron') || null);
+    });
+  }, []);
+
+  const isPatron = member?.membershipTier?.slug === 'patron';
+  const canPreview = !!(member && patronTier && !isPatron);
+
+  useEffect(() => {
+    if (!canPreview) { setPreview(null); return; }
+    setPreviewLoading(true);
+    memberApi.get(`/member/membership/upgrade-preview/${patronTier._id}`)
+      .then((r) => setPreview(r.data))
+      .catch(() => setPreview(null))
+      .finally(() => setPreviewLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canPreview, patronTier?._id]);
+
   return (
     <section className="mem-compare">
       <div className="mem-compare__inner">
@@ -53,6 +81,40 @@ export default function MembershipCompare() {
               ))}
             </tbody>
           </table>
+        </div>
+
+        <div className="mc-upgrade">
+          <h3 className="mc-upgrade__heading">Already a Friend member? Upgrade to Patron anytime.</h3>
+          <p className="mc-upgrade__text">
+            If you have more than 180 days left on your Friend membership, upgrading only costs the difference between
+            the two tiers (€90). With 180 days or fewer remaining, upgrading costs the full Patron price (€150).
+            Either way, your new Patron validity starts fresh for a full year from the day you upgrade.
+          </p>
+
+          {!member && (
+            <Link to="/dashboard/login" state={{ from: '/dashboard/membership' }} className="mc-upgrade__btn">
+              Log In to Upgrade <FaArrowRight />
+            </Link>
+          )}
+
+          {member && isPatron && (
+            <p className="mc-upgrade__already">✓ You're already a Patron member — thank you for your support!</p>
+          )}
+
+          {member && !isPatron && (
+            <>
+              {previewLoading && <p className="mc-upgrade__text">Calculating your upgrade price…</p>}
+              {preview && (
+                <p className="mc-upgrade__price">
+                  Your price: <strong>€{preview.amount}</strong>
+                  <span className="mc-upgrade__price-note">{preview.message}</span>
+                </p>
+              )}
+              <Link to="/dashboard/membership" className="mc-upgrade__btn">
+                Upgrade to Patron <FaArrowRight />
+              </Link>
+            </>
+          )}
         </div>
 
       </div>

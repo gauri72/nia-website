@@ -7,6 +7,7 @@ import PageHeader from '../../components/admin/PageHeader';
 import Card from '../../components/admin/Card';
 import Button from '../../components/admin/Button';
 import Table from '../../components/admin/Table';
+import Modal from '../../components/admin/Modal';
 
 function goToCheckout(paymentId, checkoutUrl) {
   sessionStorage.setItem('nia_pending_payment_id', paymentId);
@@ -21,6 +22,9 @@ export default function MyMembershipPage() {
   const [error, setError] = useState('');
   const [discountCode, setDiscountCode] = useState('');
   const [freeSuccess, setFreeSuccess] = useState('');
+  const [previewTier, setPreviewTier] = useState(null); // tier being considered
+  const [preview, setPreview] = useState(null); // { amount, prorationApplied, daysRemaining, message, currentTier, targetTier }
+  const [previewLoading, setPreviewLoading] = useState(false);
 
   function load() {
     memberApi.get('/member/membership').then((r) => setStatus(r.data));
@@ -40,10 +44,26 @@ export default function MyMembershipPage() {
     }
   }
 
-  async function handleJoinOrUpgrade(tierId) {
+  async function handleOpenPreview(tier) {
+    setError('');
+    setPreviewTier(tier);
+    setPreviewLoading(true);
+    try {
+      const { data } = await memberApi.get(`/member/membership/upgrade-preview/${tier._id}`);
+      setPreview(data);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to calculate upgrade price');
+      setPreviewTier(null);
+    } finally {
+      setPreviewLoading(false);
+    }
+  }
+
+  async function handleConfirmUpgrade() {
     setBusy(true); setError('');
     try {
-      const { data } = await memberApi.post('/member/membership/upgrade', { tierId, discountCode: discountCode.trim() || undefined });
+      const { data } = await memberApi.post('/member/membership/upgrade', { tierId: previewTier._id, discountCode: discountCode.trim() || undefined });
+      setPreviewTier(null); setPreview(null);
       if (data.free) { setFreeSuccess(data.message); setBusy(false); load(); }
       else goToCheckout(data.paymentId, data.checkoutUrl);
     } catch (err) {
@@ -115,6 +135,11 @@ export default function MyMembershipPage() {
 
       <div>
         <h2 className="font-bold text-nia-navy-dark mb-3">{status.membershipTier ? 'Upgrade Your Tier' : 'Available Tiers'}</h2>
+        {status.membershipTier && (
+          <p className="text-xs text-nia-text-faint mb-3">
+            Upgrading to a higher tier: if you have more than 180 days left on your current membership, you'll only pay the difference between the two tiers. With 180 days or fewer left, you'll pay the full price of the new tier. Either way, your new validity starts fresh from the day you upgrade.
+          </p>
+        )}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {tiers.filter((t) => t._id !== status.membershipTier?._id).map((t) => (
             <Card key={t._id} className="flex flex-col gap-2" style={{ borderTop: `4px solid ${t.color}` }}>
@@ -124,8 +149,8 @@ export default function MyMembershipPage() {
               <ul className="text-sm text-nia-text-muted flex flex-col gap-1 flex-1">
                 {t.benefits.map((b, i) => <li key={i} className="flex items-start gap-1.5"><CheckCircle2 className="text-nia-success mt-0.5 flex-shrink-0 text-xs" />{b}</li>)}
               </ul>
-              <Button variant="primary" disabled={busy} onClick={() => handleJoinOrUpgrade(t._id)} className="mt-2">
-                {status.membershipTier ? 'Upgrade' : 'Join'}
+              <Button variant="primary" disabled={busy || (previewLoading && previewTier?._id === t._id)} onClick={() => handleOpenPreview(t)} className="mt-2">
+                {previewLoading && previewTier?._id === t._id ? 'Calculating…' : status.membershipTier ? 'Upgrade' : 'Join'}
               </Button>
             </Card>
           ))}
@@ -158,6 +183,32 @@ export default function MyMembershipPage() {
             </Table.Body>
           </Table>
         </Card>
+      )}
+
+      {previewTier && preview && (
+        <Modal title={status.membershipTier ? `Upgrade to ${previewTier.name}` : `Join ${previewTier.name}`} onClose={() => { setPreviewTier(null); setPreview(null); }}>
+          <div className="flex flex-col gap-3">
+            {preview.currentTier && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-nia-text-muted">Current: {preview.currentTier.name}</span>
+                <span className="text-nia-text-faint">€{preview.currentTier.price}</span>
+              </div>
+            )}
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-nia-text-muted">New: {preview.targetTier.name}</span>
+              <span className="text-nia-text-faint">€{preview.targetTier.price}</span>
+            </div>
+            <div className="rounded-nia-btn bg-nia-panel px-4 py-3 text-sm text-nia-navy-dark">{preview.message}</div>
+            <div className="flex items-center justify-between border-t border-nia-border pt-3">
+              <span className="font-semibold text-nia-navy-dark">Amount to pay</span>
+              <span className="text-xl font-extrabold text-nia-orange">€{preview.amount}</span>
+            </div>
+            <div className="flex justify-end gap-2 mt-2">
+              <Button variant="secondary" onClick={() => { setPreviewTier(null); setPreview(null); }}>Cancel</Button>
+              <Button variant="primary" disabled={busy} onClick={handleConfirmUpgrade}>{busy ? 'Starting…' : 'Confirm & Continue to Payment'}</Button>
+            </div>
+          </div>
+        </Modal>
       )}
     </div>
   );

@@ -16,6 +16,7 @@ router.get(  '/membership',              memberMembershipController.getStatus);
 router.patch('/membership/auto-renew',   memberMembershipController.setAutoRenew);
 router.post( '/membership/renew',        paymentLimiter, memberMembershipController.renew);
 router.post( '/membership/upgrade',      paymentLimiter, memberMembershipController.upgrade);
+router.get(  '/membership/upgrade-preview/:tierId', memberMembershipController.previewUpgrade);
 router.get(  '/membership/card.pdf',     memberMembershipController.downloadCard);
 
 router.get(  '/notifications',               notificationController.list);
