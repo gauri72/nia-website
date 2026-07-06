@@ -30,6 +30,7 @@ router.post(  '/members',           memberAdminController.create);
 router.get(   '/members/:id',       memberAdminController.getById);
 router.patch( '/members/:id',       memberAdminController.update);
 router.patch( '/members/:id/status', requireRole(['super_admin']), memberAdminController.updateStatus);
+router.post(  '/members/:id/resend-membership-email', memberAdminController.resendMembershipEmail);
 
 // ── Membership Tiers ──────────────────────────────────────────
 router.get(   '/membership-tiers',      membershipTierController.list);

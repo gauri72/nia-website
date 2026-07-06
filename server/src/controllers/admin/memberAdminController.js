@@ -193,6 +193,26 @@ async function update(req, res, next) {
   }
 }
 
+// ── POST /api/admin/members/:id/resend-membership-email ─────────────
+// On-demand send, independent of the change-detection in update() above —
+// covers members whose active tier was set silently (e.g. by the Mollie
+// importer, which never emails) and any other case where an admin just
+// wants to (re)send the confirmation regardless of whether a field changed.
+async function resendMembershipEmail(req, res, next) {
+  try {
+    const member = await Member.findById(req.params.id).populate('membershipTier');
+    if (!member) return res.status(404).json({ error: 'Member not found' });
+    if (!member.membershipTier || member.membershipStatus !== 'active') {
+      return res.status(400).json({ error: 'This member does not have an active membership tier to send a confirmation for' });
+    }
+
+    await sendMembershipPaymentConfirmation({ member, membershipTier: member.membershipTier, type: 'manual' });
+    return res.json({ message: `Confirmation email sent to ${member.email}` });
+  } catch (err) {
+    next(err);
+  }
+}
+
 // ── PATCH /api/admin/members/:id/status ─────────────────────────────
 async function updateStatus(req, res, next) {
   try {
@@ -210,4 +230,4 @@ async function updateStatus(req, res, next) {
   }
 }
 
-module.exports = { list, exportCsv, getById, create, update, updateStatus };
+module.exports = { list, exportCsv, getById, create, update, updateStatus, resendMembershipEmail };

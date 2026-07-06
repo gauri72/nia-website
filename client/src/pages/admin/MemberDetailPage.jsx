@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Send } from 'lucide-react';
 import adminApi from '../../services/adminApi';
 import { useAdminAuth } from '../../context/AdminAuthContext';
 import StatusBadge from '../../components/admin/StatusBadge';
@@ -23,6 +23,7 @@ export default function MemberDetailPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [resending, setResending] = useState(false);
 
   useEffect(() => {
     adminApi.get(`/admin/members/${id}`).then((r) => {
@@ -63,6 +64,18 @@ export default function MemberDetailPage() {
       setMessage(`Account status set to ${status}`);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to update status');
+    }
+  }
+
+  async function handleResendMembershipEmail() {
+    setError(''); setMessage(''); setResending(true);
+    try {
+      const { data } = await adminApi.post(`/admin/members/${id}/resend-membership-email`);
+      setMessage(data.message);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to send confirmation email');
+    } finally {
+      setResending(false);
     }
   }
 
@@ -138,6 +151,20 @@ export default function MemberDetailPage() {
             ) : (
               <p className="text-sm text-nia-text-faint">Only Super Admins can activate, suspend or delete accounts.</p>
             )}
+          </Card>
+
+          <Card>
+            <h2 className="font-bold text-nia-navy-dark mb-2">Membership Email</h2>
+            <p className="text-sm text-nia-text-faint mb-3">
+              Sends the confirmation email (benefits, Membership ID, QR code, validity) for this member's current active tier — useful when a membership was assigned without one going out (e.g. via Mollie import) or just to resend it.
+            </p>
+            <Button
+              variant="secondary"
+              disabled={resending || !form.membershipTier || form.membershipStatus !== 'active'}
+              onClick={handleResendMembershipEmail}
+            >
+              <Send /> {resending ? 'Sending…' : 'Resend Confirmation Email'}
+            </Button>
           </Card>
 
           <Card>
