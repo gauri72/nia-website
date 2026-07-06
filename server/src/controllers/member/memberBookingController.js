@@ -15,11 +15,12 @@ const { finalizeFreeOrder } = require('../../services/databaseService');
 //
 // The discount caps at a fixed number of TICKET UNITS per member per event
 // (tier.ticketDiscountMaxPerEvent), not a number of orders — a single order
-// requesting more units than the remaining allowance only gets the discount
-// on the cheapest eligible units up to that allowance; the rest are charged
-// full price. Only ticket types with membershipDiscount:true and no explicit
-// memberPrice override are eligible for this automatic allocation — an
-// explicit memberPrice always wins outright and never consumes the allowance. ──
+// requesting more units than the remaining allowance discounts the
+// highest-priced eligible units first, up to that allowance; the rest are
+// charged full price. Only ticket types with membershipDiscount:true and no
+// explicit memberPrice override are eligible for this automatic allocation —
+// an explicit memberPrice always wins outright and never consumes the
+// allowance. ──
 async function computePricing(member, event, lines, discountCode) {
   const isEligibleForMemberPrice = member.membershipStatus === 'active';
 
@@ -63,15 +64,15 @@ async function computePricing(member, event, lines, discountCode) {
     }
   }
 
-  // Allocate remaining allowance to the cheapest auto-discount-eligible lines first.
-  // A line with an explicit memberPrice override is priced separately below and
-  // never competes for this allowance.
+  // Allocate remaining allowance to the highest-priced auto-discount-eligible
+  // lines first. A line with an explicit memberPrice override is priced
+  // separately below and never competes for this allowance.
   const autoEligible = resolvedLines.filter(({ tt }) => tt.membershipDiscount && !(isEligibleForMemberPrice && tt.memberPrice != null));
   const discountQtyByTicketType = new Map();
   let eligibleRequestedQty = 0;
   if (allowance > 0) {
     let allowanceLeft = allowance;
-    for (const { tt, qty } of [...autoEligible].sort((a, b) => a.tt.price - b.tt.price)) {
+    for (const { tt, qty } of [...autoEligible].sort((a, b) => b.tt.price - a.tt.price)) {
       eligibleRequestedQty += qty;
       if (allowanceLeft <= 0) continue;
       const take = Math.min(allowanceLeft, qty);

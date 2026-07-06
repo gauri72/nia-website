@@ -30,9 +30,10 @@ function validateTicketLines(tickets) {
 //
 // The discount caps at a fixed number of TICKET UNITS per member per event
 // (tier.ticketDiscountMaxPerEvent), not a number of orders — a single order
-// requesting more units than the remaining allowance only gets the discount
-// on the cheapest eligible units up to that allowance; the rest are charged
-// full price. Child tickets are never eligible (already a reduced price). ──
+// requesting more units than the remaining allowance discounts the
+// highest-priced eligible units first, up to that allowance; the rest are
+// charged full price. Child tickets are never eligible (already a reduced
+// price). ──
 async function resolveAutomaticDiscount(normalizedEmail, ticketLines) {
   const member = await Member.findOne({ email: normalizedEmail, membershipStatus: 'active' }).populate('membershipTier');
   const tier = member?.membershipTier;
@@ -57,11 +58,11 @@ async function resolveAutomaticDiscount(normalizedEmail, ticketLines) {
   }
   if (eligibleRequestedQty === 0) return { eligible: false }; // e.g. child-only order — nothing to discount, not an "already used" case
 
-  // Allocate to the cheapest eligible units first.
+  // Allocate to the highest-priced eligible units first.
   let allowanceLeft = remaining;
   let totalDiscountAmount = 0;
   let unitsDiscounted = 0;
-  for (const line of [...eligibleLines].sort((a, b) => a.unit_price - b.unit_price)) {
+  for (const line of [...eligibleLines].sort((a, b) => b.unit_price - a.unit_price)) {
     if (allowanceLeft <= 0) break;
     const qtyToDiscount = Math.min(allowanceLeft, line.quantity);
     const perUnitDiscount = applyDiscount({ type: tier.ticketDiscountType, value: tier.ticketDiscountValue }, line.unit_price).discount_amount;
