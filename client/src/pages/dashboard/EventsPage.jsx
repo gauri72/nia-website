@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { Search, MapPin, Calendar } from 'lucide-react';
 import memberApi from '../../services/memberApi';
 import PageHeader from '../../components/admin/PageHeader';
+import Button from '../../components/admin/Button';
 
 const CATEGORIES = ['Cultural', 'Community', 'Workshop', 'Festival', 'Exhibition', 'Performance', 'Other'];
 const selectFilterCls = 'rounded-nia-btn border border-nia-border px-3 py-2 text-sm focus:border-nia-orange focus:outline-none focus:ring-2 focus:ring-nia-orange/20 w-auto';
@@ -42,7 +42,7 @@ export default function DashboardEventsPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {events.map((e) => (
-          <Link key={e._id} to={`/dashboard/events/${e.slug}`} className="rounded-nia-card border border-nia-border bg-white overflow-hidden hover:shadow-lg transition-shadow flex flex-col">
+          <div key={e._id} className="rounded-nia-card border border-nia-border bg-white overflow-hidden flex flex-col">
             {e.coverImageUrl && <img src={e.coverImageUrl} alt={e.title} className="w-full h-36 object-cover" />}
             <div className="p-4 flex flex-col gap-1.5 flex-1">
               <span className="text-xs font-bold uppercase tracking-wide text-nia-orange">{e.category}</span>
@@ -54,8 +54,11 @@ export default function DashboardEventsPage() {
                 <span className="font-bold text-nia-orange">{e.minPrice != null ? `From €${e.minPrice}` : 'Free'}</span>
                 {e.isSoldOut && <span className="text-xs font-semibold text-nia-error">Sold Out</span>}
               </div>
+              <Button as="a" href="https://www.niaonline.org/events" target="_blank" rel="noopener noreferrer" variant="primary" size="sm" className="mt-2 justify-center">
+                Book Tickets
+              </Button>
             </div>
-          </Link>
+          </div>
         ))}
       </div>
     </div>
