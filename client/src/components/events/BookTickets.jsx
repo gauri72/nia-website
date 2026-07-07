@@ -71,21 +71,6 @@ export default function BookTickets() {
   const hasTickets  = selectedTickets.length > 0;
   const totalTickets = selectedTickets.reduce((sum, t) => sum + qtys[t.id], 0);
 
-  async function handleApplyDiscount() {
-    if (!discountCode.trim() || !attendee.email.trim()) return;
-    setApplyingDiscount(true);
-    try {
-      const { data } = await api.post('/discount-codes/preview', {
-        code: discountCode.trim(), productType: 'ticket', email: attendee.email.trim(), originalAmount: subtotal,
-      });
-      setDiscount(data);
-    } catch {
-      setDiscount({ valid: false, message: 'Could not validate this code right now.' });
-    } finally {
-      setApplyingDiscount(false);
-    }
-  }
-
   // Ticket composition changed — any previously computed discount (code or
   // automatic membership) no longer matches the new subtotal, so it must be
   // invalidated here. This also makes handleContinueToReview's `!discount?.valid`
@@ -184,6 +169,15 @@ export default function BookTickets() {
                 <label className="bt-field__label"><FaIdCard /> Membership Code</label>
                 <input className="bt-code-input bt-code-input--full" placeholder="Member ID" value={membershipCode} onChange={e => setMembershipCode(e.target.value)} />
               </div>
+              <div className="bt-codes__field">
+                <label className="bt-field__label"><FaTag /> Discount Code <span className="bt-optional">(optional)</span></label>
+                <input
+                  className="bt-code-input bt-code-input--full" placeholder="e.g. NIA10"
+                  value={discountCode}
+                  onChange={e => { setDiscountCode(e.target.value); setDiscount(null); }}
+                />
+                <span className="bt-pfield__hint">We'll validate this once you enter your email on the next step.</span>
+              </div>
             </div>
 
             {/* Ticket rows */}
@@ -232,7 +226,7 @@ export default function BookTickets() {
 
             <p className="book-tickets__note">
               <FaShieldAlt className="book-tickets__note-icon" />
-              Secure Booking &nbsp;|&nbsp; Limited Seats — Book Early! Have a discount code? You'll enter it on the next step.
+              Secure Booking &nbsp;|&nbsp; Limited Seats — Book Early!
             </p>
 
             <div className="bt-bottom">
@@ -277,23 +271,6 @@ export default function BookTickets() {
             <div className="bt-pfield bt-pfield--full">
               <label className="bt-pfield__label">Phone Number <span className="bt-optional">(optional)</span></label>
               <input className="bt-pfield__input" name="phone" type="tel" placeholder="+31 6 12345678" value={attendee.phone} onChange={handleAttendeeField} />
-            </div>
-
-            <div className="bt-pfield bt-pfield--full">
-              <label className="bt-pfield__label"><FaTag /> Discount Code <span className="bt-optional">(optional)</span></label>
-              <div className="bt-code-wrap">
-                <input
-                  className="bt-code-input" placeholder="e.g. NIA10"
-                  value={discountCode}
-                  onChange={e => { setDiscountCode(e.target.value); setDiscount(null); }}
-                />
-                <button className="bt-code-apply" disabled={!discountCode.trim() || !attendee.email.trim() || applyingDiscount} onClick={handleApplyDiscount}>
-                  {applyingDiscount ? 'Checking…' : 'Apply'}
-                </button>
-              </div>
-              {discount?.valid && <span className="bt-codes__applied">✓ €{discount.discount_amount} discount applied</span>}
-              {discount && !discount.valid && <span style={{ color: '#e74c3c', fontSize: '0.85rem' }}>{discount.message}</span>}
-              {!attendee.email.trim() && <span className="bt-pfield__hint">Enter your email above first.</span>}
             </div>
 
             {totalTickets > 1 && (
