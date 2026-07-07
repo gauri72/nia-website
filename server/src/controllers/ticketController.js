@@ -8,6 +8,12 @@ const TICKET_PRICES = { regular: 20, vip: 45, child: 5 };
 const EVENT_ID = 'NIA-EVENT-20260815'; // matches Ticket.event_id's schema default — the one legacy event this flow serves
 const DISCOUNT_INELIGIBLE_TYPES = ['child']; // child tickets are already discounted — never eligible for the membership discount too
 
+// Deliberately simple (not full RFC 5322) — just enough to catch the actual
+// garbage this flow has let through with no format check at all: stray
+// spaces, missing @, missing domain. Confirmation emails, PDFs and QR codes
+// are worthless if this doesn't at least look like a real address.
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 function validateTicketLines(tickets) {
   const ticketLines = [];
   let subtotal = 0;
@@ -89,6 +95,9 @@ async function create(req, res, next) {
 
     if (!name?.trim() || !email?.trim()) {
       return res.status(400).json({ error: 'name and email are required' });
+    }
+    if (!EMAIL_RE.test(email.trim())) {
+      return res.status(400).json({ error: 'Please enter a valid email address' });
     }
     if (!tickets || !Array.isArray(tickets) || tickets.length === 0) {
       return res.status(400).json({ error: 'At least one ticket is required' });
@@ -205,6 +214,9 @@ async function previewDiscount(req, res, next) {
     const { email, tickets, discountCode } = req.body;
     if (!email?.trim() || !tickets || !Array.isArray(tickets) || tickets.length === 0) {
       return res.status(400).json({ error: 'email and at least one ticket are required' });
+    }
+    if (!EMAIL_RE.test(email.trim())) {
+      return res.status(400).json({ error: 'Please enter a valid email address' });
     }
     const normalizedEmail = email.trim().toLowerCase();
 

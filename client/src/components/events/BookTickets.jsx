@@ -13,6 +13,10 @@ const TICKETS = [
   { id: 'child',   icon: <FaChild />, type: 'Child (6–12 yrs)', perks: ['Per child', 'Accompanied by adult'],        price: 5,  badge: null,         highlight: false, color: 'green'  },
 ];
 
+// Same simple check the server enforces — catches stray spaces, missing @,
+// missing domain, etc. before the buyer ever leaves this page.
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 
 function StepBar({ step }) {
   const STEPS = ['Select Tickets', 'Your Details', 'Review Order', 'Payment'];
@@ -96,7 +100,10 @@ export default function BookTickets() {
     if (e.target.name === 'email') setDiscount(null); // re-validate against the new email if changed
   }
 
-  const canProceedStep1 = attendee.name.trim() && attendee.email.trim()
+  const emailTouched = attendee.email.trim().length > 0;
+  const emailValid = EMAIL_RE.test(attendee.email.trim());
+
+  const canProceedStep1 = attendee.name.trim() && emailValid
     && (totalTickets <= 1 || attendeeNames.trim());
 
   // If a discount code was already applied above, that wins server-side too — no
@@ -262,6 +269,9 @@ export default function BookTickets() {
             <div className="bt-pfield bt-pfield--full">
               <label className="bt-pfield__label">Email Address <span className="bt-required">*</span></label>
               <input className="bt-pfield__input" name="email" type="email" placeholder="you@email.com" value={attendee.email} onChange={handleAttendeeField} required />
+              {emailTouched && !emailValid && (
+                <span className="bt-pfield__hint" style={{ color: '#e74c3c' }}>Please enter a valid email address (e.g. you@email.com) — this is where your tickets will be sent.</span>
+              )}
             </div>
 
             <div className="bt-pfield bt-pfield--full">
