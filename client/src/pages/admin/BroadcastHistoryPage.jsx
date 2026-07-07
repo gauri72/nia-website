@@ -41,6 +41,13 @@ export default function BroadcastHistoryPage() {
     load();
   }
 
+  async function handleResendFailed(b) {
+    if (!window.confirm(`Retry sending to the ${b.stats.failed} recipient(s) whose send failed?`)) return;
+    const { data } = await adminApi.post(`/broadcasts/${b._id}/resend-failed`);
+    alert(data.message);
+    load();
+  }
+
   async function handleDuplicate(b) {
     await adminApi.post(`/broadcasts/${b._id}/duplicate`);
     load();
@@ -75,11 +82,16 @@ export default function BroadcastHistoryPage() {
               <Table.Cell className="text-nia-text-muted whitespace-nowrap">
                 {b.sentAt ? new Date(b.sentAt).toLocaleString() : b.scheduledAt ? new Date(b.scheduledAt).toLocaleString() : '—'}
               </Table.Cell>
-              <Table.Cell><StatusBadge status={b.status} /></Table.Cell>
+              <Table.Cell>
+                <button onClick={() => openDetail(b)} className="border-0 bg-transparent p-0 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-nia-orange/40 rounded-full">
+                  <StatusBadge status={b.status} />
+                </button>
+              </Table.Cell>
               <Table.Cell align="right" className="whitespace-nowrap">
                 <div className="flex gap-1.5 justify-end">
                   {b.status === 'scheduled' && <Button variant="danger" size="sm" onClick={() => handleCancel(b)}>Cancel</Button>}
                   {b.status === 'sent' && <Button variant="secondary" size="sm" onClick={() => handleResend(b)}>Resend to Unopened</Button>}
+                  {b.status === 'sent' && b.stats.failed > 0 && <Button variant="secondary" size="sm" onClick={() => handleResendFailed(b)}>Retry Failed ({b.stats.failed})</Button>}
                   <Button variant="secondary" size="sm" onClick={() => handleDuplicate(b)}>Duplicate</Button>
                 </div>
               </Table.Cell>

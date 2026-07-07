@@ -31,6 +31,7 @@ router.post(  '/broadcasts/:id/send-test',      broadcastLimiter, broadcastContr
 router.post(  '/broadcasts/:id/send',           broadcastLimiter, broadcastController.send);
 router.post(  '/broadcasts/:id/cancel',         broadcastController.cancel);
 router.post(  '/broadcasts/:id/resend',         broadcastLimiter, broadcastController.resend);
+router.post(  '/broadcasts/:id/resend-failed',  broadcastLimiter, broadcastController.resendFailedRecipients);
 router.post(  '/broadcasts/:id/duplicate',      broadcastController.duplicate);
 
 // ── Suppression List ────────────────────────────────────────────

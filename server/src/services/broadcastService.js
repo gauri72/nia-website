@@ -35,8 +35,14 @@ function createTransporter() {
 }
 
 const FROM = `"NIA Netherlands" <${process.env.BROADCAST_EMAIL_FROM || BROADCAST_EMAIL_USER}>`;
-const BATCH_SIZE = 20;
-const BATCH_DELAY_MS = 2000; // spacing sends protects the SMTP mailbox from provider-side rate limiting
+// SiteGround's shared mailbox rejects bursts over ~10.5 msg/sec and hard-caps
+// the mailbox at ~400 msgs/hour (locking it for the rest of that hour once hit) —
+// 5 every 2s (~2.5/sec) stays well under the burst limit; MAX_PER_HOUR_WINDOW
+// below keeps a whole broadcast under the hourly cap by pausing until it resets.
+const BATCH_SIZE = 5;
+const BATCH_DELAY_MS = 2000;
+const MAX_PER_HOUR_WINDOW = 350; // safety margin under the ~400/hour hard cap
+const HOUR_MS = 60 * 60 * 1000;
 
 // ── Resolve which members match an audience definition ─────────────
 async function resolveAudienceMembers(audience) {
@@ -152,10 +158,25 @@ async function sendBroadcast(broadcastId) {
   const transporter = createTransporter();
   const recipients = await BroadcastRecipient.find({ broadcast: broadcastId, status: 'pending' }).populate({ path: 'member', populate: 'membershipTier' });
 
-  let sentCount = 0, failedCount = 0;
+  let windowStart = Date.now();
+  let windowAttempted = 0;
 
   for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
     const batch = recipients.slice(i, i + BATCH_SIZE);
+
+    // Pause until the hourly window resets rather than letting the mailbox
+    // provider start hard-rejecting everything for the rest of the hour.
+    if (windowAttempted + batch.length > MAX_PER_HOUR_WINDOW) {
+      const waitMs = HOUR_MS - (Date.now() - windowStart);
+      if (waitMs > 0) {
+        console.log(`[Broadcast] Hourly send cap reached (${windowAttempted} sent), pausing ${Math.ceil(waitMs / 60000)} min before continuing...`);
+        await new Promise((r) => setTimeout(r, waitMs));
+      }
+      windowStart = Date.now();
+      windowAttempted = 0;
+    }
+    windowAttempted += batch.length;
+
     await Promise.all(batch.map(async (recipient) => {
       try {
         const member = recipient.member;
@@ -173,27 +194,51 @@ async function sendBroadcast(broadcastId) {
         recipient.status = 'sent';
         recipient.sentAt = new Date();
         await recipient.save();
-        sentCount++;
       } catch (err) {
         recipient.status = 'failed';
         recipient.errorMessage = err.message;
         await recipient.save();
-        failedCount++;
       }
     }));
     if (i + BATCH_SIZE < recipients.length) await new Promise((r) => setTimeout(r, BATCH_DELAY_MS));
   }
 
+  // Recomputed from actual recipient statuses (rather than incremented by this
+  // run's sentCount/failedCount) so stats stay correct across repeated
+  // resendFailed() runs instead of double-counting recipients retried more than once.
+  const [deliveredCount, currentFailedCount] = await Promise.all([
+    BroadcastRecipient.countDocuments({ broadcast: broadcastId, status: { $in: ['sent', 'opened', 'clicked'] } }),
+    BroadcastRecipient.countDocuments({ broadcast: broadcastId, status: 'failed' }),
+  ]);
+
   broadcast.status = 'sent';
   broadcast.sentAt = new Date();
-  broadcast.stats.sent = (broadcast.stats.sent || 0) + sentCount;
-  broadcast.stats.failed = (broadcast.stats.failed || 0) + failedCount;
+  broadcast.stats.sent = deliveredCount;
+  broadcast.stats.failed = currentFailedCount;
   await broadcast.save();
 
   return broadcast;
 }
 
+// ── Retry recipients that hard-failed (e.g. rejected by the SMTP provider) ──
+async function resendFailed(broadcastId) {
+  const failed = await BroadcastRecipient.find({ broadcast: broadcastId, status: 'failed' });
+  if (failed.length === 0) return 0;
+
+  await BroadcastRecipient.updateMany(
+    { _id: { $in: failed.map((r) => r._id) } },
+    { status: 'pending', errorMessage: undefined },
+  );
+
+  const broadcast = await Broadcast.findById(broadcastId);
+  broadcast.status = 'sending';
+  await broadcast.save();
+
+  sendBroadcast(broadcastId).catch((err) => console.error('[Broadcast] Resend-failed run failed:', err.message));
+  return failed.length;
+}
+
 module.exports = {
   resolveAudienceMembers, estimateAudienceCount, renderPersonalized, injectTracking,
-  createRecipients, sendTestEmail, sendBroadcast, buildUnsubscribeUrl,
+  createRecipients, sendTestEmail, sendBroadcast, resendFailed, buildUnsubscribeUrl,
 };

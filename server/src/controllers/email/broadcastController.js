@@ -2,7 +2,7 @@ const Broadcast = require('../../models/Broadcast');
 const BroadcastRecipient = require('../../models/BroadcastRecipient');
 const EmailTemplate = require('../../models/EmailTemplate');
 const {
-  resolveAudienceMembers, estimateAudienceCount, createRecipients, sendTestEmail, sendBroadcast, buildUnsubscribeUrl,
+  resolveAudienceMembers, estimateAudienceCount, createRecipients, sendTestEmail, sendBroadcast, resendFailed, buildUnsubscribeUrl,
 } = require('../../services/broadcastService');
 
 // Client sends empty-string/empty-array placeholders for fields irrelevant to the
@@ -215,6 +215,24 @@ async function resend(req, res, next) {
   }
 }
 
+// ── POST /api/broadcasts/:id/resend-failed ────────────────────────
+// Retries recipients whose send outright failed (e.g. SMTP-provider rejection),
+// as opposed to /resend which targets successfully-sent-but-unopened recipients.
+async function resendFailedRecipients(req, res, next) {
+  try {
+    const broadcast = await Broadcast.findById(req.params.id);
+    if (!broadcast) return res.status(404).json({ error: 'Broadcast not found' });
+    if (broadcast.status !== 'sent') return res.status(400).json({ error: 'Only sent broadcasts can be retried' });
+
+    const count = await resendFailed(req.params.id);
+    if (count === 0) return res.json({ message: 'No failed recipients to retry' });
+
+    return res.json({ message: `Retrying ${count} failed recipient(s)` });
+  } catch (err) {
+    next(err);
+  }
+}
+
 // ── POST /api/broadcasts/:id/duplicate ────────────────────────────
 async function duplicate(req, res, next) {
   try {
@@ -254,4 +272,4 @@ async function analytics(req, res, next) {
   }
 }
 
-module.exports = { list, getById, recipients, estimateAudience, create, update, sendTest, send, cancel, resend, duplicate, analytics };
+module.exports = { list, getById, recipients, estimateAudience, create, update, sendTest, send, cancel, resend, resendFailedRecipients, duplicate, analytics };
