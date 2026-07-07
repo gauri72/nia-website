@@ -331,6 +331,11 @@ function ReviewTab({ push, onResolved }) {
             <div>
               <p className="font-semibold text-nia-navy-dark">€{item.amount?.toFixed(2)} — {item.transaction?.paymentId}</p>
               <p className="text-xs text-nia-text-faint">{item.description}</p>
+              {(item.transaction?.paidAt || item.transaction?.mollieCreatedAt) && (
+                <p className="text-xs text-nia-text-faint">
+                  {item.transaction?.paidAt ? 'Paid' : 'Created'}: {new Date(item.transaction?.paidAt || item.transaction?.mollieCreatedAt).toLocaleString()}
+                </p>
+              )}
               <p className="text-xs text-nia-warning font-semibold mt-1"><AlertTriangle className="inline mr-1" />{item.reason}</p>
             </div>
           </div>
