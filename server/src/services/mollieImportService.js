@@ -1,6 +1,9 @@
 const { createMollieClient } = require('@mollie/api-client');
 const { encrypt, decrypt } = require('../config/encryption');
 const { hashPassword, generateRawToken } = require('./authService');
+const { sendMemberPasswordResetEmail } = require('./emailService');
+
+const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1h — matches the admin-add-member and forgot-password flows
 
 const MollieConfig = require('../models/MollieConfig');
 const MollieTransaction = require('../models/MollieTransaction');
@@ -176,17 +179,30 @@ async function matchOrCreateMember({ email, name, paymentId }) {
   if (!member) {
     const { firstName, lastName } = splitName(name);
     const tempPassword = generateRawToken().slice(0, 20);
+    // A completed Mollie payment already proves this email is real and reachable —
+    // same reasoning memberAdminController.create() uses for admin-added members —
+    // so mark it verified and immediately email a password-setup link, rather than
+    // leaving the member with an unknowable random password and no way in.
+    const resetToken = generateRawToken();
     member = await Member.create({
       firstName,
       lastName,
       email: normalizedEmail,
       passwordHash: await hashPassword(tempPassword),
+      emailVerified: true,
       status: 'active',
       source: 'mollie_import',
       importedAt: new Date(),
       lastImportPaymentId: paymentId,
+      passwordResetToken: resetToken,
+      passwordResetExpires: new Date(Date.now() + RESET_TOKEN_TTL_MS),
     });
     created = true;
+
+    const resetUrl = `${process.env.FRONTEND_URL}/dashboard/reset-password?token=${resetToken}`;
+    sendMemberPasswordResetEmail(member, resetUrl).catch((err) =>
+      console.error('[MollieImport] Failed to send password-setup email:', err.message)
+    );
   } else {
     // Same email, possibly a different name on this transaction — log the conflict, keep the
     // existing member record as-is (don't silently overwrite a name the member may have set themselves).
