@@ -16,16 +16,25 @@ function contactsToRecipients(contacts) {
   return contacts.map((c) => ({ _id: c.linkedMember || undefined, email: c.email }));
 }
 
+// Broadcasts send from a separate mailbox (secretary@) from the rest of the
+// app's transactional email (info@, handled entirely by emailService.js) —
+// falls back to the shared EMAIL_* config if the BROADCAST_EMAIL_* vars
+// aren't set, so this never breaks broadcasting if they're missing.
+const BROADCAST_EMAIL_HOST = process.env.BROADCAST_EMAIL_HOST || process.env.EMAIL_HOST;
+const BROADCAST_EMAIL_PORT = process.env.BROADCAST_EMAIL_PORT || process.env.EMAIL_PORT;
+const BROADCAST_EMAIL_USER = process.env.BROADCAST_EMAIL_USER || process.env.EMAIL_USER;
+const BROADCAST_EMAIL_PASS = process.env.BROADCAST_EMAIL_PASS || process.env.EMAIL_PASS;
+
 function createTransporter() {
   return nodemailer.createTransport({
-    host: process.env.EMAIL_HOST,
-    port: Number(process.env.EMAIL_PORT) || 587,
-    secure: process.env.EMAIL_PORT === '465',
-    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
+    host: BROADCAST_EMAIL_HOST,
+    port: Number(BROADCAST_EMAIL_PORT) || 587,
+    secure: String(BROADCAST_EMAIL_PORT) === '465',
+    auth: { user: BROADCAST_EMAIL_USER, pass: BROADCAST_EMAIL_PASS },
   });
 }
 
-const FROM = `"NIA Netherlands" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`;
+const FROM = `"NIA Netherlands" <${process.env.BROADCAST_EMAIL_FROM || BROADCAST_EMAIL_USER}>`;
 const BATCH_SIZE = 20;
 const BATCH_DELAY_MS = 2000; // spacing sends protects the SMTP mailbox from provider-side rate limiting
 
