@@ -2,7 +2,7 @@ const Broadcast = require('../../models/Broadcast');
 const BroadcastRecipient = require('../../models/BroadcastRecipient');
 const EmailTemplate = require('../../models/EmailTemplate');
 const {
-  resolveAudienceMembers, estimateAudienceCount, createRecipients, sendTestEmail, sendBroadcast,
+  resolveAudienceMembers, estimateAudienceCount, createRecipients, sendTestEmail, sendBroadcast, buildUnsubscribeUrl,
 } = require('../../services/broadcastService');
 
 // Client sends empty-string/empty-array placeholders for fields irrelevant to the
@@ -128,7 +128,15 @@ async function sendTest(req, res, next) {
     const broadcast = await Broadcast.findById(req.params.id).populate('template');
     if (!broadcast) return res.status(404).json({ error: 'Broadcast not found' });
 
-    await sendTestEmail(email.trim(), broadcast.subject, broadcast.template.htmlContent, broadcast.personalizationVars);
+    // A real BroadcastRecipient (not just a fabricated token) so the test send's
+    // List-Unsubscribe header points at a link that genuinely works if clicked —
+    // same as what a real recipient would get.
+    const normalizedEmail = email.trim().toLowerCase();
+    let recipient = await BroadcastRecipient.findOne({ broadcast: broadcast._id, email: normalizedEmail });
+    if (!recipient) recipient = await BroadcastRecipient.create({ broadcast: broadcast._id, email: normalizedEmail });
+    const unsubscribeUrl = buildUnsubscribeUrl(recipient.trackingToken);
+
+    await sendTestEmail(email.trim(), broadcast.subject, broadcast.template.htmlContent, broadcast.personalizationVars, unsubscribeUrl);
 
     await Broadcast.findByIdAndUpdate(req.params.id, { $addToSet: { testSendEmails: email.trim() } });
     return res.json({ message: `Test email sent to ${email}` });

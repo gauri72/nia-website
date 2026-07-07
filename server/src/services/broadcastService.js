@@ -93,9 +93,14 @@ function renderPersonalized(html, member, vars = {}) {
   return rendered;
 }
 
+function buildUnsubscribeUrl(trackingToken) {
+  const base = process.env.BACKEND_URL || 'http://localhost:5050';
+  return `${base}/api/unsubscribe?token=${trackingToken}`;
+}
+
 function injectTracking(html, trackingToken) {
   const base = process.env.BACKEND_URL || 'http://localhost:5050';
-  const unsubscribeUrl = `${base}/api/unsubscribe?token=${trackingToken}`;
+  const unsubscribeUrl = buildUnsubscribeUrl(trackingToken);
   let out = html.replaceAll('{{unsubscribe_url}}', unsubscribeUrl);
 
   // Rewrite <a href="..."> (except the unsubscribe link) into click-tracked redirects
@@ -121,11 +126,19 @@ async function createRecipients(broadcastId, members) {
 }
 
 // ── Send a test email to the admin ──────────────────────────────────
-async function sendTestEmail(to, subject, html, sampleVars = {}) {
+// unsubscribeUrl is optional — when the caller has a real BroadcastRecipient
+// token to test against, this sends the same List-Unsubscribe header a real
+// send would, so Gmail/Outlook's native one-click unsubscribe can be verified
+// even for templates with no visible unsubscribe link in the body.
+async function sendTestEmail(to, subject, html, sampleVars = {}, unsubscribeUrl = null) {
   const transporter = createTransporter();
   const rendered = renderPersonalized(html, { firstName: 'Test', lastName: 'Member', membershipTier: null, membershipExpiresAt: null }, sampleVars)
-    .replaceAll('{{unsubscribe_url}}', '#');
-  await transporter.sendMail({ from: FROM, to, subject: `[TEST] ${subject}`, html: rendered });
+    .replaceAll('{{unsubscribe_url}}', unsubscribeUrl || '#');
+  const mailOptions = { from: FROM, to, subject: `[TEST] ${subject}`, html: rendered };
+  if (unsubscribeUrl) {
+    mailOptions.headers = { 'List-Unsubscribe': `<${unsubscribeUrl}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' };
+  }
+  await transporter.sendMail(mailOptions);
 }
 
 // ── Send (or resume sending) a broadcast to its pending recipients ──
@@ -150,8 +163,12 @@ async function sendBroadcast(broadcastId) {
           ? renderPersonalized(broadcast.template.htmlContent, member, broadcast.personalizationVars)
           : broadcast.template.htmlContent;
         const finalHtml = injectTracking(personalized, recipient.trackingToken);
+        const unsubscribeUrl = buildUnsubscribeUrl(recipient.trackingToken);
 
-        await transporter.sendMail({ from: FROM, to: recipient.email, subject: broadcast.subject, html: finalHtml });
+        await transporter.sendMail({
+          from: FROM, to: recipient.email, subject: broadcast.subject, html: finalHtml,
+          headers: { 'List-Unsubscribe': `<${unsubscribeUrl}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' },
+        });
 
         recipient.status = 'sent';
         recipient.sentAt = new Date();
@@ -178,5 +195,5 @@ async function sendBroadcast(broadcastId) {
 
 module.exports = {
   resolveAudienceMembers, estimateAudienceCount, renderPersonalized, injectTracking,
-  createRecipients, sendTestEmail, sendBroadcast,
+  createRecipients, sendTestEmail, sendBroadcast, buildUnsubscribeUrl,
 };
