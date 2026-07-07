@@ -89,22 +89,18 @@ export default function UsersPage() {
             <Table.Th>Email</Table.Th>
             <Table.Th>Phone</Table.Th>
             <Table.Th>Type</Table.Th>
-            <Table.Th>Member</Table.Th>
             <Table.Th></Table.Th>
           </Table.HeaderRow>
         </Table.Head>
         <Table.Body>
-          {!data && <Table.Skeleton colSpan={6} />}
-          {data && data.items.length === 0 && <Table.Empty colSpan={6}>No users found.</Table.Empty>}
+          {!data && <Table.Skeleton colSpan={5} />}
+          {data && data.items.length === 0 && <Table.Empty colSpan={5}>No users found.</Table.Empty>}
           {data?.items.map((c) => (
             <Table.Row key={c._id}>
               <Table.Cell className="font-medium text-nia-navy-dark">{c.fullName}</Table.Cell>
               <Table.Cell className="text-nia-text-faint">{c.email}</Table.Cell>
               <Table.Cell className="text-nia-text-muted">{c.phone || '—'}</Table.Cell>
               <Table.Cell className="text-nia-text-muted">{typeLabel(c.userType)}</Table.Cell>
-              <Table.Cell>
-                {c.linkedMember ? <span className="text-xs font-semibold text-nia-success">✓ Member</span> : <span className="text-nia-text-faint">—</span>}
-              </Table.Cell>
               <Table.Cell align="right">
                 <div className="flex justify-end gap-2">
                   {!c.linkedMember && (

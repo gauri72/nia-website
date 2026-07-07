@@ -8,7 +8,6 @@ import PageHeader from '../../components/admin/PageHeader';
 import Table from '../../components/admin/Table';
 import Button from '../../components/admin/Button';
 
-const STATUS_OPTIONS = ['active', 'expired', 'pending', 'suspended', 'none', 'canceled'];
 const inputCls = 'w-full rounded-nia-btn border border-nia-border px-3 py-2 text-sm focus:border-nia-orange focus:outline-none focus:ring-2 focus:ring-nia-orange/20';
 const selectFilterCls = 'rounded-nia-btn border border-nia-border px-3 py-2 text-sm focus:border-nia-orange focus:outline-none focus:ring-2 focus:ring-nia-orange/20 w-auto';
 
@@ -16,7 +15,6 @@ export default function MembersPage() {
   const [members, setMembers] = useState([]);
   const [tiers, setTiers] = useState([]);
   const [search, setSearch] = useState('');
-  const [status, setStatus] = useState('');
   const [tier, setTier] = useState('');
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(1);
@@ -27,20 +25,20 @@ export default function MembersPage() {
   const fetchMembers = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await adminApi.get('/admin/members', { params: { search, status, tier, page, limit: 20 } });
+      const { data } = await adminApi.get('/admin/members', { params: { search, tier, page, limit: 20 } });
       setMembers(data.members);
       setPages(data.pages);
       setTotal(data.total);
     } finally {
       setLoading(false);
     }
-  }, [search, status, tier, page]);
+  }, [search, tier, page]);
 
   useEffect(() => { fetchMembers(); }, [fetchMembers]);
   useEffect(() => { adminApi.get('/admin/membership-tiers').then((r) => setTiers(r.data)); }, []);
 
   function exportCsv() {
-    const params = new URLSearchParams({ search, status, tier });
+    const params = new URLSearchParams({ search, tier });
     const token = localStorage.getItem('nia_admin_token');
     fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5050/api'}/admin/members/export?${params}`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -77,10 +75,6 @@ export default function MembersPage() {
             value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }}
           />
         </div>
-        <select className={selectFilterCls} value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }}>
-          <option value="">All statuses</option>
-          {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
-        </select>
         <select className={selectFilterCls} value={tier} onChange={(e) => { setTier(e.target.value); setPage(1); }}>
           <option value="">All tiers</option>
           {tiers.map((t) => <option key={t._id} value={t._id}>{t.name}</option>)}

@@ -123,7 +123,9 @@ async function convertToMember(req, res, next) {
       passwordHash: await hashPassword(tempPassword),
       emailVerified: true,
       membershipTier: membershipTier || undefined,
-      membershipStatus: membershipTier ? 'active' : 'none',
+      // Always active — the Members list only shows active members, and marking
+      // someone as a Member from the Users list should make them show up there.
+      membershipStatus: 'active',
       membershipExpiresAt: membershipTier && membershipExpiresAt ? new Date(membershipExpiresAt) : undefined,
       passwordResetToken: resetToken,
       passwordResetExpires: new Date(Date.now() + RESET_TOKEN_TTL_MS),

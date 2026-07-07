@@ -30,13 +30,15 @@ async function attachTransactionDates(members) {
   return members.map((m) => ({ ...m, transactionDate: dateMap.get(String(m._id)) || null }));
 }
 
-function buildFilter({ search, status, tier }) {
-  const filter = { status: { $ne: 'deleted' } };
+// The Members admin list only ever shows active members — non-active records
+// (placeholder imports, expired, etc.) are intentionally excluded, not just
+// filtered by default.
+function buildFilter({ search, tier }) {
+  const filter = { status: { $ne: 'deleted' }, membershipStatus: 'active' };
   if (search?.trim()) {
     const re = new RegExp(search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
     filter.$or = [{ firstName: re }, { lastName: re }, { email: re }, { memberId: re }];
   }
-  if (status?.trim()) filter.membershipStatus = status.trim();
   if (tier?.trim()) filter.membershipTier = tier.trim();
   return filter;
 }
@@ -44,8 +46,8 @@ function buildFilter({ search, status, tier }) {
 // ── GET /api/admin/members ──────────────────────────────────────
 async function list(req, res, next) {
   try {
-    const { search, status, tier, sort = '-createdAt', page = 1, limit = 25 } = req.query;
-    const filter = buildFilter({ search, status, tier });
+    const { search, tier, sort = '-createdAt', page = 1, limit = 25 } = req.query;
+    const filter = buildFilter({ search, tier });
 
     const pageNum = Math.max(1, parseInt(page, 10) || 1);
     const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 25));
@@ -71,8 +73,8 @@ async function list(req, res, next) {
 // ── GET /api/admin/members/export ───────────────────────────────
 async function exportCsv(req, res, next) {
   try {
-    const { search, status, tier } = req.query;
-    const filter = buildFilter({ search, status, tier });
+    const { search, tier } = req.query;
+    const filter = buildFilter({ search, tier });
     const members = await Member.find(filter).populate('membershipTier', 'name').sort('-createdAt').lean();
     const membersWithDates = await attachTransactionDates(members);
 
@@ -136,7 +138,8 @@ async function create(req, res, next) {
       passwordHash: await hashPassword(tempPassword),
       emailVerified: true,
       membershipTier: membershipTier || undefined,
-      membershipStatus: membershipTier ? 'active' : 'none',
+      // Always active — the Members list only shows active members.
+      membershipStatus: 'active',
       membershipExpiresAt: membershipTier && membershipExpiresAt ? new Date(membershipExpiresAt) : undefined,
       passwordResetToken: resetToken,
       passwordResetExpires: new Date(Date.now() + RESET_TOKEN_TTL_MS),
