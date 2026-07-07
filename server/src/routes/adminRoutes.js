@@ -137,6 +137,8 @@ router.get( '/mollie/review-queue',                            mollieImportContr
 router.put( '/mollie/review-queue/:id',                        mollieImportController.resolveReviewQueueItem);
 router.get( '/mollie/webhook-log',                             mollieImportController.webhookLog);
 router.get( '/mollie/transactions/export',                    mollieImportController.exportTransactions); // before /transactions
+router.get( '/mollie/transactions/years',                     mollieImportController.transactionYears); // before /transactions
+router.post('/mollie/transactions/refresh-settlements', mollieSyncLimiter, mollieImportController.refreshSettlements);
 router.get( '/mollie/transactions',                            mollieImportController.transactions);
 router.get( '/mollie/tier-mapping',                            mollieImportController.listTierMapping);
 router.post('/mollie/tier-mapping',                            mollieImportController.createTierMapping);

@@ -14,6 +14,12 @@ const MollieTransactionSchema = new mongoose.Schema({
   metadata: { type: mongoose.Schema.Types.Mixed },
   paidAt: { type: Date },
   mollieCreatedAt: { type: Date },
+  // Settlement typically lands days after paidAt — Mollie's payment resource carries
+  // these once it happens, so a paid transaction is often unsettled for a while.
+  // NOTE: Mollie is deprecating both fields Jan 1 2027 in favor of the Settlements API —
+  // fine to rely on for now, but this will need a follow-up before then.
+  settlementId: { type: String },
+  settlementAmount: { type: Number },
 
   importStatus: {
     type: String,

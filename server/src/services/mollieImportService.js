@@ -106,6 +106,8 @@ function extractMeta(payment) {
     description: payment.description,
     paidAt: payment.paidAt ? new Date(payment.paidAt) : null,
     mollieCreatedAt: payment.createdAt ? new Date(payment.createdAt) : null,
+    settlementId: payment.settlementId || null,
+    settlementAmount: payment.settlementAmount ? Number(payment.settlementAmount.value) : null,
     // Recovered from Mollie's own payment object for transactions this app never created —
     // e.g. the live site's WordPress plugins (Gravity Forms, WooCommerce) set these directly.
     wpEmail: payment.billingAddress?.email || null,
@@ -236,6 +238,8 @@ async function processTransaction(payment, importLogId = null) {
     metadata: payment.metadata,
     paidAt: meta.paidAt,
     mollieCreatedAt: meta.mollieCreatedAt,
+    settlementId: meta.settlementId,
+    settlementAmount: meta.settlementAmount,
     importLog: importLogId,
   };
 
@@ -487,6 +491,51 @@ async function resolveReviewItem({ id, action, email, name, membershipTierId, ad
   throw err;
 }
 
+// ── Refresh settlement status for already-imported paid transactions ────────
+// Settlement lands days after a payment is marked paid, so a transaction imported
+// as 'paid' often has no settlementId yet — this re-fetches each one from Mollie
+// to pick up settlement info as it becomes available. Scoped to a year (via
+// paidAt) so a re-check doesn't have to hit every paid transaction in history.
+async function refreshSettlements({ year } = {}) {
+  const client = await getConfiguredClient();
+  const filter = { status: 'paid', settlementId: { $in: [null, undefined] } };
+  if (year) {
+    filter.paidAt = { $gte: new Date(`${year}-01-01T00:00:00.000Z`), $lte: new Date(`${year}-12-31T23:59:59.999Z`) };
+  }
+
+  const candidates = await MollieTransaction.find(filter).select('paymentId');
+  let checked = 0;
+  let updated = 0;
+
+  for (const txn of candidates) {
+    checked += 1;
+    try {
+      const payment = await client.payments.get(txn.paymentId);
+      if (payment.settlementId) {
+        await MollieTransaction.updateOne(
+          { _id: txn._id },
+          { settlementId: payment.settlementId, settlementAmount: payment.settlementAmount ? Number(payment.settlementAmount.value) : null },
+        );
+        updated += 1;
+      }
+    } catch (err) {
+      console.error(`[MollieImport] Failed to refresh settlement for ${txn.paymentId}:`, err.message);
+    }
+  }
+
+  return { checked, updated };
+}
+
+// ── Distinct years with imported transactions, for the year filter dropdown ──
+async function getTransactionYears() {
+  const years = await MollieTransaction.aggregate([
+    { $match: { paidAt: { $ne: null } } },
+    { $group: { _id: { $year: '$paidAt' } } },
+    { $sort: { _id: -1 } },
+  ]);
+  return years.map((y) => y._id);
+}
+
 module.exports = {
   connect,
   getStatus,
@@ -494,4 +543,6 @@ module.exports = {
   runImport,
   processWebhookPayment,
   resolveReviewItem,
+  refreshSettlements,
+  getTransactionYears,
 };

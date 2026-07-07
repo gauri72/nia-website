@@ -81,7 +81,7 @@ export default function AdminMollieImportPage() {
       {tab === 'history' && <HistoryTab push={push} />}
       {tab === 'review' && <ReviewTab push={push} onResolved={() => setTab((t) => t)} />}
       {tab === 'webhooks' && <WebhookTab />}
-      {tab === 'transactions' && <TransactionsTab />}
+      {tab === 'transactions' && <TransactionsTab push={push} />}
       {tab === 'tiers' && <TiersTab push={push} />}
     </div>
   );
@@ -394,16 +394,29 @@ function WebhookTab() {
 }
 
 // ── Imported Transactions ────────────────────────────────────────────
-function TransactionsTab() {
-  const [data, setData] = useState(null);
-  const [search, setSearch] = useState('');
+const SETTLED_OPTIONS = [
+  { value: 'paid_settled', label: 'Paid & Settled' },
+  { value: 'paid_only', label: 'Paid Only (any settlement)' },
+  { value: 'all', label: 'All (incl. failed/expired/pending)' },
+];
 
-  function load(searchValue = search) {
+function TransactionsTab({ push }) {
+  const [data, setData] = useState(null);
+  const [years, setYears] = useState([]);
+  const [search, setSearch] = useState('');
+  const [year, setYear] = useState('');
+  const [settled, setSettled] = useState('paid_settled');
+  const [refreshing, setRefreshing] = useState(false);
+
+  function load(params = {}) {
     setData(null);
-    adminApi.get('/admin/mollie/transactions', { params: { search: searchValue || undefined } }).then((r) => setData(r.data));
+    adminApi.get('/admin/mollie/transactions', {
+      params: { search: search || undefined, year: year || undefined, settled, ...params },
+    }).then((r) => setData(r.data));
   }
 
-  useEffect(() => { load(''); }, []);
+  useEffect(() => { adminApi.get('/admin/mollie/transactions/years').then((r) => setYears(r.data)); }, []);
+  useEffect(() => { load(); }, [year, settled]);
 
   function handleExport() {
     const token = localStorage.getItem('nia_admin_token');
@@ -417,18 +430,43 @@ function TransactionsTab() {
     });
   }
 
+  async function handleRefreshSettlements() {
+    setRefreshing(true);
+    try {
+      const r = await adminApi.post('/admin/mollie/transactions/refresh-settlements', { year: year || undefined });
+      push(`Checked ${r.data.checked} paid transaction(s) — ${r.data.updated} newly settled`);
+      load();
+    } catch (err) {
+      push(err.response?.data?.error || 'Could not refresh settlement status', 'error');
+    } finally {
+      setRefreshing(false);
+    }
+  }
+
   return (
     <div>
-      <div className="flex items-center justify-between mb-4 gap-3">
-        <input
-          className={`${inputCls} max-w-xs`}
-          placeholder="Search email, name, payment ID…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && load()}
-        />
+      <div className="flex flex-wrap items-center justify-between mb-4 gap-3">
+        <div className="flex flex-wrap gap-2">
+          <input
+            className={`${inputCls} max-w-xs`}
+            placeholder="Search email, name, payment ID…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && load()}
+          />
+          <select className={inputCls} value={year} onChange={(e) => setYear(e.target.value)}>
+            <option value="">All years</option>
+            {years.map((y) => <option key={y} value={y}>{y}</option>)}
+          </select>
+          <select className={inputCls} value={settled} onChange={(e) => setSettled(e.target.value)}>
+            {SETTLED_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+        </div>
         <div className="flex gap-2">
           <Button variant="secondary" size="sm" onClick={() => load()}>Search</Button>
+          <Button variant="secondary" size="sm" onClick={handleRefreshSettlements} disabled={refreshing}>
+            <RefreshCw /> {refreshing ? 'Checking…' : 'Refresh Settlement Status'}
+          </Button>
           <Button variant="secondary" size="sm" onClick={handleExport}><Download /> Export CSV</Button>
         </div>
       </div>
@@ -440,7 +478,7 @@ function TransactionsTab() {
           <Table.Head>
             <Table.HeaderRow>
               <Table.Th>Email</Table.Th><Table.Th>Name</Table.Th><Table.Th>Type</Table.Th>
-              <Table.Th align="right">Amount</Table.Th><Table.Th>Result</Table.Th><Table.Th>Date</Table.Th>
+              <Table.Th align="right">Amount</Table.Th><Table.Th>Result</Table.Th><Table.Th>Settled</Table.Th><Table.Th>Date</Table.Th>
             </Table.HeaderRow>
           </Table.Head>
           <Table.Body>
@@ -451,10 +489,11 @@ function TransactionsTab() {
                 <Table.Cell className="text-nia-text-muted">{t.type || 'unknown'}</Table.Cell>
                 <Table.Cell align="right" className="font-semibold text-nia-navy-dark tabular-nums">€{t.amount.toFixed(2)}</Table.Cell>
                 <Table.Cell><StatusBadge status={t.importStatus === 'created' || t.importStatus === 'updated' ? 'active' : t.importStatus === 'flagged' ? 'pending' : 'canceled'} /></Table.Cell>
-                <Table.Cell className="text-nia-text-muted">{new Date(t.createdAt).toLocaleDateString()}</Table.Cell>
+                <Table.Cell>{t.settlementId ? <span className="text-nia-success font-semibold">✓ Settled</span> : <span className="text-nia-text-faint">—</span>}</Table.Cell>
+                <Table.Cell className="text-nia-text-muted">{t.paidAt ? new Date(t.paidAt).toLocaleDateString() : new Date(t.createdAt).toLocaleDateString()}</Table.Cell>
               </Table.Row>
             ))}
-            {data.items.length === 0 && <Table.Empty colSpan={6}>No transactions imported yet.</Table.Empty>}
+            {data.items.length === 0 && <Table.Empty colSpan={7}>No transactions found for this filter.</Table.Empty>}
           </Table.Body>
         </Table>
       )}

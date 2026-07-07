@@ -120,7 +120,7 @@ async function webhookLog(req, res, next) {
 // ── GET /api/admin/mollie/transactions ──────────────────────────────
 async function transactions(req, res, next) {
   try {
-    const { status: importStatus, type, search, page = 1, limit = 25 } = req.query;
+    const { status: importStatus, type, search, year, settled = 'paid_settled', page = 1, limit = 25 } = req.query;
     const filter = {};
     if (importStatus) filter.importStatus = importStatus;
     if (type) filter.type = type;
@@ -131,11 +131,44 @@ async function transactions(req, res, next) {
         { paymentId: new RegExp(search, 'i') },
       ];
     }
+    if (year) {
+      filter.paidAt = { $gte: new Date(`${year}-01-01T00:00:00.000Z`), $lte: new Date(`${year}-12-31T23:59:59.999Z`) };
+    }
+    // Default view: only real, completed money — excludes failed/expired/canceled/open/pending
+    // payments and (within paid ones) anything not yet settled into the bank account.
+    if (settled === 'paid_settled') {
+      filter.status = 'paid';
+      filter.settlementId = { $nin: [null, undefined] };
+    } else if (settled === 'paid_only') {
+      filter.status = 'paid';
+    } // settled === 'all' — no status/settlement filter
+
     const [items, total] = await Promise.all([
       MollieTransaction.find(filter).sort('-createdAt').skip((page - 1) * limit).limit(Number(limit)),
       MollieTransaction.countDocuments(filter),
     ]);
     return res.json({ items, total, page: Number(page), pages: Math.ceil(total / limit) });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// ── GET /api/admin/mollie/transactions/years ────────────────────────
+async function transactionYears(req, res, next) {
+  try {
+    const years = await mollieImportService.getTransactionYears();
+    return res.json(years);
+  } catch (err) {
+    next(err);
+  }
+}
+
+// ── POST /api/admin/mollie/transactions/refresh-settlements ─────────
+async function refreshSettlements(req, res, next) {
+  try {
+    const { year } = req.body || {};
+    const result = await mollieImportService.refreshSettlements({ year });
+    return res.json(result);
   } catch (err) {
     next(err);
   }
@@ -194,5 +227,6 @@ async function deleteTierMapping(req, res, next) {
 module.exports = {
   connect, status, sync, importTransactions, importHistory, importHistoryDetail,
   reviewQueue, resolveReviewQueueItem, webhookLog, transactions, exportTransactions,
+  transactionYears, refreshSettlements,
   listTierMapping, createTierMapping, deleteTierMapping,
 };
