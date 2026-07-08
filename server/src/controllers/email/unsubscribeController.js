@@ -32,10 +32,20 @@ async function trackClick(req, res) {
     const recipient = await BroadcastRecipient.findOne({ trackingToken: req.params.token });
     if (recipient) {
       const firstClick = !recipient.clickedAt;
+      // A click always implies an open, even if the pixel image never loaded
+      // (image-blocking clients) — without this, Opened understates true
+      // engagement for anyone who clicked without their client fetching the pixel.
+      const firstOpen = !recipient.openedAt;
       recipient.clickedAt = new Date();
-      recipient.status = 'clicked';
+      if (firstOpen) recipient.openedAt = recipient.clickedAt;
+      // Don't downgrade a terminal state (e.g. unsubscribed) back to 'clicked'.
+      if (recipient.status !== 'unsubscribed') recipient.status = 'clicked';
       await recipient.save();
-      if (firstClick) await Broadcast.findByIdAndUpdate(recipient.broadcast, { $inc: { 'stats.clicked': 1 } });
+
+      const inc = {};
+      if (firstClick) inc['stats.clicked'] = 1;
+      if (firstOpen) inc['stats.opened'] = 1;
+      if (Object.keys(inc).length) await Broadcast.findByIdAndUpdate(recipient.broadcast, { $inc: inc });
     }
   } catch (err) {
     console.error('[Tracking] Click tracking failed:', err.message);
