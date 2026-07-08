@@ -279,9 +279,13 @@ async function analytics(req, res, next) {
 // (e.g. right after a send) instead of waiting for the next scheduled pass.
 async function scanBounces(req, res, next) {
   try {
-    const result = await scanForBounces();
+    // Optional `since` (ISO date) does a one-off historical backfill instead of
+    // the normal incremental scan — for catching up on a campaign sent before
+    // bounce detection was live.
+    const { since } = req.body || {};
+    const result = await scanForBounces({ since });
     if (result.skipped) return res.status(400).json({ error: 'Bounce scanning is not configured (missing IMAP credentials)' });
-    return res.json({ message: `Scanned ${result.scanned} new message(s), found ${result.bounced} bounce(s)`, ...result });
+    return res.json({ message: `Scanned ${result.scanned} message(s), found ${result.bounced} bounce(s)`, ...result });
   } catch (err) {
     next(err);
   }

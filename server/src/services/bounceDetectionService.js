@@ -85,7 +85,86 @@ async function markRecipientBounced(email, subject) {
   return true;
 }
 
-async function scanForBounces() {
+async function processUid(client, uid) {
+  try {
+    const { content } = await client.download(uid, undefined, { uid: true });
+    const parsed = await simpleParser(content);
+
+    if (!looksLikeBounce(parsed)) return false;
+    const failedEmail = extractFailedRecipient(parsed);
+    if (!failedEmail) return false;
+
+    return await markRecipientBounced(failedEmail, parsed.subject);
+  } catch (err) {
+    console.error(`[BounceDetection] Failed to process UID ${uid}:`, err.message);
+    return false;
+  }
+}
+
+// ── Incremental scan — used for both the scheduled cron pass and the
+// on-demand "Check for Bounces" button. Only ever looks at messages newer
+// than the last processed UID, tracked per-mailbox in BounceScanState.
+async function scanIncremental(client) {
+  let scanned = 0;
+  let bounced = 0;
+
+  const uidValidity = String(client.mailbox.uidValidity);
+  let state = await BounceScanState.findOne({ mailbox: MAILBOX_LABEL });
+
+  if (!state) {
+    // First run ever for this mailbox — don't backfill years of history,
+    // just establish a baseline and start watching from here forward.
+    state = await BounceScanState.create({
+      mailbox: MAILBOX_LABEL, uidValidity, lastUid: client.mailbox.uidNext - 1,
+    });
+    console.log(`[BounceDetection] First run for ${MAILBOX_LABEL} — baseline set at UID ${state.lastUid}, no historical backfill`);
+    return { scanned, bounced };
+  }
+
+  if (state.uidValidity !== uidValidity) {
+    // Mailbox was rebuilt server-side — old UIDs no longer mean anything.
+    state.uidValidity = uidValidity;
+    state.lastUid = client.mailbox.uidNext - 1;
+    await state.save();
+    console.log(`[BounceDetection] UIDVALIDITY changed for ${MAILBOX_LABEL} — baseline reset`);
+    return { scanned, bounced };
+  }
+
+  const searchRange = `${state.lastUid + 1}:*`;
+  const uids = (await client.search({ uid: searchRange }, { uid: true })) || [];
+
+  let maxUid = state.lastUid;
+  for (const uid of uids) {
+    if (uid <= state.lastUid) continue; // IMAP's trailing '*' can re-match the boundary UID
+    maxUid = Math.max(maxUid, uid);
+    scanned++;
+    if (await processUid(client, uid)) bounced++;
+  }
+
+  state.lastUid = maxUid;
+  await state.save();
+  return { scanned, bounced };
+}
+
+// ── One-off historical backfill — scans everything since a given date,
+// regardless of BounceScanState (and doesn't touch it), for cases like
+// catching up on a campaign sent before bounce detection was live. Safe to
+// re-run: markRecipientBounced() only affects still-pending recipient rows,
+// so anything already resolved (or not a match) is silently skipped again.
+async function scanHistorical(client, since) {
+  let scanned = 0;
+  let bounced = 0;
+
+  const uids = (await client.search({ since: new Date(since) }, { uid: true })) || [];
+  for (const uid of uids) {
+    scanned++;
+    if (await processUid(client, uid)) bounced++;
+  }
+
+  return { scanned, bounced };
+}
+
+async function scanForBounces({ since } = {}) {
   if (!IMAP_HOST || !IMAP_USER || !IMAP_PASS) {
     console.log('[BounceDetection] Skipped — no IMAP credentials configured (BROADCAST_EMAIL_IMAP_HOST/USER/PASS)');
     return { scanned: 0, bounced: 0, skipped: true };
@@ -99,56 +178,12 @@ async function scanForBounces() {
     logger: false,
   });
 
-  let scanned = 0;
-  let bounced = 0;
-
+  let result;
   await client.connect();
   try {
     const lock = await client.getMailboxLock('INBOX');
     try {
-      const uidValidity = String(client.mailbox.uidValidity);
-      let state = await BounceScanState.findOne({ mailbox: MAILBOX_LABEL });
-
-      if (!state) {
-        // First run ever for this mailbox — don't backfill years of history,
-        // just establish a baseline and start watching from here forward.
-        state = await BounceScanState.create({
-          mailbox: MAILBOX_LABEL, uidValidity, lastUid: client.mailbox.uidNext - 1,
-        });
-        console.log(`[BounceDetection] First run for ${MAILBOX_LABEL} — baseline set at UID ${state.lastUid}, no historical backfill`);
-      } else if (state.uidValidity !== uidValidity) {
-        // Mailbox was rebuilt server-side — old UIDs no longer mean anything.
-        state.uidValidity = uidValidity;
-        state.lastUid = client.mailbox.uidNext - 1;
-        await state.save();
-        console.log(`[BounceDetection] UIDVALIDITY changed for ${MAILBOX_LABEL} — baseline reset`);
-      } else {
-        const searchRange = `${state.lastUid + 1}:*`;
-        const uids = (await client.search({ uid: searchRange }, { uid: true })) || [];
-
-        let maxUid = state.lastUid;
-        for (const uid of uids) {
-          if (uid <= state.lastUid) continue; // IMAP's trailing '*' can re-match the boundary UID
-          maxUid = Math.max(maxUid, uid);
-          scanned++;
-
-          try {
-            const { content } = await client.download(uid, undefined, { uid: true });
-            const parsed = await simpleParser(content);
-
-            if (!looksLikeBounce(parsed)) continue;
-            const failedEmail = extractFailedRecipient(parsed);
-            if (!failedEmail) continue;
-
-            if (await markRecipientBounced(failedEmail, parsed.subject)) bounced++;
-          } catch (err) {
-            console.error(`[BounceDetection] Failed to process UID ${uid}:`, err.message);
-          }
-        }
-
-        state.lastUid = maxUid;
-        await state.save();
-      }
+      result = since ? await scanHistorical(client, since) : await scanIncremental(client);
     } finally {
       lock.release();
     }
@@ -156,8 +191,8 @@ async function scanForBounces() {
     await client.logout().catch(() => client.close());
   }
 
-  console.log(`[BounceDetection] Scanned ${scanned} new message(s), matched ${bounced} bounce(s)`);
-  return { scanned, bounced, skipped: false };
+  console.log(`[BounceDetection] Scanned ${result.scanned} message(s)${since ? ' (historical)' : ''}, matched ${result.bounced} bounce(s)`);
+  return { ...result, skipped: false };
 }
 
 module.exports = { scanForBounces };

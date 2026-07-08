@@ -6,6 +6,11 @@ const SuppressionListSchema = new mongoose.Schema({
   broadcast: { type: mongoose.Schema.Types.ObjectId, ref: 'Broadcast' },
   member: { type: mongoose.Schema.Types.ObjectId, ref: 'Member' },
   suppressedAt: { type: Date, default: Date.now },
+  // Archiving is purely organizational — it hides an entry from the default
+  // view but the address stays suppressed. Distinct from resubscribing,
+  // which actually removes the suppression.
+  archived: { type: Boolean, default: false },
+  archivedAt: { type: Date },
 }, { timestamps: true });
 
 module.exports = mongoose.model('SuppressionList', SuppressionListSchema);

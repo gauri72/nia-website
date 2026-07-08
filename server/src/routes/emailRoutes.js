@@ -38,5 +38,7 @@ router.post(  '/broadcasts/:id/duplicate',      broadcastController.duplicate);
 // ── Suppression List ────────────────────────────────────────────
 router.get(   '/suppression-list',                 suppressionListController.list);
 router.post(  '/suppression-list/:id/resubscribe', suppressionListController.resubscribe);
+router.post(  '/suppression-list/:id/archive',      suppressionListController.archive);
+router.post(  '/suppression-list/:id/unarchive',    suppressionListController.unarchive);
 
 module.exports = router;
