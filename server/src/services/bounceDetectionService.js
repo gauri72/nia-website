@@ -16,6 +16,10 @@ const IMAP_USER = process.env.BROADCAST_EMAIL_USER || process.env.EMAIL_USER;
 const IMAP_PASS = process.env.BROADCAST_EMAIL_PASS || process.env.EMAIL_PASS;
 const MAILBOX_LABEL = IMAP_USER || 'broadcast-mailbox';
 
+// One-time backfill cutover for the very first scan ever run — see the
+// !state branch in scanIncremental() below.
+const FIRST_RUN_BACKFILL_SINCE = '2026-07-06';
+
 const BOUNCE_SUBJECT_PATTERNS = [
   'undelivered mail returned to sender',
   'delivery status notification (failure)',
@@ -112,13 +116,18 @@ async function scanIncremental(client) {
   let state = await BounceScanState.findOne({ mailbox: MAILBOX_LABEL });
 
   if (!state) {
-    // First run ever for this mailbox — don't backfill years of history,
-    // just establish a baseline and start watching from here forward.
+    // First run ever for this mailbox. One-time exception: bounce detection
+    // went live after the "Grand" campaign was already sent (2026-07-07), so
+    // a plain baseline-only first run would permanently miss any bounces that
+    // already arrived for it — backfill since then, once, before establishing
+    // the normal go-forward baseline. Safe to delete FIRST_RUN_BACKFILL_SINCE
+    // (and this branch's backfill call) after this has deployed and run once.
+    const backfill = await scanHistorical(client, FIRST_RUN_BACKFILL_SINCE);
     state = await BounceScanState.create({
       mailbox: MAILBOX_LABEL, uidValidity, lastUid: client.mailbox.uidNext - 1,
     });
-    console.log(`[BounceDetection] First run for ${MAILBOX_LABEL} — baseline set at UID ${state.lastUid}, no historical backfill`);
-    return { scanned, bounced };
+    console.log(`[BounceDetection] First run for ${MAILBOX_LABEL} — backfilled since ${FIRST_RUN_BACKFILL_SINCE} (${backfill.scanned} scanned, ${backfill.bounced} bounced), baseline now UID ${state.lastUid}`);
+    return backfill;
   }
 
   if (state.uidValidity !== uidValidity) {
