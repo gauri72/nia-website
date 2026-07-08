@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Search, Plus, Pencil, Trash2, UserCheck, User, Handshake, HeartHandshake, Landmark, Gavel } from 'lucide-react';
+import { Search, Plus, Pencil, Trash2, UserCheck, KeyRound, User, Handshake, HeartHandshake, Landmark, Gavel } from 'lucide-react';
 import adminApi from '../../services/adminApi';
 import Modal from '../../components/admin/Modal';
 import PageHeader from '../../components/admin/PageHeader';
@@ -46,6 +46,18 @@ export default function UsersPage() {
       load();
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to delete user');
+    }
+  }
+
+  async function handleResetAccount(contact) {
+    if (!window.confirm(`Verify ${contact.fullName}'s email and send a password reset link to ${contact.email}?`)) return;
+    setError('');
+    try {
+      const { data } = await adminApi.post(`/admin/contacts/${contact._id}/reset-member-account`);
+      alert(data.message);
+      load();
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to reset account');
     }
   }
 
@@ -106,6 +118,7 @@ export default function UsersPage() {
                   {!c.linkedMember && (
                     <Button variant="secondary" size="sm" onClick={() => setConverting(c)}><UserCheck /> Mark as Member</Button>
                   )}
+                  <Button variant="secondary" size="sm" onClick={() => handleResetAccount(c)} title="Verify email & send a password reset link"><KeyRound /> Reset Account</Button>
                   <Button variant="secondary" size="sm" onClick={() => setEditing(c)}><Pencil /></Button>
                   <Button variant="danger" size="sm" onClick={() => handleDelete(c)}><Trash2 /></Button>
                 </div>

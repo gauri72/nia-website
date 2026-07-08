@@ -34,6 +34,7 @@ router.post(  '/contacts',                       contactAdminController.create);
 router.put(   '/contacts/:id',                   contactAdminController.update);
 router.delete('/contacts/:id',                   requireRole(['super_admin']), contactAdminController.remove);
 router.post(  '/contacts/:id/convert-to-member', contactAdminController.convertToMember);
+router.post(  '/contacts/:id/reset-member-account', contactAdminController.resetMemberAccount);
 
 // ── Members ───────────────────────────────────────────────────
 router.get(   '/members/export',    memberAdminController.exportCsv); // before /:id

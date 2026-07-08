@@ -151,4 +151,44 @@ async function convertToMember(req, res, next) {
   }
 }
 
-module.exports = { list, create, update, remove, convertToMember };
+// ── POST /api/admin/contacts/:id/reset-member-account ───────────────
+// For a user stuck on "please verify your email" (e.g. self-registered on the
+// dashboard, never clicked the link) or who just needs a fresh password —
+// force-verifies their Member account and emails a new password-reset link.
+// Looks the Member up by linkedMember first, falling back to email, since a
+// self-registered Member and its Contact aren't always explicitly linked.
+async function resetMemberAccount(req, res, next) {
+  try {
+    const contact = await Contact.findById(req.params.id);
+    if (!contact) return res.status(404).json({ error: 'User not found' });
+
+    const member = contact.linkedMember
+      ? await Member.findById(contact.linkedMember)
+      : await Member.findOne({ email: contact.email });
+    if (!member) return res.status(404).json({ error: 'No member account exists yet for this email' });
+
+    member.emailVerified = true;
+    member.emailVerificationToken = undefined;
+    member.emailVerificationExpires = undefined;
+
+    const resetToken = generateRawToken();
+    member.passwordResetToken = resetToken;
+    member.passwordResetExpires = new Date(Date.now() + RESET_TOKEN_TTL_MS);
+    await member.save();
+
+    if (!contact.linkedMember) {
+      contact.linkedMember = member._id;
+      contact.convertedToMemberAt = contact.convertedToMemberAt || new Date();
+      await contact.save();
+    }
+
+    const resetUrl = `${process.env.FRONTEND_URL}/dashboard/reset-password?token=${resetToken}`;
+    await sendMemberPasswordResetEmail(member, resetUrl);
+
+    return res.json({ message: `Account verified — password reset email sent to ${member.email}` });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { list, create, update, remove, convertToMember, resetMemberAccount };
