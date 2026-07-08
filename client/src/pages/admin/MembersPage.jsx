@@ -1,12 +1,13 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Download, Plus } from 'lucide-react';
+import { Search, Download, Plus, Users, Award } from 'lucide-react';
 import adminApi from '../../services/adminApi';
 import StatusBadge from '../../components/admin/StatusBadge';
 import Modal from '../../components/admin/Modal';
 import PageHeader from '../../components/admin/PageHeader';
 import Table from '../../components/admin/Table';
 import Button from '../../components/admin/Button';
+import StatCard from '../../components/admin/StatCard';
 
 const inputCls = 'w-full rounded-nia-btn border border-nia-border px-3 py-2 text-sm focus:border-nia-orange focus:outline-none focus:ring-2 focus:ring-nia-orange/20';
 const selectFilterCls = 'rounded-nia-btn border border-nia-border px-3 py-2 text-sm focus:border-nia-orange focus:outline-none focus:ring-2 focus:ring-nia-orange/20 w-auto';
@@ -19,6 +20,8 @@ export default function MembersPage() {
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(1);
   const [total, setTotal] = useState(0);
+  const [activeTotal, setActiveTotal] = useState(0);
+  const [byTier, setByTier] = useState({});
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
 
@@ -29,6 +32,8 @@ export default function MembersPage() {
       setMembers(data.members);
       setPages(data.pages);
       setTotal(data.total);
+      setActiveTotal(data.activeTotal);
+      setByTier(data.byTier || {});
     } finally {
       setLoading(false);
     }
@@ -65,6 +70,14 @@ export default function MembersPage() {
           </>
         )}
       />
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-5">
+        <StatCard icon={Users} label="Active Members" value={activeTotal} tone="navy" />
+        {tiers.map((t) => (
+          <StatCard key={t._id} icon={Award} label={t.name} value={byTier[t._id] || 0} tone="orange" />
+        ))}
+        {byTier.none > 0 && <StatCard icon={Award} label="No Tier" value={byTier.none} tone="orange" />}
+      </div>
 
       <div className="flex flex-wrap gap-3 mb-4">
         <div className="relative flex-1 min-w-[200px]">

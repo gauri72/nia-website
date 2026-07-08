@@ -52,7 +52,7 @@ async function list(req, res, next) {
     const pageNum = Math.max(1, parseInt(page, 10) || 1);
     const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 25));
 
-    const [members, total] = await Promise.all([
+    const [members, total, tierCounts, activeTotal] = await Promise.all([
       Member.find(filter)
         .select(SENSITIVE_FIELDS)
         .populate('membershipTier', 'name color')
@@ -61,10 +61,18 @@ async function list(req, res, next) {
         .limit(limitNum)
         .lean(),
       Member.countDocuments(filter),
+      // Global breakdown by tier, independent of search/tier query filters —
+      // a stable "at a glance" summary that doesn't jump around while typing.
+      Member.aggregate([
+        { $match: { status: { $ne: 'deleted' }, membershipStatus: 'active' } },
+        { $group: { _id: '$membershipTier', count: { $sum: 1 } } },
+      ]),
+      Member.countDocuments({ status: { $ne: 'deleted' }, membershipStatus: 'active' }),
     ]);
+    const byTier = tierCounts.reduce((acc, t) => ({ ...acc, [t._id ? String(t._id) : 'none']: t.count }), {});
 
     const membersWithDates = await attachTransactionDates(members);
-    return res.json({ members: membersWithDates, total, page: pageNum, pages: Math.ceil(total / limitNum) });
+    return res.json({ members: membersWithDates, total, page: pageNum, pages: Math.ceil(total / limitNum), activeTotal, byTier });
   } catch (err) {
     next(err);
   }
