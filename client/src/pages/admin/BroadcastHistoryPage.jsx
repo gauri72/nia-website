@@ -7,11 +7,26 @@ import PageHeader from '../../components/admin/PageHeader';
 import Table from '../../components/admin/Table';
 import Button from '../../components/admin/Button';
 
+// Each stat tile maps to the set of recipient statuses that make up its
+// number — e.g. "Sent" counts everyone who successfully received the email,
+// whether or not they went on to open/click it, so its filter has to include
+// those statuses too or the filtered list would look like it disagrees with
+// the tile's own count.
+const STAT_FILTERS = {
+  sent: ['sent', 'opened', 'clicked'],
+  opened: ['opened', 'clicked'],
+  clicked: ['clicked'],
+  bounced: ['bounced'],
+  unsubscribed: ['unsubscribed'],
+  failed: ['failed'],
+};
+
 export default function BroadcastHistoryPage() {
   const [broadcasts, setBroadcasts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [detail, setDetail] = useState(null);
   const [recipients, setRecipients] = useState([]);
+  const [statusFilter, setStatusFilter] = useState(null);
   const [scanningBounces, setScanningBounces] = useState(false);
 
   function load() {
@@ -27,6 +42,7 @@ export default function BroadcastHistoryPage() {
     ]);
     setDetail({ ...b, analytics });
     setRecipients(recipientList);
+    setStatusFilter(null);
   }
 
   async function handleCancel(b) {
@@ -122,44 +138,66 @@ export default function BroadcastHistoryPage() {
         </Table.Body>
       </Table>
 
-      {detail && (
-        <Modal title={detail.name} onClose={() => setDetail(null)} width="max-w-2xl">
-          <div className="grid grid-cols-3 gap-3 mb-5">
-            {[
-              ['Sent', detail.analytics.sent],
-              ['Opened', `${detail.analytics.opened} (${detail.analytics.openRate}%)`],
-              ['Clicked', `${detail.analytics.clicked} (${detail.analytics.clickRate}%)`],
-              ['Bounced', detail.analytics.bounced],
-              ['Unsubscribed', detail.analytics.unsubscribed],
-              ['Failed', detail.analytics.failed],
-            ].map(([lbl, val]) => (
-              <div key={lbl} className="rounded-nia-btn bg-nia-panel p-3 text-center">
-                <p className="text-lg font-extrabold text-nia-navy-dark">{val}</p>
-                <p className="text-xs text-nia-text-faint">{lbl}</p>
-              </div>
-            ))}
-          </div>
-          <h3 className="font-bold text-nia-navy-dark mb-2 text-sm">Recipients</h3>
-          <div className="max-h-64 overflow-y-auto">
-            <Table bare>
-              <Table.Head>
-                <Table.HeaderRow>
-                  <Table.Th className="text-xs">Email</Table.Th>
-                  <Table.Th className="text-xs">Status</Table.Th>
-                </Table.HeaderRow>
-              </Table.Head>
-              <Table.Body>
-                {recipients.map((r) => (
-                  <Table.Row key={r._id}>
-                    <Table.Cell className="text-xs">{r.email}</Table.Cell>
-                    <Table.Cell className="text-xs"><StatusBadge status={r.status} /></Table.Cell>
-                  </Table.Row>
-                ))}
-              </Table.Body>
-            </Table>
-          </div>
-        </Modal>
-      )}
+      {detail && (() => {
+        const filteredRecipients = statusFilter
+          ? recipients.filter((r) => STAT_FILTERS[statusFilter].includes(r.status))
+          : recipients;
+
+        return (
+          <Modal title={detail.name} onClose={() => setDetail(null)} width="max-w-2xl">
+            <div className="grid grid-cols-3 gap-3 mb-5">
+              {[
+                ['sent', 'Sent', detail.analytics.sent],
+                ['opened', 'Opened', `${detail.analytics.opened} (${detail.analytics.openRate}%)`],
+                ['clicked', 'Clicked', `${detail.analytics.clicked} (${detail.analytics.clickRate}%)`],
+                ['bounced', 'Bounced', detail.analytics.bounced],
+                ['unsubscribed', 'Unsubscribed', detail.analytics.unsubscribed],
+                ['failed', 'Failed', detail.analytics.failed],
+              ].map(([key, lbl, val]) => (
+                <button
+                  key={key}
+                  onClick={() => setStatusFilter((f) => (f === key ? null : key))}
+                  className={`rounded-nia-btn p-3 text-center cursor-pointer border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-nia-orange/40 ${
+                    statusFilter === key ? 'bg-nia-orange/10 border-nia-orange' : 'bg-nia-panel border-transparent hover:border-nia-border'
+                  }`}
+                >
+                  <p className="text-lg font-extrabold text-nia-navy-dark">{val}</p>
+                  <p className="text-xs text-nia-text-faint">{lbl}</p>
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-bold text-nia-navy-dark text-sm">
+                Recipients {statusFilter && <span className="font-normal text-nia-text-faint">— {statusFilter} ({filteredRecipients.length})</span>}
+              </h3>
+              {statusFilter && (
+                <button onClick={() => setStatusFilter(null)} className="text-xs text-nia-orange border-0 bg-transparent cursor-pointer hover:underline focus:outline-none">
+                  Clear filter
+                </button>
+              )}
+            </div>
+            <div className="max-h-64 overflow-y-auto">
+              <Table bare>
+                <Table.Head>
+                  <Table.HeaderRow>
+                    <Table.Th className="text-xs">Email</Table.Th>
+                    <Table.Th className="text-xs">Status</Table.Th>
+                  </Table.HeaderRow>
+                </Table.Head>
+                <Table.Body>
+                  {filteredRecipients.length === 0 && <Table.Empty colSpan={2}>No recipients match this filter.</Table.Empty>}
+                  {filteredRecipients.map((r) => (
+                    <Table.Row key={r._id}>
+                      <Table.Cell className="text-xs">{r.email}</Table.Cell>
+                      <Table.Cell className="text-xs"><StatusBadge status={r.status} /></Table.Cell>
+                    </Table.Row>
+                  ))}
+                </Table.Body>
+              </Table>
+            </div>
+          </Modal>
+        );
+      })()}
     </div>
   );
 }
