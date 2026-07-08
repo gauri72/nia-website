@@ -6,6 +6,7 @@ const Booking = require('../models/Booking');
 const { resolveAudienceMembers, createRecipients, sendBroadcast } = require('./broadcastService');
 const { sendRenewalReminder, sendExpiryNotice, sendEventReminder } = require('./emailService');
 const { notifyMember } = require('./notificationService');
+const { scanForBounces } = require('./bounceDetectionService');
 
 async function dispatchDueBroadcasts() {
   const due = await Broadcast.find({ status: 'scheduled', scheduledAt: { $lte: new Date() } });
@@ -95,7 +96,13 @@ function start() {
     sendEventReminders().catch((err) => console.error('[Scheduler] Event reminder sweep failed:', err.message));
   });
 
-  console.log('[Scheduler] Broadcast scheduler started (checks every minute); membership/event sweeps run hourly');
+  // Bounce notifications trickle into the sending mailbox asynchronously —
+  // check every 15 minutes rather than only right after a send.
+  cron.schedule('*/15 * * * *', () => {
+    scanForBounces().catch((err) => console.error('[Scheduler] Bounce scan failed:', err.message));
+  });
+
+  console.log('[Scheduler] Broadcast scheduler started (checks every minute); membership/event sweeps run hourly; bounce scan runs every 15 minutes');
 }
 
 module.exports = { start, sendRenewalReminders, sweepExpiredMemberships, sendEventReminders };

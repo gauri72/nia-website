@@ -4,6 +4,7 @@ const EmailTemplate = require('../../models/EmailTemplate');
 const {
   resolveAudienceMembers, estimateAudienceCount, createRecipients, sendTestEmail, sendBroadcast, resendFailed, buildUnsubscribeUrl,
 } = require('../../services/broadcastService');
+const { scanForBounces } = require('../../services/bounceDetectionService');
 
 // Client sends empty-string/empty-array placeholders for fields irrelevant to the
 // selected audience type (e.g. eventId: "" when type is "all_members") — Mongoose's
@@ -272,4 +273,18 @@ async function analytics(req, res, next) {
   }
 }
 
-module.exports = { list, getById, recipients, estimateAudience, create, update, sendTest, send, cancel, resend, resendFailedRecipients, duplicate, analytics };
+// ── POST /api/broadcasts/scan-bounces ─────────────────────────────
+// Manual trigger for the same check that also runs automatically every
+// 15 minutes (schedulerService) — lets an admin get fresh numbers on demand
+// (e.g. right after a send) instead of waiting for the next scheduled pass.
+async function scanBounces(req, res, next) {
+  try {
+    const result = await scanForBounces();
+    if (result.skipped) return res.status(400).json({ error: 'Bounce scanning is not configured (missing IMAP credentials)' });
+    return res.json({ message: `Scanned ${result.scanned} new message(s), found ${result.bounced} bounce(s)`, ...result });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { list, getById, recipients, estimateAudience, create, update, sendTest, send, cancel, resend, resendFailedRecipients, duplicate, analytics, scanBounces };

@@ -12,6 +12,7 @@ export default function BroadcastHistoryPage() {
   const [loading, setLoading] = useState(true);
   const [detail, setDetail] = useState(null);
   const [recipients, setRecipients] = useState([]);
+  const [scanningBounces, setScanningBounces] = useState(false);
 
   function load() {
     setLoading(true);
@@ -53,10 +54,31 @@ export default function BroadcastHistoryPage() {
     load();
   }
 
+  async function handleScanBounces() {
+    setScanningBounces(true);
+    try {
+      const { data } = await adminApi.post('/broadcasts/scan-bounces');
+      alert(data.message);
+      load();
+      if (detail) openDetail(detail);
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to check for bounces');
+    } finally {
+      setScanningBounces(false);
+    }
+  }
+
   return (
     <div>
       <EmailBroadcastingNav />
-      <PageHeader title="Broadcast History" />
+      <PageHeader
+        title="Broadcast History"
+        actions={(
+          <Button variant="secondary" onClick={handleScanBounces} disabled={scanningBounces}>
+            {scanningBounces ? 'Checking…' : 'Check for Bounces'}
+          </Button>
+        )}
+      />
 
       <Table>
         <Table.Head>

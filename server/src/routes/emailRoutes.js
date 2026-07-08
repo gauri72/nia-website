@@ -23,6 +23,7 @@ router.post(  '/ai/generate-template', aiLimiter, aiTemplateController.generate)
 router.get(   '/broadcasts',                   broadcastController.list);
 router.post(  '/broadcasts',                   broadcastController.create);
 router.post(  '/broadcasts/estimate-audience',  broadcastController.estimateAudience);
+router.post(  '/broadcasts/scan-bounces',       broadcastController.scanBounces); // before /:id
 router.get(   '/broadcasts/:id',                broadcastController.getById);
 router.patch( '/broadcasts/:id',                broadcastController.update);
 router.get(   '/broadcasts/:id/recipients',     broadcastController.recipients);
