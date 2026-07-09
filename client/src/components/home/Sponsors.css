@@ -179,14 +179,16 @@
   z-index: 1;
 }
 
-/* No white chip behind the logo — shown as-is, just softened corners
-   (border-radius clips a replaced element's own content directly) so hard
-   image edges don't look jarring against the dark carousel card. */
+/* Real logos land on a white chip so any logo's own background (transparent,
+   white, or a solid brand color) reads cleanly against the dark carousel card. */
 .sp-logo-card__img {
-  width: calc(100% - 8px);
-  height: calc(100% - 8px);
-  border-radius: 6px;
+  width: calc(100% - 20px);
+  height: calc(100% - 20px);
+  background: #fff;
+  border-radius: 8px;
   object-fit: contain;
+  padding: 10px;
+  box-sizing: border-box;
 }
 
 .sp-logo-card__initials {
