@@ -73,7 +73,15 @@ export default function UsersPage() {
       {data && (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-5">
           {USER_TYPES.map((t) => (
-            <StatCard key={t.value} icon={t.icon} label={t.label} value={data.byType?.[t.value] || 0} tone="orange" />
+            <StatCard
+              key={t.value}
+              icon={t.icon}
+              label={t.label}
+              value={data.byType?.[t.value] || 0}
+              tone="orange"
+              active={userType === t.value}
+              onClick={() => { setUserType((v) => (v === t.value ? '' : t.value)); setPage(1); }}
+            />
           ))}
         </div>
       )}
