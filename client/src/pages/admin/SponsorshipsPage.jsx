@@ -441,46 +441,49 @@ function LogosTab() {
   );
 }
 
-const emptyLogoForm = { name: '', logoUrl: '', tier: '', websiteUrl: '', sortOrder: 0, isActive: true };
+const emptyLogoForm = { name: '', tier: '', websiteUrl: '', sortOrder: 0, isActive: true };
 
 function LogoFormModal({ logo, onClose, onSaved }) {
   const [form, setForm] = useState(logo ? {
-    name: logo.name, logoUrl: logo.logoUrl, tier: logo.tier || '', websiteUrl: logo.websiteUrl || '',
+    name: logo.name, tier: logo.tier || '', websiteUrl: logo.websiteUrl || '',
     sortOrder: logo.sortOrder || 0, isActive: logo.isActive,
   } : emptyLogoForm);
+  const [logoFile, setLogoFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(logo?.logoUrl || '');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
 
   function update(field) {
     return (e) => setForm((f) => ({ ...f, [field]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }));
   }
 
-  async function handleFileChange(e) {
+  function handleFileChange(e) {
     const file = e.target.files[0];
     if (!file) return;
-    setError(''); setUploading(true);
-    const formData = new FormData();
-    formData.append('file', file);
-    try {
-      const { data } = await adminApi.post('/admin/media/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-      setForm((f) => ({ ...f, logoUrl: data.url }));
-    } catch (err) {
-      setError(err.response?.data?.error || 'Upload failed');
-    } finally {
-      setUploading(false);
-    }
+    setLogoFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!form.logoUrl) { setError('Please upload a logo image'); return; }
+    if (!logo && !logoFile) { setError('Please choose a logo image'); return; }
     setError(''); setSaving(true);
-    const payload = { ...form, sortOrder: Number(form.sortOrder) || 0 };
+
+    // multipart, not JSON — the image (if any) is embedded directly on the
+    // document rather than uploaded to disk, since Render's disk is wiped
+    // on every deploy and was silently breaking every logo.
+    const formData = new FormData();
+    formData.append('name', form.name);
+    formData.append('tier', form.tier);
+    formData.append('websiteUrl', form.websiteUrl);
+    formData.append('isActive', form.isActive);
+    formData.append('sortOrder', form.sortOrder);
+    if (logoFile) formData.append('logo', logoFile);
+
     try {
-      if (logo) await adminApi.put(`/admin/sponsor-logos/${logo._id}`, payload);
-      else await adminApi.post('/admin/sponsor-logos', payload);
+      if (logo) await adminApi.put(`/admin/sponsor-logos/${logo._id}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      else await adminApi.post('/admin/sponsor-logos', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
       onSaved();
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to save logo');
@@ -499,10 +502,10 @@ function LogoFormModal({ logo, onClose, onSaved }) {
           <label className={label}>Logo Image</label>
           <div className="flex items-center gap-3">
             <div className="w-16 h-16 rounded-nia-btn bg-white border border-nia-border flex items-center justify-center overflow-hidden flex-shrink-0">
-              {form.logoUrl ? <img src={form.logoUrl} alt="Logo preview" className="max-h-14 max-w-full object-contain" /> : <ImageOff className="text-nia-text-faint" />}
+              {previewUrl ? <img src={previewUrl} alt="Logo preview" className="max-h-14 max-w-full object-contain" /> : <ImageOff className="text-nia-text-faint" />}
             </div>
-            <Button type="button" variant="secondary" disabled={uploading} onClick={() => fileInputRef.current?.click()}>
-              <Upload /> {uploading ? 'Uploading…' : form.logoUrl ? 'Replace Image' : 'Upload Image'}
+            <Button type="button" variant="secondary" onClick={() => fileInputRef.current?.click()}>
+              <Upload /> {previewUrl ? 'Replace Image' : 'Choose Image'}
             </Button>
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
           </div>
@@ -519,7 +522,7 @@ function LogoFormModal({ logo, onClose, onSaved }) {
         </label>
         <div className="flex justify-end gap-2 mt-2">
           <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
-          <Button type="submit" variant="primary" disabled={saving || uploading}>{saving ? 'Saving…' : 'Save Logo'}</Button>
+          <Button type="submit" variant="primary" disabled={saving}>{saving ? 'Saving…' : 'Save Logo'}</Button>
         </div>
       </form>
     </Modal>

@@ -58,6 +58,7 @@ router.use('/admin',       adminRoutes);
 router.get('/membership-tiers', membershipTierController.publicList);
 router.get('/sponsorship-tiers', sponsorshipTierController.publicList);
 router.get('/sponsor-logos', sponsorLogoController.publicList);
+router.get('/sponsor-logos/:id/image', sponsorLogoController.image); // before any :id catch-alls, though none currently exist here
 router.post('/discount-codes/preview', discountCodeController.preview);
 
 router.use('/events',      publicEventRoutes);

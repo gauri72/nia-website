@@ -131,8 +131,8 @@ router.post(  '/sponsorship-tiers',       requireRole(['super_admin']), sponsors
 router.put(   '/sponsorship-tiers/:id',   requireRole(['super_admin']), sponsorshipTierController.update);
 router.delete('/sponsorship-tiers/:id',   requireRole(['super_admin']), sponsorshipTierController.remove);
 router.get(   '/sponsor-logos',           sponsorLogoController.list);
-router.post(  '/sponsor-logos',           sponsorLogoController.create);
-router.put(   '/sponsor-logos/:id',       sponsorLogoController.update);
+router.post(  '/sponsor-logos',           upload.uploadToMemory.single('logo'), sponsorLogoController.create);
+router.put(   '/sponsor-logos/:id',       upload.uploadToMemory.single('logo'), sponsorLogoController.update);
 router.delete('/sponsor-logos/:id',       sponsorLogoController.remove);
 
 // ── Donations ───────────────────────────────────────────────────

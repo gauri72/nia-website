@@ -25,4 +25,13 @@ function fileFilter(req, file, cb) {
 
 const upload = multer({ storage, fileFilter, limits: { fileSize: 5 * 1024 * 1024 } });
 
+// Render's web service filesystem is ephemeral — anything written to disk
+// (including everything the diskStorage `upload` above saves) is wiped on
+// every deploy/restart. For small images that need to survive deploys
+// without a persistent disk or third-party storage, this keeps the file in
+// memory (req.file.buffer) so the caller can embed it directly in Mongo
+// instead of writing it to disk.
+const uploadToMemory = multer({ storage: multer.memoryStorage(), fileFilter, limits: { fileSize: 5 * 1024 * 1024 } });
+
 module.exports = upload;
+module.exports.uploadToMemory = uploadToMemory;
