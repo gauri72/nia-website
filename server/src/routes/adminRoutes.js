@@ -20,6 +20,7 @@ const sponsorshipAdminController = require('../controllers/admin/sponsorshipAdmi
 const sponsorshipTierController = require('../controllers/admin/sponsorshipTierController');
 const donationAdminController = require('../controllers/admin/donationAdminController');
 const contactAdminController = require('../controllers/admin/contactAdminController');
+const scanController = require('../controllers/admin/scanController');
 const { requireAdminAuth, requireRole } = require('../middleware/adminAuth');
 const { mollieSyncLimiter } = require('../middleware/rateLimiter');
 
@@ -27,6 +28,12 @@ router.use(requireAdminAuth);
 
 // ── Dashboard ─────────────────────────────────────────────────
 router.get('/dashboard', dashboardController.overview);
+
+// ── Ticket & Membership Scanning ────────────────────────────────
+router.post('/scan/lookup',   scanController.lookup);
+router.post('/scan/check-in', scanController.checkIn);
+router.get( '/scan/log',      scanController.log);
+router.get( '/scan/stats',    scanController.stats);
 
 // ── Users (community contact list — separate from Members) ────
 router.get(   '/contacts',                       contactAdminController.list);

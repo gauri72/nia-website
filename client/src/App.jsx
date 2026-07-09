@@ -29,6 +29,7 @@ import AdminEventsPage            from './pages/admin/EventsPage';
 import AdminEventFormPage         from './pages/admin/EventFormPage';
 import AdminBookingsPage          from './pages/admin/BookingsPage';
 import AdminTicketSalesPage       from './pages/admin/TicketSalesPage';
+import AdminScanPage              from './pages/admin/ScanPage';
 import AdminSponsorshipsPage      from './pages/admin/SponsorshipsPage';
 import AdminDonationsPage         from './pages/admin/DonationsPage';
 import AdminContentManagementPage from './pages/admin/ContentManagementPage';
@@ -93,6 +94,7 @@ export default function App() {
               <Route path="events/:id" element={<AdminEventFormPage />} />
               <Route path="bookings" element={<AdminBookingsPage />} />
               <Route path="ticket-sales" element={<AdminTicketSalesPage />} />
+              <Route path="scan" element={<AdminScanPage />} />
               <Route path="sponsorships" element={<AdminSponsorshipsPage />} />
               <Route path="donations" element={<AdminDonationsPage />} />
               <Route path="content" element={<AdminContentManagementPage />} />

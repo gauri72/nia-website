@@ -43,6 +43,9 @@ const TicketSchema = new mongoose.Schema({
   member: { type: mongoose.Schema.Types.ObjectId, ref: 'Member' },
   refunded_at: { type: Date },
   refund_amount: { type: Number },
+  // Event-door check-in, additive to the existing payment flow — same pattern as Booking.checkedInAt.
+  checkedInAt: { type: Date },
+  checkedInBy: { type: mongoose.Schema.Types.ObjectId, ref: 'AdminUser' },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Ticket', TicketSchema);
