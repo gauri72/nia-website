@@ -93,13 +93,13 @@
 }
 
 .sp-lc__arrow {
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   border: 1.5px solid rgba(255,255,255,0.2);
   background: rgba(255,255,255,0.06);
   color: rgba(255,255,255,0.7);
-  font-size: 0.8rem;
+  font-size: 1rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -116,8 +116,8 @@
 }
 
 .sp-lc__stage {
-  width: 160px;
-  height: 190px;
+  width: 250px;
+  height: 280px;
   position: relative;
   overflow: hidden;
   display: flex;
@@ -146,8 +146,8 @@
 
 /* Logo placeholder card */
 .sp-logo-card {
-  width: 140px;
-  height: 110px;
+  width: 220px;
+  height: 170px;
   border-radius: 10px;
   border: 2px solid rgba(255,255,255,0.18);
   background: rgba(0,0,0,0.3);
@@ -182,17 +182,17 @@
 /* Real logos land on a white chip so any logo's own background (transparent,
    white, or a solid brand color) reads cleanly against the dark carousel card. */
 .sp-logo-card__img {
-  width: calc(100% - 20px);
-  height: calc(100% - 20px);
+  width: calc(100% - 30px);
+  height: calc(100% - 30px);
   background: #fff;
-  border-radius: 8px;
+  border-radius: 10px;
   object-fit: contain;
-  padding: 10px;
+  padding: 15px;
   box-sizing: border-box;
 }
 
 .sp-logo-card__initials {
-  font-size: 2rem;
+  font-size: 2.8rem;
   font-weight: 800;
   color: var(--sponsor-color, rgba(255,255,255,0.4));
   letter-spacing: 0.05em;
@@ -200,7 +200,7 @@
 }
 
 .sp-logo-card__name {
-  font-size: 0.68rem;
+  font-size: 0.85rem;
   font-weight: 800;
   letter-spacing: 0.1em;
   color: rgba(255,255,255,0.75);
@@ -210,7 +210,7 @@
 }
 
 .sp-logo-card__tier {
-  font-size: 0.6rem;
+  font-size: 0.72rem;
   color: var(--sponsor-color, rgba(255,255,255,0.4));
   letter-spacing: 0.08em;
   text-align: center;
@@ -353,15 +353,15 @@
   .hs-sp__tagline { font-size: 1.4rem; }
   .hs-sp__rule { max-width: 200px; margin: 0 auto; }
   .hs-sp__cta-col { align-items: center; }
-  .sp-lc__stage { width: 180px; height: 200px; }
-  .sp-logo-card { width: 150px; }
+  .sp-lc__stage { width: 260px; height: 290px; }
+  .sp-logo-card { width: 220px; height: 175px; }
 }
 
 /* ── Mobile (≤480px) ── */
 @media (max-width: 480px) {
   .hs-sp__row { padding: 1.6rem 1.2rem; gap: 1.4rem; }
   .hs-sp__tagline { font-size: 1.2rem; }
-  .sp-lc__stage { width: 150px; height: 190px; }
-  .sp-logo-card { width: 130px; height: 100px; }
-  .sp-logo-card__initials { font-size: 1.6rem; }
+  .sp-lc__stage { width: 200px; height: 240px; }
+  .sp-logo-card { width: 170px; height: 135px; }
+  .sp-logo-card__initials { font-size: 2rem; }
 }
