@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Search, Plus, Pencil, Trash2, UserCheck, KeyRound, User, Handshake, HeartHandshake, Landmark, Gavel } from 'lucide-react';
+import { Search, Plus, Pencil, Trash2, UserCheck, KeyRound, User, Handshake, HeartHandshake, Landmark, Gavel, Crown } from 'lucide-react';
 import adminApi from '../../services/adminApi';
 import Modal from '../../components/admin/Modal';
 import PageHeader from '../../components/admin/PageHeader';
@@ -17,6 +17,7 @@ const USER_TYPES = [
   { value: 'friend_membership', label: 'Friend Membership', icon: HeartHandshake },
   { value: 'advisory_council', label: 'Advisory Council', icon: Landmark },
   { value: 'board_member', label: 'Board Member', icon: Gavel },
+  { value: 'community_head', label: 'Community Head', icon: Crown },
 ];
 const typeLabel = (v) => USER_TYPES.find((t) => t.value === v)?.label || v;
 
@@ -70,7 +71,7 @@ export default function UsersPage() {
       />
 
       {data && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-5">
           {USER_TYPES.map((t) => (
             <StatCard key={t.value} icon={t.icon} label={t.label} value={data.byType?.[t.value] || 0} tone="orange" />
           ))}

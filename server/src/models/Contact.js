@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const USER_TYPES = ['user', 'sponsor_partner', 'friend_membership', 'advisory_council', 'board_member'];
+const USER_TYPES = ['user', 'sponsor_partner', 'friend_membership', 'advisory_council', 'board_member', 'community_head'];
 
 const ContactSchema = new mongoose.Schema({
   fullName: { type: String, required: true, trim: true },
