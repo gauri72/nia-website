@@ -5,6 +5,9 @@ const BroadcastRecipientSchema = new mongoose.Schema({
   broadcast: { type: mongoose.Schema.Types.ObjectId, ref: 'Broadcast', required: true },
   member: { type: mongoose.Schema.Types.ObjectId, ref: 'Member' },
   email: { type: String, required: true, lowercase: true, trim: true },
+  // Carries a Contact's fullName through for recipients with no linked
+  // Member — sendBroadcast() falls back to this for personalization.
+  recipientName: { type: String },
   status: {
     type: String,
     enum: ['pending', 'sent', 'delivered', 'opened', 'clicked', 'bounced', 'failed', 'unsubscribed'],

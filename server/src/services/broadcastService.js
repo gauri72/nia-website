@@ -9,11 +9,11 @@ const Broadcast = require('../models/Broadcast');
 // Contacts aren't Members — most have no linked account at all — so they're
 // represented here as the lightest shape createRecipients/sendBroadcast need:
 // an _id (the linked Member's, if one exists, so BroadcastRecipient.member
-// still points at a real Member and not a Contact) and an email. sendBroadcast
-// already falls back to the raw template with no personalization whenever
-// recipient.member is unset, which is exactly what happens for the rest.
+// still points at a real Member and not a Contact), an email, and the
+// Contact's own name so {{first_name}} still resolves even with no linked
+// Member — sendBroadcast() falls back to this via recipient.recipientName.
 function contactsToRecipients(contacts) {
-  return contacts.map((c) => ({ _id: c.linkedMember || undefined, email: c.email }));
+  return contacts.map((c) => ({ _id: c.linkedMember || undefined, email: c.email, fullName: c.fullName }));
 }
 
 // Broadcasts send from a separate mailbox (secretary@) from the rest of the
@@ -83,6 +83,16 @@ async function estimateAudienceCount(audience) {
   return members.length;
 }
 
+// Splits a Contact's fullName into a { firstName, lastName } shape so it can
+// be passed to renderPersonalized() the same way a real Member is — returns
+// null (not personalized) when there's no name to work with.
+function splitName(fullName) {
+  if (!fullName?.trim()) return null;
+  const parts = fullName.trim().split(/\s+/);
+  if (parts.length === 1) return { firstName: parts[0], lastName: '' };
+  return { firstName: parts[0], lastName: parts.slice(1).join(' ') };
+}
+
 // ── Personalization + tracking injection ────────────────────────────
 function renderPersonalized(html, member, vars = {}) {
   const tokens = {
@@ -125,7 +135,7 @@ function injectTracking(html, trackingToken) {
 
 // ── Create recipient records for a broadcast (called once, at send/schedule time) ──
 async function createRecipients(broadcastId, members) {
-  const docs = members.map((m) => ({ broadcast: broadcastId, member: m._id, email: m.email }));
+  const docs = members.map((m) => ({ broadcast: broadcastId, member: m._id, email: m.email, recipientName: m.fullName || undefined }));
   if (docs.length === 0) return [];
   await BroadcastRecipient.insertMany(docs, { ordered: false }).catch(() => {}); // ignore dup-key races
   return BroadcastRecipient.find({ broadcast: broadcastId });
@@ -179,9 +189,9 @@ async function sendBroadcast(broadcastId) {
 
     await Promise.all(batch.map(async (recipient) => {
       try {
-        const member = recipient.member;
-        const personalized = member
-          ? renderPersonalized(broadcast.template.htmlContent, member, broadcast.personalizationVars)
+        const personalizeTarget = recipient.member || splitName(recipient.recipientName);
+        const personalized = personalizeTarget
+          ? renderPersonalized(broadcast.template.htmlContent, personalizeTarget, broadcast.personalizationVars)
           : broadcast.template.htmlContent;
         const finalHtml = injectTracking(personalized, recipient.trackingToken);
         const unsubscribeUrl = buildUnsubscribeUrl(recipient.trackingToken);
