@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback } from 'react';
-import { Handshake, Euro, Search, Plus, Pencil, Trash2, Medal, Star, Crown, Gem, Trophy, Award, Send, Ticket as TicketIcon } from 'lucide-react';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { Handshake, Euro, Search, Plus, Pencil, Trash2, Medal, Star, Crown, Gem, Trophy, Award, Send, Ticket as TicketIcon, Upload, ImageOff } from 'lucide-react';
 import adminApi from '../../services/adminApi';
 import { useAdminAuth } from '../../context/AdminAuthContext';
 import Modal from '../../components/admin/Modal';
@@ -45,11 +45,13 @@ export default function SponsorshipsPage() {
     <div>
       <PageHeader title="Sponsorships" description="Sponsorship transactions and editable packages." />
       <Tabs
-        tabs={[{ key: 'transactions', label: 'Transactions' }, { key: 'tiers', label: 'Tiers' }]}
+        tabs={[{ key: 'transactions', label: 'Transactions' }, { key: 'tiers', label: 'Tiers' }, { key: 'logos', label: 'Homepage Logos' }]}
         active={tab}
         onChange={setTab}
       />
-      {tab === 'transactions' ? <TransactionsTab /> : <TiersTab />}
+      {tab === 'transactions' && <TransactionsTab />}
+      {tab === 'tiers' && <TiersTab />}
+      {tab === 'logos' && <LogosTab />}
     </div>
   );
 }
@@ -369,6 +371,155 @@ function TierFormModal({ tier, onClose, onSaved }) {
         <div className="flex justify-end gap-2 mt-2">
           <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
           <Button type="submit" variant="primary" disabled={saving}>{saving ? 'Saving…' : 'Save Package'}</Button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+function LogosTab() {
+  const [logos, setLogos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState(null);
+  const [error, setError] = useState('');
+
+  function fetchLogos() {
+    setLoading(true);
+    adminApi.get('/admin/sponsor-logos').then((r) => setLogos(r.data)).finally(() => setLoading(false));
+  }
+  useEffect(() => { fetchLogos(); }, []);
+
+  async function handleDelete(logo) {
+    if (!window.confirm(`Remove the "${logo.name}" logo from the homepage carousel?`)) return;
+    try {
+      await adminApi.delete(`/admin/sponsor-logos/${logo._id}`);
+      fetchLogos();
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to delete logo');
+    }
+  }
+
+  return (
+    <div>
+      <p className="text-sm text-nia-text-muted mb-4">Logos shown in the "Our Sponsors" carousel on the homepage. Only active logos appear publicly.</p>
+
+      <div className="flex justify-end mb-4">
+        <Button variant="primary" onClick={() => setEditing('new')}><Plus /> Add Logo</Button>
+      </div>
+
+      {error && <div className="mb-4 rounded bg-red-50 border-l-4 border-nia-error px-3 py-2 text-sm text-red-700">{error}</div>}
+      {loading && <p className="text-nia-text-faint">Loading…</p>}
+      {!loading && logos.length === 0 && <p className="text-nia-text-faint">No sponsor logos yet — add one to have it appear on the homepage.</p>}
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {logos.map((l) => (
+          <Card key={l._id} className="flex flex-col gap-2">
+            <div className="h-20 rounded-nia-btn bg-white border border-nia-border flex items-center justify-center overflow-hidden">
+              {l.logoUrl ? <img src={l.logoUrl} alt={l.name} className="max-h-16 max-w-full object-contain" /> : <ImageOff className="text-nia-text-faint" />}
+            </div>
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-nia-navy-dark truncate">{l.name}</h3>
+              {!l.isActive && <span className="text-xs font-semibold text-nia-text-faint bg-nia-panel-alt rounded-full px-2 py-0.5 flex-shrink-0">Inactive</span>}
+            </div>
+            {l.tier && <p className="text-xs text-nia-text-faint">{l.tier}</p>}
+            <div className="flex gap-2 mt-2">
+              <Button variant="secondary" className="flex-1" onClick={() => setEditing(l)}><Pencil /> Edit</Button>
+              <Button variant="danger" icon onClick={() => handleDelete(l)}><Trash2 /></Button>
+            </div>
+          </Card>
+        ))}
+      </div>
+
+      {editing && (
+        <LogoFormModal
+          logo={editing === 'new' ? null : editing}
+          onClose={() => setEditing(null)}
+          onSaved={() => { setEditing(null); fetchLogos(); }}
+        />
+      )}
+    </div>
+  );
+}
+
+const emptyLogoForm = { name: '', logoUrl: '', tier: '', websiteUrl: '', sortOrder: 0, isActive: true };
+
+function LogoFormModal({ logo, onClose, onSaved }) {
+  const [form, setForm] = useState(logo ? {
+    name: logo.name, logoUrl: logo.logoUrl, tier: logo.tier || '', websiteUrl: logo.websiteUrl || '',
+    sortOrder: logo.sortOrder || 0, isActive: logo.isActive,
+  } : emptyLogoForm);
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
+
+  function update(field) {
+    return (e) => setForm((f) => ({ ...f, [field]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }));
+  }
+
+  async function handleFileChange(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    setError(''); setUploading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const { data } = await adminApi.post('/admin/media/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      setForm((f) => ({ ...f, logoUrl: data.url }));
+    } catch (err) {
+      setError(err.response?.data?.error || 'Upload failed');
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (!form.logoUrl) { setError('Please upload a logo image'); return; }
+    setError(''); setSaving(true);
+    const payload = { ...form, sortOrder: Number(form.sortOrder) || 0 };
+    try {
+      if (logo) await adminApi.put(`/admin/sponsor-logos/${logo._id}`, payload);
+      else await adminApi.post('/admin/sponsor-logos', payload);
+      onSaved();
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to save logo');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Modal title={logo ? `Edit ${logo.name}` : 'Add Sponsor Logo'} onClose={onClose}>
+      {error && <div className="mb-3 rounded bg-red-50 border-l-4 border-nia-error px-3 py-2 text-sm text-red-700">{error}</div>}
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+        <div><label className={label}>Sponsor Name</label><input className={inputCls} required value={form.name} onChange={update('name')} /></div>
+
+        <div>
+          <label className={label}>Logo Image</label>
+          <div className="flex items-center gap-3">
+            <div className="w-16 h-16 rounded-nia-btn bg-white border border-nia-border flex items-center justify-center overflow-hidden flex-shrink-0">
+              {form.logoUrl ? <img src={form.logoUrl} alt="Logo preview" className="max-h-14 max-w-full object-contain" /> : <ImageOff className="text-nia-text-faint" />}
+            </div>
+            <Button type="button" variant="secondary" disabled={uploading} onClick={() => fileInputRef.current?.click()}>
+              <Upload /> {uploading ? 'Uploading…' : form.logoUrl ? 'Replace Image' : 'Upload Image'}
+            </Button>
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div><label className={label}>Tier Badge (optional)</label><input className={inputCls} placeholder="e.g. Platinum" value={form.tier} onChange={update('tier')} /></div>
+          <div><label className={label}>Sort Order</label><input type="number" className={inputCls} value={form.sortOrder} onChange={update('sortOrder')} /></div>
+        </div>
+        <div><label className={label}>Website URL (optional)</label><input type="url" className={inputCls} placeholder="https://" value={form.websiteUrl} onChange={update('websiteUrl')} /></div>
+
+        <label className="flex items-center gap-2 text-sm text-nia-text-muted">
+          <input type="checkbox" checked={form.isActive} onChange={update('isActive')} /> Active (shown on the homepage)
+        </label>
+        <div className="flex justify-end gap-2 mt-2">
+          <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
+          <Button type="submit" variant="primary" disabled={saving || uploading}>{saving ? 'Saving…' : 'Save Logo'}</Button>
         </div>
       </form>
     </Modal>

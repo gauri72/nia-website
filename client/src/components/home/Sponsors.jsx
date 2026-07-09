@@ -1,18 +1,23 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { FaChevronLeft, FaChevronRight, FaHandshake } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
+import api from '../../services/api';
 import './Sponsors.css';
 
-const SPONSORS = [
-  { name: 'SPONSOR 1', tier: 'PLATINUM', initials: 'S1', color: '#4a90d9' },
-  { name: 'SPONSOR 2', tier: 'GOLD',     initials: 'S2', color: '#c89a2e' },
-  { name: 'SPONSOR 3', tier: 'SILVER',   initials: 'S3', color: '#8a9bb0' },
-  { name: 'SPONSOR 4', tier: 'BRONZE',   initials: 'S4', color: '#b07340' },
-];
-
 const INTERVAL = 4000;
+const FALLBACK_COLOR = '#8a9bb0';
 
-function SponsorCarousel() {
+function initialsOf(name) {
+  return (name || '')
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join('')
+    .toUpperCase();
+}
+
+function SponsorCarousel({ sponsors }) {
   const [active, setActive]   = useState(0);
   const [dir, setDir]         = useState('next');
   const [animKey, setAnimKey] = useState(0);
@@ -20,29 +25,43 @@ function SponsorCarousel() {
 
   const go = useCallback((index, direction) => {
     setDir(direction);
-    setAnimKey(k => k + 1);
+    setAnimKey((k) => k + 1);
     setActive(index);
   }, []);
 
   const next = useCallback(() => {
-    go((active + 1) % SPONSORS.length, 'next');
-  }, [active, go]);
+    go((active + 1) % sponsors.length, 'next');
+  }, [active, go, sponsors.length]);
 
   const prev = useCallback(() => {
-    go((active - 1 + SPONSORS.length) % SPONSORS.length, 'prev');
-  }, [active, go]);
+    go((active - 1 + sponsors.length) % sponsors.length, 'prev');
+  }, [active, go, sponsors.length]);
 
   const resetTimer = useCallback(() => {
     clearInterval(timerRef.current);
-    timerRef.current = setInterval(next, INTERVAL);
-  }, [next]);
+    if (sponsors.length > 1) timerRef.current = setInterval(next, INTERVAL);
+  }, [next, sponsors.length]);
 
   useEffect(() => {
-    timerRef.current = setInterval(next, INTERVAL);
+    resetTimer();
     return () => clearInterval(timerRef.current);
-  }, [next]);
+  }, [resetTimer]);
 
-  const sponsor = SPONSORS[active];
+  // The sponsor list can shrink (admin deactivates one) while a later index
+  // is active — clamp so we never index past the end.
+  const sponsor = sponsors[Math.min(active, sponsors.length - 1)];
+
+  const card = (
+    <div className="sp-logo-card" style={{ '--sponsor-color': FALLBACK_COLOR }}>
+      <div className="sp-logo-card__inner">
+        {sponsor.logoUrl ? (
+          <img className="sp-logo-card__img" src={sponsor.logoUrl} alt={sponsor.name} />
+        ) : (
+          <div className="sp-logo-card__initials">{initialsOf(sponsor.name)}</div>
+        )}
+      </div>
+    </div>
+  );
 
   return (
     <div
@@ -56,13 +75,11 @@ function SponsorCarousel() {
 
       <div className="sp-lc__stage">
         <div key={animKey} className={`sp-lc__slide sp-lc__slide--${dir}`}>
-          <div className="sp-logo-card" style={{ '--sponsor-color': sponsor.color }}>
-            <div className="sp-logo-card__inner">
-              <div className="sp-logo-card__initials">{sponsor.initials}</div>
-            </div>
-          </div>
+          {sponsor.websiteUrl ? (
+            <a href={sponsor.websiteUrl} target="_blank" rel="noopener noreferrer">{card}</a>
+          ) : card}
           <p className="sp-logo-card__name">{sponsor.name}</p>
-          <p className="sp-logo-card__tier">{sponsor.tier}</p>
+          {sponsor.tier && <p className="sp-logo-card__tier">{sponsor.tier}</p>}
         </div>
       </div>
 
@@ -71,11 +88,11 @@ function SponsorCarousel() {
       </button>
 
       <div className="sp-lc__dots">
-        {SPONSORS.map((s, i) => (
+        {sponsors.map((s, i) => (
           <button
-            key={i}
+            key={s._id || i}
             className={`sp-lc__dot${i === active ? ' sp-lc__dot--active' : ''}`}
-            style={{ '--sponsor-color': s.color }}
+            style={{ '--sponsor-color': FALLBACK_COLOR }}
             onClick={() => { go(i, i > active ? 'next' : 'prev'); resetTimer(); }}
             aria-label={`Sponsor ${i + 1}`}
           />
@@ -90,6 +107,16 @@ function SponsorCarousel() {
 }
 
 export default function Sponsors() {
+  const [sponsors, setSponsors] = useState(null); // null = still loading
+
+  useEffect(() => {
+    api.get('/sponsor-logos').then((r) => setSponsors(r.data)).catch(() => setSponsors([]));
+  }, []);
+
+  // Nothing to show yet (still loading) or nothing configured — don't render
+  // a broken/empty carousel while waiting on real sponsor data.
+  if (!sponsors || sponsors.length === 0) return null;
+
   return (
     <section className="hs-sponsors">
       <div className="hs-sp__row">
@@ -112,7 +139,7 @@ export default function Sponsors() {
         {/* Centre: logo carousel */}
         <div className="hs-sp__carousel-col">
           <p className="hs-sp__section-label">OUR SPONSORS</p>
-          <SponsorCarousel />
+          <SponsorCarousel sponsors={sponsors} />
         </div>
 
         {/* Right: CTA */}

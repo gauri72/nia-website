@@ -10,6 +10,7 @@ const donationController    = require('../controllers/donationController');
 const sponsorshipController = require('../controllers/sponsorshipController');
 const discountCodeController = require('../controllers/admin/discountCodeController');
 const sponsorshipTierController = require('../controllers/admin/sponsorshipTierController');
+const sponsorLogoController = require('../controllers/admin/sponsorLogoController');
 
 const { paymentLimiter, webhookLimiter } = require('../middleware/rateLimiter');
 
@@ -56,6 +57,7 @@ router.use('/admin-auth',  adminAuthRoutes);
 router.use('/admin',       adminRoutes);
 router.get('/membership-tiers', membershipTierController.publicList);
 router.get('/sponsorship-tiers', sponsorshipTierController.publicList);
+router.get('/sponsor-logos', sponsorLogoController.publicList);
 router.post('/discount-codes/preview', discountCodeController.preview);
 
 router.use('/events',      publicEventRoutes);

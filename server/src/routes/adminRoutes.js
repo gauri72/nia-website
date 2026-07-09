@@ -21,6 +21,7 @@ const sponsorshipTierController = require('../controllers/admin/sponsorshipTierC
 const donationAdminController = require('../controllers/admin/donationAdminController');
 const contactAdminController = require('../controllers/admin/contactAdminController');
 const scanController = require('../controllers/admin/scanController');
+const sponsorLogoController = require('../controllers/admin/sponsorLogoController');
 const { requireAdminAuth, requireRole } = require('../middleware/adminAuth');
 const { mollieSyncLimiter } = require('../middleware/rateLimiter');
 
@@ -129,6 +130,10 @@ router.get(   '/sponsorship-tiers',       sponsorshipTierController.list);
 router.post(  '/sponsorship-tiers',       requireRole(['super_admin']), sponsorshipTierController.create);
 router.put(   '/sponsorship-tiers/:id',   requireRole(['super_admin']), sponsorshipTierController.update);
 router.delete('/sponsorship-tiers/:id',   requireRole(['super_admin']), sponsorshipTierController.remove);
+router.get(   '/sponsor-logos',           sponsorLogoController.list);
+router.post(  '/sponsor-logos',           sponsorLogoController.create);
+router.put(   '/sponsor-logos/:id',       sponsorLogoController.update);
+router.delete('/sponsor-logos/:id',       sponsorLogoController.remove);
 
 // ── Donations ───────────────────────────────────────────────────
 router.get('/donations',     donationAdminController.list);
