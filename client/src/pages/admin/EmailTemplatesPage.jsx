@@ -1,12 +1,84 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Eye, Pencil, Copy, Trash2, Bot } from 'lucide-react';
+import { Search, Eye, Pencil, Copy, Trash2, Bot, Download } from 'lucide-react';
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
 import adminApi from '../../services/adminApi';
 import Modal from '../../components/admin/Modal';
 import EmailBroadcastingNav from '../../components/admin/EmailBroadcastingNav';
 import PageHeader from '../../components/admin/PageHeader';
 import Card from '../../components/admin/Card';
 import Button from '../../components/admin/Button';
+
+// PDF export is a static handout, not a real send — personalization tokens
+// have no real recipient to resolve against, so they're replaced with a
+// generic greeting instead of being left as literal "{{first_name}}" text.
+function renderForPdf(html) {
+  return html
+    .replaceAll('{{first_name}}', 'NIA Family Member')
+    .replaceAll('{{last_name}}', '')
+    .replaceAll('{{membership_tier}}', '')
+    .replaceAll('{{expiry_date}}', '')
+    .replaceAll('{{unsubscribe_url}}', '#');
+}
+
+// Renders the template in an off-screen iframe (same isolation the Preview
+// modal already relies on via srcDoc, since these are full HTML documents
+// with their own <style> blocks that would otherwise clash with the admin
+// panel's own CSS) and captures it into a paginated PDF.
+async function downloadTemplateAsPdf(template) {
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'fixed';
+  iframe.style.left = '-9999px';
+  iframe.style.top = '0';
+  iframe.style.width = '700px';
+  iframe.style.height = '100px';
+  iframe.style.border = '0';
+  document.body.appendChild(iframe);
+
+  try {
+    await new Promise((resolve) => {
+      iframe.onload = resolve;
+      iframe.srcdoc = renderForPdf(template.htmlContent);
+    });
+    // Let images inside the iframe finish loading before measuring/capturing.
+    await new Promise((resolve) => setTimeout(resolve, 400));
+
+    const doc = iframe.contentDocument;
+    const fullHeight = doc.documentElement.scrollHeight;
+    iframe.style.height = `${fullHeight}px`;
+
+    const canvas = await html2canvas(doc.body, {
+      width: 700,
+      windowWidth: 700,
+      height: fullHeight,
+      scale: 2,
+      useCORS: true,
+    });
+
+    const pdf = new jsPDF('p', 'pt', 'a4');
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const imgWidth = pageWidth;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    const imgData = canvas.toDataURL('image/png');
+
+    let heightLeft = imgHeight;
+    let position = 0;
+    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+    heightLeft -= pageHeight;
+    while (heightLeft > 0) {
+      position -= pageHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+    }
+
+    pdf.save(`${template.name.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.pdf`);
+  } finally {
+    document.body.removeChild(iframe);
+  }
+}
 
 const TYPES = ['event_announcement', 'newsletter', 'membership_update', 'promotional', 'welcome', 'general'];
 const selectFilterCls = 'rounded-nia-btn border border-nia-border px-3 py-2 text-sm focus:border-nia-orange focus:outline-none focus:ring-2 focus:ring-nia-orange/20 w-auto';
@@ -21,6 +93,7 @@ export default function EmailTemplatesPage() {
   const [type, setType] = useState('');
   const [loading, setLoading] = useState(true);
   const [previewTemplate, setPreviewTemplate] = useState(null);
+  const [downloadingId, setDownloadingId] = useState(null);
 
   function load() {
     setLoading(true);
@@ -37,6 +110,17 @@ export default function EmailTemplatesPage() {
     if (!window.confirm(`Delete template "${t.name}"?`)) return;
     await adminApi.delete(`/email-templates/${t._id}`);
     load();
+  }
+
+  async function handleDownloadPdf(t) {
+    setDownloadingId(t._id);
+    try {
+      await downloadTemplateAsPdf(t);
+    } catch {
+      alert('Failed to generate PDF. Please try again.');
+    } finally {
+      setDownloadingId(null);
+    }
   }
 
   return (
@@ -82,6 +166,9 @@ export default function EmailTemplatesPage() {
                 <Button variant="secondary" size="sm" onClick={() => setPreviewTemplate(t)}><Eye /> Preview</Button>
                 <Button as={Link} to={`/admin/broadcasting/generate?templateId=${t._id}`} variant="secondary" size="sm"><Pencil /> Edit</Button>
                 <Button variant="secondary" size="sm" onClick={() => handleDuplicate(t)}><Copy /> Duplicate</Button>
+                <Button variant="secondary" size="sm" disabled={downloadingId === t._id} onClick={() => handleDownloadPdf(t)}>
+                  <Download /> {downloadingId === t._id ? 'Generating…' : 'PDF'}
+                </Button>
                 <Button variant="danger" size="sm" icon onClick={() => handleDelete(t)}><Trash2 /></Button>
               </div>
             </div>
@@ -91,6 +178,11 @@ export default function EmailTemplatesPage() {
 
       {previewTemplate && (
         <Modal title={previewTemplate.name} onClose={() => setPreviewTemplate(null)} width="max-w-2xl">
+          <div className="flex justify-end mb-2">
+            <Button variant="secondary" size="sm" disabled={downloadingId === previewTemplate._id} onClick={() => handleDownloadPdf(previewTemplate)}>
+              <Download /> {downloadingId === previewTemplate._id ? 'Generating…' : 'Download PDF'}
+            </Button>
+          </div>
           <iframe title="preview" srcDoc={previewTemplate.htmlContent} className="w-full h-[70vh] border border-nia-border rounded-nia-btn" />
         </Modal>
       )}
