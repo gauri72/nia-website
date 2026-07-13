@@ -15,7 +15,19 @@ const BOARD = [
   { role: 'Director Marketing',               name: 'Remy van Nieuwenhoven', photo: imgDirectorMarketing,   color: '#7B2D8B', linkedin: 'https://www.linkedin.com/in/remy-van-nieuwenhoven/' },
   { role: 'Director Sponsorships',            name: 'Jayadev Sukumaran',     photo: imgDirectorSponsorship, color: '#c89a2e', linkedin: 'https://www.linkedin.com/in/jayadev-sukumaran-38801b138/' },
   { role: 'Director Public Relations',        name: 'Radha Nikhade',         photo: imgDirectorPR,          color: '#1a7fa8', linkedin: 'https://www.linkedin.com/in/radha-nikhade-2a2548a/' },
+  // Photos pending — falls back to initials in the avatar circle until supplied.
+  { role: 'Advisor', name: 'Prof. dr. Dirk Kolff', photo: null, color: '#b0463c' },
+  { role: 'Advisor', name: 'Ram Lakhina',          photo: null, color: '#3c8fb0' },
+  { role: 'Advisor', name: 'Badri Madan',          photo: null, color: '#8a6d3b' },
+  { role: 'Advisor', name: 'Vinod Sehdev',         photo: null, color: '#4a7d4f' },
+  { role: 'Advisor', name: 'Dev Pal Singh',        photo: null, color: '#6b5b9e' },
 ];
+
+function initials(name) {
+  // Strips ALL leading honorifics ("Prof. dr. " is two tokens, not one).
+  const parts = name.replace(/^(?:(?:Prof|Dr|Mr|Mrs|Ms)\.?\s*)+/i, '').trim().split(/\s+/);
+  return ((parts[0]?.[0] || '') + (parts[parts.length - 1]?.[0] || '')).toUpperCase();
+}
 
 const INTERVAL = 4000;
 
@@ -67,8 +79,10 @@ function OfficeBearersCarousel() {
             className="ob-avatar"
             role="img"
             aria-label={member.name}
-            style={{ backgroundImage: `url(${member.photo})` }}
-          />
+            style={member.photo ? { backgroundImage: `url(${member.photo})` } : { '--member-color': member.color }}
+          >
+            {!member.photo && <span className="ob-avatar__initials">{initials(member.name)}</span>}
+          </div>
           <p className="ob-carousel__name">{member.name}</p>
           <p className="ob-carousel__role">{member.role}</p>
           {member.linkedin && (
