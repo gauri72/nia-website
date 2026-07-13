@@ -20,10 +20,10 @@ const BOARD = [
   { role: 'Director Public Relations',        name: 'Radha Nikhade',         photo: imgDirectorPR,          color: '#1a7fa8', linkedin: 'https://www.linkedin.com/in/radha-nikhade-2a2548a/' },
   // Photos pending for these two — falls back to initials in the avatar circle until supplied.
   { role: 'Advisor', name: 'Prof. dr. Dirk Kolff', photo: null, color: '#b0463c' },
-  { role: 'Advisor', name: 'Ram Lakhina',          photo: null, color: '#3c8fb0' },
-  { role: 'Advisor', name: 'Badri Madan',          photo: imgAdvisorBadriMadan,  color: '#8a6d3b' },
-  { role: 'Advisor', name: 'Vinod Sehdev',         photo: imgAdvisorVinodSehdev, color: '#4a7d4f' },
-  { role: 'Advisor', name: 'Dev Pal Singh',        photo: imgAdvisorDevPalSingh, color: '#6b5b9e' },
+  { role: 'Advisor', name: 'Mr. Ram Lakhina',      photo: null, color: '#3c8fb0' },
+  { role: 'Advisor', name: 'Mr. Badri Madan',      photo: imgAdvisorBadriMadan,  color: '#8a6d3b' },
+  { role: 'Advisor', name: 'Mr. Vinod Sehdev',     photo: imgAdvisorVinodSehdev, color: '#4a7d4f' },
+  { role: 'Advisor', name: 'Mr. Dev Pal Singh',    photo: imgAdvisorDevPalSingh, color: '#6b5b9e' },
 ];
 
 function initials(name) {
