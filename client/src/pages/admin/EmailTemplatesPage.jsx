@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Eye, Pencil, Copy, Trash2, Bot, Download } from 'lucide-react';
 import { jsPDF } from 'jspdf';
-import html2canvas from 'html2canvas';
 import adminApi from '../../services/adminApi';
 import Modal from '../../components/admin/Modal';
 import EmailBroadcastingNav from '../../components/admin/EmailBroadcastingNav';
@@ -25,7 +24,12 @@ function renderForPdf(html) {
 // Renders the template in an off-screen iframe (same isolation the Preview
 // modal already relies on via srcDoc, since these are full HTML documents
 // with their own <style> blocks that would otherwise clash with the admin
-// panel's own CSS) and captures it into a paginated PDF.
+// panel's own CSS), then hands the live DOM to jsPDF's html() plugin —
+// NOT a manual html2canvas-screenshot-then-slice-into-fixed-page-heights
+// approach, which produced duplicated/cut rows at arbitrary page breaks and
+// only ever outputs a flat image with no clickable content. html() paginates
+// around real element boundaries (autoPaging: 'text') and walks the DOM to
+// add genuine link annotations for every <a href> (enableLinks: true).
 async function downloadTemplateAsPdf(template) {
   const iframe = document.createElement('iframe');
   iframe.style.position = 'fixed';
@@ -45,34 +49,20 @@ async function downloadTemplateAsPdf(template) {
     await new Promise((resolve) => setTimeout(resolve, 400));
 
     const doc = iframe.contentDocument;
-    const fullHeight = doc.documentElement.scrollHeight;
-    iframe.style.height = `${fullHeight}px`;
-
-    const canvas = await html2canvas(doc.body, {
-      width: 700,
-      windowWidth: 700,
-      height: fullHeight,
-      scale: 2,
-      useCORS: true,
-    });
+    iframe.style.height = `${doc.documentElement.scrollHeight}px`;
 
     const pdf = new jsPDF('p', 'pt', 'a4');
     const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-    const imgWidth = pageWidth;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-    const imgData = canvas.toDataURL('image/png');
 
-    let heightLeft = imgHeight;
-    let position = 0;
-    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-    heightLeft -= pageHeight;
-    while (heightLeft > 0) {
-      position -= pageHeight;
-      pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-    }
+    await pdf.html(doc.body, {
+      x: 0,
+      y: 0,
+      width: pageWidth,
+      windowWidth: 700,
+      autoPaging: 'text',
+      enableLinks: true,
+      html2canvas: { scale: 2, useCORS: true },
+    });
 
     pdf.save(`${template.name.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.pdf`);
   } finally {
