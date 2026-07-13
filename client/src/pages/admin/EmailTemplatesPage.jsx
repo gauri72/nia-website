@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Eye, Pencil, Copy, Trash2, Bot, Download } from 'lucide-react';
 import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
 import adminApi from '../../services/adminApi';
 import Modal from '../../components/admin/Modal';
 import EmailBroadcastingNav from '../../components/admin/EmailBroadcastingNav';
@@ -21,15 +22,16 @@ function renderForPdf(html) {
     .replaceAll('{{unsubscribe_url}}', '#');
 }
 
-// Renders the template in an off-screen iframe (same isolation the Preview
-// modal already relies on via srcDoc, since these are full HTML documents
-// with their own <style> blocks that would otherwise clash with the admin
-// panel's own CSS), then hands the live DOM to jsPDF's html() plugin —
-// NOT a manual html2canvas-screenshot-then-slice-into-fixed-page-heights
-// approach, which produced duplicated/cut rows at arbitrary page breaks and
-// only ever outputs a flat image with no clickable content. html() paginates
-// around real element boundaries (autoPaging: 'text') and walks the DOM to
-// add genuine link annotations for every <a href> (enableLinks: true).
+// jsPDF's own html() plugin turned out to be the wrong tool: its native PDF
+// text renderer has no glyphs for the emoji these templates use (rendered as
+// garbage bytes) and its width scaling clipped content off the page edge.
+// This instead rasterizes the real browser-rendered DOM via html2canvas
+// (correct emoji, gradients, everything — it's a literal screenshot), then
+// slices that single tall image into pages itself, snapping each page break
+// to the nearest <tr> boundary instead of a blind fixed pixel offset, so a
+// row is never split/duplicated across two pages. Links are re-added as
+// invisible clickable annotations positioned over the flattened image, since
+// an image has no notion of a clickable region on its own.
 async function downloadTemplateAsPdf(template) {
   const iframe = document.createElement('iframe');
   iframe.style.position = 'fixed';
@@ -49,19 +51,66 @@ async function downloadTemplateAsPdf(template) {
     await new Promise((resolve) => setTimeout(resolve, 400));
 
     const doc = iframe.contentDocument;
-    iframe.style.height = `${doc.documentElement.scrollHeight}px`;
+    const fullHeightPx = doc.documentElement.scrollHeight;
+    iframe.style.height = `${fullHeightPx}px`;
+    const bodyTop = doc.body.getBoundingClientRect().top;
+
+    // Safe page-break points: the bottom edge of every table row, in CSS px
+    // relative to the top of the document — a break landing here never cuts
+    // through the middle of a row.
+    const safeBreaksPx = Array.from(doc.querySelectorAll('tr'))
+      .map((r) => r.getBoundingClientRect().bottom - bodyTop)
+      .filter((y) => y > 0 && y < fullHeightPx)
+      .sort((a, b) => a - b);
+
+    // Captured before rasterizing — the flattened image has no clickable
+    // regions of its own, so these get overlaid as PDF link annotations.
+    const links = Array.from(doc.querySelectorAll('a[href]')).map((a) => {
+      const r = a.getBoundingClientRect();
+      return { url: a.href, top: r.top - bodyTop, left: r.left, width: r.width, height: r.height };
+    });
+
+    const RENDER_SCALE = 2; // sharper output; must match the value passed to html2canvas below
+    const canvas = await html2canvas(doc.body, {
+      width: 700, windowWidth: 700, height: fullHeightPx, scale: RENDER_SCALE, useCORS: true,
+    });
 
     const pdf = new jsPDF('p', 'pt', 'a4');
-    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageWidthPt = pdf.internal.pageSize.getWidth();
+    const pageHeightPt = pdf.internal.pageSize.getHeight();
+    const ptPerPx = pageWidthPt / 700; // the 700px-wide render maps to the page's full width
+    const maxSlicePx = pageHeightPt / ptPerPx;
 
-    await pdf.html(doc.body, {
-      x: 0,
-      y: 0,
-      width: pageWidth,
-      windowWidth: 700,
-      autoPaging: 'text',
-      enableLinks: true,
-      html2canvas: { scale: 2, useCORS: true },
+    const pageRanges = [];
+    let cursor = 0;
+    while (cursor < fullHeightPx - 0.5) {
+      const target = cursor + maxSlicePx;
+      let end = target >= fullHeightPx ? fullHeightPx : safeBreaksPx.slice().reverse().find((b) => b > cursor && b <= target);
+      if (!end || end <= cursor) end = Math.min(target, fullHeightPx); // no safe break in range — fall back to a hard cut
+      pageRanges.push({ startPx: cursor, endPx: end });
+      cursor = end;
+    }
+
+    pageRanges.forEach((range, i) => {
+      const sliceHeightPx = range.endPx - range.startPx;
+      const sliceCanvas = document.createElement('canvas');
+      sliceCanvas.width = canvas.width;
+      sliceCanvas.height = Math.min(Math.round(sliceHeightPx * RENDER_SCALE), canvas.height - Math.round(range.startPx * RENDER_SCALE));
+      sliceCanvas.getContext('2d').drawImage(
+        canvas,
+        0, Math.round(range.startPx * RENDER_SCALE), canvas.width, sliceCanvas.height,
+        0, 0, canvas.width, sliceCanvas.height,
+      );
+
+      if (i > 0) pdf.addPage();
+      pdf.addImage(sliceCanvas.toDataURL('image/png'), 'PNG', 0, 0, pageWidthPt, sliceHeightPx * ptPerPx);
+
+      links.forEach((link) => {
+        const linkCenter = link.top + link.height / 2;
+        if (linkCenter >= range.startPx && linkCenter < range.endPx) {
+          pdf.link(link.left * ptPerPx, (link.top - range.startPx) * ptPerPx, link.width * ptPerPx, link.height * ptPerPx, { url: link.url });
+        }
+      });
     });
 
     pdf.save(`${template.name.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.pdf`);
