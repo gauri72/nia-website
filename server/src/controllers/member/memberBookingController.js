@@ -202,6 +202,7 @@ async function create(req, res, next) {
       type: 'booking',
       referenceId: booking._id.toString(),
     });
+    await Booking.findByIdAndUpdate(booking._id, { mollie_payment_id: payment.paymentId });
 
     return res.status(201).json({
       bookingId: booking._id,

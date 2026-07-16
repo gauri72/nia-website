@@ -78,6 +78,7 @@ async function renew(req, res, next) {
       type: 'membership_payment',
       referenceId: payment._id.toString(),
     });
+    await MembershipPayment.findByIdAndUpdate(payment._id, { mollie_payment_id: result.paymentId });
 
     return res.status(201).json({ paymentId: result.paymentId, checkoutUrl: result.checkoutUrl });
   } catch (err) {
@@ -156,6 +157,7 @@ async function upgrade(req, res, next) {
       type: 'membership_payment',
       referenceId: payment._id.toString(),
     });
+    await MembershipPayment.findByIdAndUpdate(payment._id, { mollie_payment_id: result.paymentId });
 
     return res.status(201).json({ paymentId: result.paymentId, checkoutUrl: result.checkoutUrl, amount, message: upgradeCalc.message });
   } catch (err) {

@@ -68,6 +68,7 @@ async function create(req, res, next) {
       type: 'sponsorship',
       referenceId: sponsorship._id.toString(),
     });
+    await Sponsorship.findByIdAndUpdate(sponsorship._id, { mollie_payment_id: payment.paymentId });
 
     console.log(`[Sponsorship] Created ${sponsorship._id} | tier=${tier.name} | payment=${payment.paymentId}`);
 

@@ -69,6 +69,7 @@ async function create(req, res, next) {
       type: 'membership',
       referenceId: membership._id.toString(),
     });
+    await Membership.findByIdAndUpdate(membership._id, { mollie_payment_id: payment.paymentId });
 
     console.log(`[Membership] Created ${membership._id} | plan=${plan} | payment=${payment.paymentId}`);
 

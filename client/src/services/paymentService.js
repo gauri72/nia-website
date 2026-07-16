@@ -17,6 +17,17 @@ export async function getPaymentStatus(paymentId) {
   return data; // { status, paidAt, amount, metadata }
 }
 
+/**
+ * Fallback for when sessionStorage's paymentId didn't survive the redirect
+ * (e.g. a bank app-switch flow that returns in a different browser tab) —
+ * looks the payment up by the record's own ID instead, which travels safely
+ * in the redirect URL's query string.
+ */
+export async function getPaymentStatusByReference(type, referenceId) {
+  const { data } = await api.get('/payments/status-by-reference', { params: { type, referenceId } });
+  return data;
+}
+
 // ── Domain helpers ────────────────────────────────────────────
 
 export async function startMembershipPayment(details) {

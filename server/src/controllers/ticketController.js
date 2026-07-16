@@ -186,6 +186,10 @@ async function create(req, res, next) {
       type: 'event_ticket',
       referenceId: ticket._id.toString(),
     });
+    // Stored immediately (not just on payment confirmation) so the status
+    // page can look this payment up by ticket ID alone if the Mollie payment
+    // ID itself never made it back to the browser (see PaymentSuccessPage).
+    await Ticket.findByIdAndUpdate(ticket._id, { mollie_payment_id: payment.paymentId });
 
     console.log(`[Ticket] Created ${ticket._id} | total=€${total} | payment=${payment.paymentId}`);
 

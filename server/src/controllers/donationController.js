@@ -42,6 +42,7 @@ async function create(req, res, next) {
       type: 'donation',
       referenceId: donation._id.toString(),
     });
+    await Donation.findByIdAndUpdate(donation._id, { mollie_payment_id: payment.paymentId });
 
     console.log(`[Donation] Created ${donation._id} | amount=€${numAmount} | payment=${payment.paymentId}`);
 

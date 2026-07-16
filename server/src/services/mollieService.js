@@ -35,8 +35,13 @@ async function createPayment({ amount, description, type, referenceId, metadata 
       value: amountStr,
     },
     description: description || TYPE_DESCRIPTIONS[type],
-    redirectUrl: `${process.env.FRONTEND_URL}/payment/success?type=${type}`,
-    cancelUrl:   `${process.env.FRONTEND_URL}/payment/cancel?type=${type}`,
+    // referenceId (our own record's ID, known before Mollie even assigns a
+    // payment ID) travels in the URL itself so the status page can look the
+    // payment up even if it returns in a different browser tab/context than
+    // the one that started checkout — sessionStorage alone doesn't survive
+    // that (see PaymentSuccessPage.jsx for the full explanation).
+    redirectUrl: `${process.env.FRONTEND_URL}/payment/success?type=${type}&ref=${referenceId}`,
+    cancelUrl:   `${process.env.FRONTEND_URL}/payment/cancel?type=${type}&ref=${referenceId}`,
     metadata: {
       type,
       referenceId: String(referenceId),

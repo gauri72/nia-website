@@ -30,6 +30,7 @@ router.get('/health', (req, res) => res.json({ status: 'ok', timestamp: new Date
 router.post('/payments/create',            paymentLimiter,  paymentController.create);
 router.post('/payments/webhook',           webhookLimiter,  paymentController.webhook);
 router.get( '/payments/status/:paymentId',                  paymentController.status);
+router.get( '/payments/status-by-reference',                paymentController.statusByReference);
 
 // ── Mollie Import — real-time webhook (separate from the payments webhook above) ──
 router.post('/mollie/webhook',             webhookLimiter,  mollieWebhookController.webhook);
