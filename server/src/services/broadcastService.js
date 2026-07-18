@@ -1,6 +1,7 @@
 const nodemailer = require('nodemailer');
 const Member = require('../models/Member');
 const Booking = require('../models/Booking');
+const Ticket = require('../models/Ticket');
 const Contact = require('../models/Contact');
 const SuppressionList = require('../models/SuppressionList');
 const BroadcastRecipient = require('../models/BroadcastRecipient');
@@ -14,6 +15,20 @@ const Broadcast = require('../models/Broadcast');
 // Member — sendBroadcast() falls back to this via recipient.recipientName.
 function contactsToRecipients(contacts) {
   return contacts.map((c) => ({ _id: c.linkedMember || undefined, email: c.email, fullName: c.fullName }));
+}
+
+// Real public ticket purchases (the actual event booking flow guests use)
+// live in Ticket, not Booking — Booking only ever gets written to by a
+// separate, largely-unused member-dashboard-only booking flow. Most Ticket
+// buyers are guest checkouts with no Member account at all, so this can't
+// resolve through Member — it returns the same lightweight recipient shape
+// contactsToRecipients() does. Note: Ticket.event_id is a fixed string (not
+// an Event ref), so this can't filter by a specific selected Event the way
+// Booking can — it reflects the one event ticket sales are currently wired
+// to, not whichever Event a caller might pass in.
+async function ticketBuyersToRecipients() {
+  const tickets = await Ticket.find({ ticket_status: 'paid' }).select('email name member');
+  return tickets.map((t) => ({ _id: t.member || undefined, email: t.email, fullName: t.name }));
 }
 
 // Broadcasts send from a separate mailbox (secretary@) from the rest of the
@@ -53,9 +68,22 @@ async function resolveAudienceMembers(audience) {
   } else if (audience.type === 'tier') {
     members = await Member.find({ status: 'active', membershipTier: { $in: audience.tierIds || [] } });
   } else if (audience.type === 'event_attendees') {
-    const bookings = await Booking.find({ event: audience.eventId, status: 'paid' }).select('member');
-    const memberIds = [...new Set(bookings.map((b) => String(b.member)))];
-    members = await Member.find({ _id: { $in: memberIds }, status: 'active' });
+    // Two independent systems can each have attendees: real public ticket
+    // sales (Ticket, guest-checkout-friendly, not tied to the selected
+    // Event) and the separate member-dashboard booking flow (Booking,
+    // always a real Member, properly tied to the selected Event).
+    const bookings = await Booking.find({ event: audience.eventId, status: 'paid' }).populate('member', 'email firstName lastName status');
+    const bookingRecipients = bookings
+      .filter((b) => b.member && b.member.status === 'active')
+      .map((b) => ({ _id: b.member._id, email: b.member.email, fullName: `${b.member.firstName} ${b.member.lastName}` }));
+
+    const seen = new Set();
+    members = [...(await ticketBuyersToRecipients()), ...bookingRecipients].filter((m) => {
+      const key = m.email.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   } else if (audience.type === 'custom_list') {
     const filter = { status: 'active' };
     if (audience.memberIds?.length) filter._id = { $in: audience.memberIds };
@@ -72,6 +100,15 @@ async function resolveAudienceMembers(audience) {
     members = contactsToRecipients(await Contact.find({ userType: 'advisory_council' }));
   } else if (audience.type === 'board_members') {
     members = contactsToRecipients(await Contact.find({ userType: 'board_member' }));
+  }
+
+  // Skip people who've already bought a ticket — e.g. a "book your tickets"
+  // reminder sent to everyone shouldn't nag people who've already registered.
+  // Meaningless (and skipped) for the event_attendees type itself, since
+  // that audience IS the ticket buyers.
+  if (audience.excludeEventAttendees && audience.type !== 'event_attendees') {
+    const alreadyBought = new Set((await ticketBuyersToRecipients()).map((r) => r.email.toLowerCase()));
+    members = members.filter((m) => !alreadyBought.has(m.email.toLowerCase()));
   }
 
   const suppressed = new Set((await SuppressionList.find().select('email')).map((s) => s.email));

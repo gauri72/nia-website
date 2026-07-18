@@ -217,6 +217,16 @@ export default function BroadcastComposerPage() {
               </select>
             )}
 
+            {audience.type !== 'event_attendees' && (
+              <label className="flex items-center gap-2 text-sm mb-4">
+                <input
+                  type="checkbox" checked={!!audience.excludeEventAttendees}
+                  onChange={(e) => setAudience((a) => ({ ...a, excludeEventAttendees: e.target.checked }))}
+                />
+                Skip people who've already bought a ticket
+              </label>
+            )}
+
             <div className="rounded-nia-btn bg-nia-panel px-4 py-3 mb-4 text-sm font-semibold text-nia-navy-dark">
               Estimated recipients: <span className="text-nia-orange text-lg">{recipientCount ?? '…'}</span>
             </div>

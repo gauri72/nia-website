@@ -22,6 +22,10 @@ const BroadcastSchema = new mongoose.Schema({
     contactIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Contact' }],
     joinedAfter: { type: Date },
     joinedBefore: { type: Date },
+    // Skip anyone who's already bought an event ticket — e.g. a "book your
+    // tickets" reminder to a broad audience shouldn't nag people who already
+    // registered. No-op for the event_attendees type itself.
+    excludeEventAttendees: { type: Boolean, default: false },
   },
   personalizationVars: { type: mongoose.Schema.Types.Mixed },
   status: {

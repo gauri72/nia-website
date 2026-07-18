@@ -18,6 +18,7 @@ function sanitizeAudience(audience) {
     contactIds: (audience.contactIds || []).filter(Boolean),
     joinedAfter: audience.joinedAfter || undefined,
     joinedBefore: audience.joinedBefore || undefined,
+    excludeEventAttendees: !!audience.excludeEventAttendees,
   };
 }
 
