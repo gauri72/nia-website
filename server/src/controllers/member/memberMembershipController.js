@@ -3,6 +3,7 @@ const MembershipTier = require('../../models/MembershipTier');
 const MembershipPayment = require('../../models/MembershipPayment');
 const { createPayment } = require('../../services/mollieService');
 const { generateMembershipCardPDF } = require('../../services/emailService');
+const { generatePatronPassPDF } = require('../../services/patronPassService');
 const { computeDiscount } = require('../../services/discountService');
 const { finalizeFreeOrder } = require('../../services/databaseService');
 const { computeUpgradeAmount } = require('../../services/membershipUpgradeService');
@@ -180,4 +181,22 @@ async function downloadCard(req, res, next) {
   }
 }
 
-module.exports = { getStatus, setAutoRenew, renew, upgrade, previewUpgrade, downloadCard };
+// ── GET /api/member/membership/patron-pass.pdf ─────────────────────
+async function downloadPatronPass(req, res, next) {
+  try {
+    const member = await Member.findById(req.member.id).populate('membershipTier');
+    if (member.membershipTier?.slug !== 'patron' && member.membershipTier?.name?.toLowerCase() !== 'patron') {
+      return res.status(400).json({ error: 'Patron Pass is only available for Patron-tier members' });
+    }
+    if (member.membershipStatus !== 'active') return res.status(400).json({ error: 'An active membership is required to download a pass' });
+
+    const pdfBuffer = await generatePatronPassPDF(member, member.membershipTier);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="NIA-Patron-Pass-${member.memberId}.pdf"`);
+    return res.send(pdfBuffer);
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { getStatus, setAutoRenew, renew, upgrade, previewUpgrade, downloadCard, downloadPatronPass };

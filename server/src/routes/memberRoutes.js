@@ -18,6 +18,7 @@ router.post( '/membership/renew',        paymentLimiter, memberMembershipControl
 router.post( '/membership/upgrade',      paymentLimiter, memberMembershipController.upgrade);
 router.get(  '/membership/upgrade-preview/:tierId', memberMembershipController.previewUpgrade);
 router.get(  '/membership/card.pdf',     memberMembershipController.downloadCard);
+router.get(  '/membership/patron-pass.pdf', memberMembershipController.downloadPatronPass);
 
 router.get(  '/notifications',               notificationController.list);
 router.post('/notifications/mark-all-read',  notificationController.markAllRead);

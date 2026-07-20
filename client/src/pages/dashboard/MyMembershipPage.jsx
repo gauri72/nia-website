@@ -90,6 +90,18 @@ export default function MyMembershipPage() {
     });
   }
 
+  function downloadPatronPass() {
+    const token = localStorage.getItem('nia_member_token');
+    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5050/api'}/member/membership/patron-pass.pdf`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }).then((r) => r.blob()).then((blob) => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'NIA-Patron-Pass.pdf'; a.click();
+      URL.revokeObjectURL(url);
+    });
+  }
+
   if (!status) return <div className="text-nia-text-muted">Loading…</div>;
 
   return (
@@ -116,6 +128,9 @@ export default function MyMembershipPage() {
           <div className="flex flex-wrap gap-3">
             <Button variant="primary" disabled={busy} onClick={handleRenew}>Renew Membership</Button>
             <Button variant="secondary" onClick={downloadCard}><Download />Download Card</Button>
+            {status.membershipTier.slug === 'patron' && (
+              <Button variant="secondary" onClick={downloadPatronPass}><Download />Download Patron Pass</Button>
+            )}
           </div>
         </Card>
       ) : (
