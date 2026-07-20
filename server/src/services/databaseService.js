@@ -9,9 +9,65 @@ const Member       = require('../models/Member');
 const MembershipTier = require('../models/MembershipTier');
 const { notifyAdmins, notifyMember } = require('./notificationService');
 const { recordRedemption } = require('./discountService');
-const { sendPostPaymentEmails } = require('./emailService');
+const { sendPostPaymentEmails, sendMemberPasswordResetEmail } = require('./emailService');
+const { hashPassword, generateRawToken } = require('./authService');
 
 const TERMINAL_STATUSES = ['paid', 'failed', 'expired', 'canceled'];
+const RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
+
+function splitName(fullName) {
+  const parts = (fullName || '').trim().split(/\s+/).filter(Boolean);
+  const firstName = parts.shift() || 'Member';
+  const lastName = parts.join(' ') || '-';
+  return { firstName, lastName };
+}
+
+// Finds or creates the Member account for a newly-paid Membership purchase and
+// links the two records together — the live payment flow (webhook + status
+// poll) previously only ever updated the Membership record's own status,
+// never provisioning an actual login account. This mirrors matchOrCreateMember
+// + resolveTierForMembership in mollieImportService.js (the only place this
+// logic used to live, requiring an admin to manually run Mollie Import for
+// every new signup) so both paths behave identically.
+async function linkMemberToMembership(membership) {
+  const normalizedEmail = membership.email.trim().toLowerCase();
+  let member = await Member.findOne({ email: normalizedEmail });
+
+  if (!member) {
+    const { firstName, lastName } = splitName(membership.name);
+    const tempPassword = generateRawToken().slice(0, 20);
+    const resetToken = generateRawToken();
+    member = await Member.create({
+      firstName,
+      lastName,
+      email: normalizedEmail,
+      phone: membership.phone,
+      passwordHash: await hashPassword(tempPassword),
+      emailVerified: true,
+      status: 'active',
+      source: 'registration',
+      passwordResetToken: resetToken,
+      passwordResetExpires: new Date(Date.now() + RESET_TOKEN_TTL_MS),
+    });
+
+    const resetUrl = `${process.env.FRONTEND_URL}/dashboard/reset-password?token=${resetToken}`;
+    sendMemberPasswordResetEmail(member, resetUrl).catch((err) =>
+      console.error('[DB] Failed to send password-setup email:', err.message)
+    );
+  }
+
+  const tier = await MembershipTier.findOne({ slug: membership.plan })
+    || await MembershipTier.findOne({ name: new RegExp(`^${membership.plan}$`, 'i') });
+  if (tier) member.membershipTier = tier._id;
+  member.membershipStatus = 'active';
+  member.currentMembershipRecord = membership._id;
+  await member.save();
+
+  membership.member = member._id;
+  await membership.save();
+
+  return member;
+}
 
 /**
  * Generic guard: skip update if record already has a terminal status.
@@ -53,8 +109,11 @@ async function updateMembership(referenceId, molliePaymentId, status, paidAt) {
   }
   console.log(`[DB] Membership ${referenceId} updated → status=${status}`);
 
-  if (status === 'paid' && updated.discountCode) {
-    await recordRedemption({ discountCodeId: updated.discountCode, email: updated.email, productType: 'membership', referenceId: updated._id });
+  if (status === 'paid') {
+    if (updated.discountCode) {
+      await recordRedemption({ discountCodeId: updated.discountCode, email: updated.email, productType: 'membership', referenceId: updated._id });
+    }
+    await linkMemberToMembership(updated);
   }
 
   return updated;

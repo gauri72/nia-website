@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Send, ArrowUpCircle, Copy } from 'lucide-react';
+import { ArrowLeft, Send, ArrowUpCircle, Copy, IdCard, Ban } from 'lucide-react';
 import adminApi from '../../services/adminApi';
 import { useAdminAuth } from '../../context/AdminAuthContext';
 import StatusBadge from '../../components/admin/StatusBadge';
@@ -30,6 +30,8 @@ export default function MemberDetailPage() {
   const [generatingLink, setGeneratingLink] = useState(false);
   const [upgradeLink, setUpgradeLink] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [downloadingPass, setDownloadingPass] = useState(false);
+  const [voiding, setVoiding] = useState(false);
 
   useEffect(() => {
     adminApi.get(`/admin/members/${id}`).then((r) => {
@@ -82,6 +84,46 @@ export default function MemberDetailPage() {
       setError(err.response?.data?.error || 'Failed to send confirmation email');
     } finally {
       setResending(false);
+    }
+  }
+
+  async function handleDownloadPatronPass() {
+    setError(''); setDownloadingPass(true);
+    try {
+      const token = localStorage.getItem('nia_admin_token');
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5050/api'}/admin/members/${id}/patron-pass`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || 'Failed to generate Patron Pass');
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `NIA-Patron-Pass-${member.memberId}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err.message || 'Failed to generate Patron Pass');
+    } finally {
+      setDownloadingPass(false);
+    }
+  }
+
+  async function handleVoidMembership() {
+    if (!window.confirm('Void this member\'s current membership? This immediately clears their tier and expiry — the account itself stays active. This cannot be undone.')) return;
+    setError(''); setMessage(''); setVoiding(true);
+    try {
+      const { data } = await adminApi.post(`/admin/members/${id}/void-membership`);
+      setMember(data);
+      setForm((f) => ({ ...f, membershipTier: '', membershipStatus: 'canceled', membershipExpiresAt: '', autoRenew: false }));
+      setMessage('Membership voided');
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to void membership');
+    } finally {
+      setVoiding(false);
     }
   }
 
@@ -211,6 +253,32 @@ export default function MemberDetailPage() {
             >
               <Send /> {resending ? 'Sending…' : 'Resend Confirmation Email'}
             </Button>
+          </Card>
+
+          {member.membershipTier?.slug === 'patron' && form.membershipStatus === 'active' && (
+            <Card>
+              <h2 className="font-bold text-nia-navy-dark mb-2">Patron Pass</h2>
+              <p className="text-sm text-nia-text-faint mb-3">
+                A downloadable pass with a QR code for free entry to any NIA event, no ticket needed, valid until this membership's expiry date. Scans at the door the same way a ticket or member ID does.
+              </p>
+              <Button variant="secondary" disabled={downloadingPass} onClick={handleDownloadPatronPass}>
+                <IdCard /> {downloadingPass ? 'Generating…' : 'Download Patron Pass'}
+              </Button>
+            </Card>
+          )}
+
+          <Card>
+            <h2 className="font-bold text-nia-navy-dark mb-2">Void Membership</h2>
+            <p className="text-sm text-nia-text-faint mb-3">
+              Immediately clears this member's tier and expiry, setting their membership to canceled — for refunds or a mistaken purchase. The login account itself is untouched; use Account Actions above to suspend or delete that.
+            </p>
+            {isSuperAdmin ? (
+              <Button variant="danger" disabled={voiding || form.membershipStatus === 'none'} onClick={handleVoidMembership}>
+                <Ban /> {voiding ? 'Voiding…' : 'Void Membership'}
+              </Button>
+            ) : (
+              <p className="text-sm text-nia-text-faint">Only Super Admins can void a membership.</p>
+            )}
           </Card>
 
           <Card>

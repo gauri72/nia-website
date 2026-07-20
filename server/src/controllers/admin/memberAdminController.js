@@ -7,6 +7,7 @@ const { sendMemberPasswordResetEmail, sendMembershipPaymentConfirmation } = requ
 const { createPayment } = require('../../services/mollieService');
 const { finalizeFreeOrder } = require('../../services/databaseService');
 const { computeUpgradeAmount } = require('../../services/membershipUpgradeService');
+const { generatePatronPassPDF } = require('../../services/patronPassService');
 
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
 const SENSITIVE_FIELDS = '-passwordHash -emailVerificationToken -emailVerificationExpires -passwordResetToken -passwordResetExpires';
@@ -239,6 +240,49 @@ async function resendMembershipEmail(req, res, next) {
   }
 }
 
+// ── GET /api/admin/members/:id/patron-pass ────────────────────────────
+// Patron-exclusive perk: a downloadable pass whose QR code is the member's
+// own memberId — the same code the admin Scan page already resolves via
+// /api/admin/scan/check-in, so this needs no new check-in logic at all.
+async function downloadPatronPass(req, res, next) {
+  try {
+    const member = await Member.findById(req.params.id).populate('membershipTier');
+    if (!member) return res.status(404).json({ error: 'Member not found' });
+    if (member.membershipTier?.slug !== 'patron' && member.membershipTier?.name?.toLowerCase() !== 'patron') {
+      return res.status(400).json({ error: 'Patron Pass is only available for Patron-tier members' });
+    }
+    if (member.membershipStatus !== 'active') {
+      return res.status(400).json({ error: 'This member\'s membership is not active' });
+    }
+
+    const pdfBuffer = await generatePatronPassPDF(member, member.membershipTier);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="NIA-Patron-Pass-${member.memberId}.pdf"`);
+    return res.send(pdfBuffer);
+  } catch (err) {
+    next(err);
+  }
+}
+
+// ── POST /api/admin/members/:id/void-membership ───────────────────────
+// A purpose-built action distinct from the general PATCH edit form — sets
+// membershipStatus to canceled and clears the tier/expiry immediately,
+// rather than an admin having to know that "canceled" in a dropdown means
+// "void it now". The account itself (login, status) is untouched.
+async function voidMembership(req, res, next) {
+  try {
+    const member = await Member.findByIdAndUpdate(
+      req.params.id,
+      { $set: { membershipStatus: 'canceled', autoRenew: false }, $unset: { membershipTier: '', membershipExpiresAt: '' } },
+      { new: true },
+    ).populate('membershipTier');
+    if (!member) return res.status(404).json({ error: 'Member not found' });
+    return res.json(member);
+  } catch (err) {
+    next(err);
+  }
+}
+
 // ── GET /api/admin/members/:id/upgrade-preview/:tierId ───────────────
 // No side effects — same computation the member would see themselves, so an
 // admin can quote the correct amount before generating a real payment link.
@@ -322,4 +366,4 @@ async function updateStatus(req, res, next) {
   }
 }
 
-module.exports = { list, exportCsv, getById, create, update, updateStatus, resendMembershipEmail, previewUpgrade, generateUpgradeLink };
+module.exports = { list, exportCsv, getById, create, update, updateStatus, resendMembershipEmail, downloadPatronPass, voidMembership, previewUpgrade, generateUpgradeLink };
