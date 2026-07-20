@@ -20,6 +20,7 @@ export default function MemberDetailPage() {
   const [member, setMember] = useState(null);
   const [tiers, setTiers] = useState([]);
   const [form, setForm] = useState(null);
+  const [savedForm, setSavedForm] = useState(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -33,15 +34,21 @@ export default function MemberDetailPage() {
   const [downloadingPass, setDownloadingPass] = useState(false);
   const [voiding, setVoiding] = useState(false);
 
+  function formFromMember(m) {
+    return {
+      firstName: m.firstName, lastName: m.lastName, phone: m.phone || '', address: m.address || '',
+      membershipTier: m.membershipTier?._id || '', membershipStatus: m.membershipStatus,
+      membershipExpiresAt: m.membershipExpiresAt ? m.membershipExpiresAt.slice(0, 10) : '',
+      autoRenew: m.autoRenew,
+    };
+  }
+
   useEffect(() => {
     adminApi.get(`/admin/members/${id}`).then((r) => {
       setMember(r.data);
-      setForm({
-        firstName: r.data.firstName, lastName: r.data.lastName, phone: r.data.phone || '', address: r.data.address || '',
-        membershipTier: r.data.membershipTier?._id || '', membershipStatus: r.data.membershipStatus,
-        membershipExpiresAt: r.data.membershipExpiresAt ? r.data.membershipExpiresAt.slice(0, 10) : '',
-        autoRenew: r.data.autoRenew,
-      });
+      const initial = formFromMember(r.data);
+      setForm(initial);
+      setSavedForm(initial);
     });
     adminApi.get('/admin/membership-tiers').then((r) => setTiers(r.data));
   }, [id]);
@@ -54,8 +61,23 @@ export default function MemberDetailPage() {
     e.preventDefault();
     setError(''); setMessage(''); setSaving(true);
     try {
-      const { data } = await adminApi.patch(`/admin/members/${id}`, form);
+      // Only send fields actually changed in this session — a field left
+      // untouched (loaded from a page opened a while ago) must never
+      // overwrite a more recent value that changed elsewhere in the
+      // meantime (e.g. a real membership payment finishing after this
+      // page loaded but before this save).
+      const changedFields = Object.fromEntries(
+        Object.entries(form).filter(([key, value]) => value !== savedForm[key])
+      );
+      if (Object.keys(changedFields).length === 0) {
+        setMessage('No changes to save');
+        return;
+      }
+      const { data } = await adminApi.patch(`/admin/members/${id}`, changedFields);
       setMember(data);
+      const refreshed = formFromMember(data);
+      setForm(refreshed);
+      setSavedForm(refreshed);
       setMessage('Saved successfully');
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to save changes');
@@ -118,7 +140,9 @@ export default function MemberDetailPage() {
     try {
       const { data } = await adminApi.post(`/admin/members/${id}/void-membership`);
       setMember(data);
-      setForm((f) => ({ ...f, membershipTier: '', membershipStatus: 'canceled', membershipExpiresAt: '', autoRenew: false }));
+      const refreshed = formFromMember(data);
+      setForm(refreshed);
+      setSavedForm(refreshed);
       setMessage('Membership voided');
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to void membership');
