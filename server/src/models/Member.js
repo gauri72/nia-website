@@ -31,6 +31,9 @@ const MemberSchema = new mongoose.Schema({
   autoRenew: { type: Boolean, default: false },
   renewalReminderSentAt: { type: Date },
   currentMembershipRecord: { type: mongoose.Schema.Types.ObjectId, ref: 'Membership' },
+  // Guards the automatic Patron welcome email — set once, ever, so a renewal
+  // or any other later tier-related update never re-sends it.
+  patronWelcomeEmailSentAt: { type: Date },
 
   communicationPrefs: {
     newsletter: { type: Boolean, default: true },

@@ -6,6 +6,7 @@ const Contact = require('../models/Contact');
 const SuppressionList = require('../models/SuppressionList');
 const BroadcastRecipient = require('../models/BroadcastRecipient');
 const Broadcast = require('../models/Broadcast');
+const EmailTemplate = require('../models/EmailTemplate');
 
 // Contacts aren't Members — most have no linked account at all — so they're
 // represented here as the lightest shape createRecipients/sendBroadcast need:
@@ -194,6 +195,26 @@ async function sendTestEmail(to, subject, html, sampleVars = {}, unsubscribeUrl 
   await transporter.sendMail(mailOptions);
 }
 
+// ── Send a single saved template to one real member (not a mass broadcast) ──
+// Used for workflow-triggered sends (e.g. the automatic Patron welcome email)
+// and admin "resend" actions — a real send, not a test, so it respects the
+// suppression list and carries no [TEST] prefix.
+async function sendTemplateToMember(member, templateId) {
+  const template = await EmailTemplate.findById(templateId);
+  if (!template) throw new Error(`Email template not found: ${templateId}`);
+
+  const suppressed = await SuppressionList.findOne({ email: member.email });
+  if (suppressed) {
+    console.log(`[Broadcast] Skipped "${template.name}" to ${member.email} — suppressed (${suppressed.reason})`);
+    return { sent: false, reason: 'suppressed' };
+  }
+
+  const transporter = createTransporter();
+  const rendered = renderPersonalized(template.htmlContent, member, {}).replaceAll('{{unsubscribe_url}}', '#');
+  await transporter.sendMail({ from: FROM, to: member.email, subject: template.subject, html: rendered });
+  return { sent: true };
+}
+
 // ── Send (or resume sending) a broadcast to its pending recipients ──
 async function sendBroadcast(broadcastId) {
   const broadcast = await Broadcast.findById(broadcastId).populate('template');
@@ -287,5 +308,5 @@ async function resendFailed(broadcastId) {
 
 module.exports = {
   resolveAudienceMembers, estimateAudienceCount, renderPersonalized, injectTracking,
-  createRecipients, sendTestEmail, sendBroadcast, resendFailed, buildUnsubscribeUrl,
+  createRecipients, sendTestEmail, sendTemplateToMember, sendBroadcast, resendFailed, buildUnsubscribeUrl,
 };

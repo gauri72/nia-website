@@ -2,15 +2,18 @@ const Member = require('../../models/Member');
 const MembershipTier = require('../../models/MembershipTier');
 const MollieTransaction = require('../../models/MollieTransaction');
 const MembershipPayment = require('../../models/MembershipPayment');
+const EmailTemplate = require('../../models/EmailTemplate');
 const { hashPassword, generateRawToken } = require('../../services/authService');
 const { sendMemberPasswordResetEmail, sendMembershipPaymentConfirmation } = require('../../services/emailService');
 const { createPayment } = require('../../services/mollieService');
-const { finalizeFreeOrder } = require('../../services/databaseService');
+const { finalizeFreeOrder, maybeSendPatronWelcomeEmail } = require('../../services/databaseService');
+const { sendTemplateToMember } = require('../../services/broadcastService');
 const { computeUpgradeAmount } = require('../../services/membershipUpgradeService');
 const { generatePatronPassPDF } = require('../../services/patronPassService');
 
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
 const SENSITIVE_FIELDS = '-passwordHash -emailVerificationToken -emailVerificationExpires -passwordResetToken -passwordResetExpires';
+const PATRON_WELCOME_TEMPLATE_NAME = 'Patron Member Thank You';
 
 function csvEscape(value) {
   const str = value === null || value === undefined ? '' : String(value);
@@ -210,7 +213,15 @@ async function update(req, res, next) {
     const statusChanged = before.membershipStatus !== member.membershipStatus;
     const expiryChanged = String(before.membershipExpiresAt || '') !== String(member.membershipExpiresAt || '');
     if (member.membershipStatus === 'active' && member.membershipTier && (tierChanged || statusChanged || expiryChanged)) {
-      sendMembershipPaymentConfirmation({ member, membershipTier: member.membershipTier, type: 'manual' })
+      // A newly-Patron member gets the dedicated welcome email instead of the
+      // generic confirmation; falls back to the generic one if that's already
+      // been sent before (e.g. this edit isn't their first time becoming Patron).
+      maybeSendPatronWelcomeEmail(member, member.membershipTier)
+        .then((sentPatronWelcome) => {
+          if (!sentPatronWelcome) {
+            return sendMembershipPaymentConfirmation({ member, membershipTier: member.membershipTier, type: 'manual' });
+          }
+        })
         .catch((err) => console.error('[MemberAdmin] Failed to send manual membership confirmation email:', err.message));
     }
 
@@ -233,7 +244,21 @@ async function resendMembershipEmail(req, res, next) {
       return res.status(400).json({ error: 'This member does not have an active membership tier to send a confirmation for' });
     }
 
-    await sendMembershipPaymentConfirmation({ member, membershipTier: member.membershipTier, type: 'manual' });
+    // Patron members get the dedicated welcome/benefits template — a deliberate
+    // resend, so it ignores the "only once ever" guard the automatic trigger uses.
+    const isPatron = member.membershipTier.slug === 'patron' || member.membershipTier.name?.toLowerCase() === 'patron';
+    if (isPatron) {
+      const template = await EmailTemplate.findOne({ name: PATRON_WELCOME_TEMPLATE_NAME });
+      if (!template) return res.status(500).json({ error: `"${PATRON_WELCOME_TEMPLATE_NAME}" template not found` });
+      await sendTemplateToMember(member, template._id);
+      if (!member.patronWelcomeEmailSentAt) {
+        member.patronWelcomeEmailSentAt = new Date();
+        await member.save();
+      }
+    } else {
+      await sendMembershipPaymentConfirmation({ member, membershipTier: member.membershipTier, type: 'manual' });
+    }
+
     return res.json({ message: `Confirmation email sent to ${member.email}` });
   } catch (err) {
     next(err);

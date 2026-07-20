@@ -7,13 +7,43 @@ const TicketType   = require('../models/TicketType');
 const MembershipPayment = require('../models/MembershipPayment');
 const Member       = require('../models/Member');
 const MembershipTier = require('../models/MembershipTier');
+const EmailTemplate = require('../models/EmailTemplate');
 const { notifyAdmins, notifyMember } = require('./notificationService');
 const { recordRedemption } = require('./discountService');
 const { sendPostPaymentEmails, sendMemberPasswordResetEmail } = require('./emailService');
 const { hashPassword, generateRawToken } = require('./authService');
+const { sendTemplateToMember } = require('./broadcastService');
 
 const TERMINAL_STATUSES = ['paid', 'failed', 'expired', 'canceled'];
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
+const PATRON_WELCOME_TEMPLATE_NAME = 'Patron Member Thank You';
+
+// Fires once, ever, per member — the moment their tier genuinely becomes
+// Patron (new signup, upgrade, or admin assignment — anywhere a caller
+// resolves a real tier change). Guarded by patronWelcomeEmailSentAt so a
+// later renewal at the same tier never re-sends it. Returns whether it
+// actually sent, so callers can fall back to a generic confirmation email
+// when this was skipped (not Patron, or already sent before).
+async function maybeSendPatronWelcomeEmail(member, tier) {
+  if (!tier || (tier.slug !== 'patron' && tier.name?.toLowerCase() !== 'patron')) return false;
+  if (member.patronWelcomeEmailSentAt) return false;
+
+  try {
+    const template = await EmailTemplate.findOne({ name: PATRON_WELCOME_TEMPLATE_NAME });
+    if (!template) {
+      console.warn(`[DB] "${PATRON_WELCOME_TEMPLATE_NAME}" template not found — skipping Patron welcome email for ${member.email}`);
+      return false;
+    }
+    await sendTemplateToMember(member, template._id);
+    member.patronWelcomeEmailSentAt = new Date();
+    await member.save();
+    console.log(`[DB] Sent Patron welcome email to ${member.email}`);
+    return true;
+  } catch (err) {
+    console.error(`[DB] Failed to send Patron welcome email to ${member.email}:`, err.message);
+    return false;
+  }
+}
 
 function splitName(fullName) {
   const parts = (fullName || '').trim().split(/\s+/).filter(Boolean);
@@ -65,6 +95,8 @@ async function linkMemberToMembership(membership) {
 
   membership.member = member._id;
   await membership.save();
+
+  await maybeSendPatronWelcomeEmail(member, tier);
 
   return member;
 }
@@ -268,12 +300,18 @@ async function updateMembershipPayment(referenceId, molliePaymentId, status, pai
     // Renewals extend from current expiry if still in the future; upgrades/new start from now.
     const base = (record.type === 'renewal' && member?.membershipExpiresAt > new Date()) ? member.membershipExpiresAt : new Date();
 
-    await Member.findByIdAndUpdate(record.member, {
+    const updatedMember = await Member.findByIdAndUpdate(record.member, {
       membershipTier: record.membershipTier,
       membershipStatus: 'active',
       membershipExpiresAt: new Date(base.getTime() + durationMs),
       renewalReminderSentAt: null,
-    });
+    }, { new: true });
+
+    // Only an upgrade/new join can be someone's first time becoming Patron —
+    // a renewal keeps the same tier they already had.
+    if (record.type !== 'renewal' && updatedMember) {
+      await maybeSendPatronWelcomeEmail(updatedMember, tier);
+    }
   }
 
   const updated = await MembershipPayment.findOneAndUpdate(
@@ -332,4 +370,4 @@ async function finalizeFreeOrder(type, referenceId) {
   return updated;
 }
 
-module.exports = { updateRecordByType, finalizeFreeOrder };
+module.exports = { updateRecordByType, finalizeFreeOrder, maybeSendPatronWelcomeEmail };
