@@ -9,6 +9,7 @@ import imgDirectorPR         from '../../assets/about-us/director-public-relatio
 import imgAdvisorBadriMadan   from '../../assets/about-us/advisor-badri-madan.jpeg';
 import imgAdvisorVinodSehdev  from '../../assets/about-us/advisor-vinod-sehdev.jpeg';
 import imgAdvisorDevPalSingh  from '../../assets/about-us/advisor-dev-pal-singh.jpeg';
+import imgAdvisorDirkKolff    from '../../assets/about-us/advisor-dirk-kolff.jpeg';
 import './AboutStructure.css';
 
 const BOARD = [
@@ -18,8 +19,8 @@ const BOARD = [
   { role: 'Director Marketing',               name: 'Remy van Nieuwenhoven', photo: imgDirectorMarketing,   color: '#7B2D8B', linkedin: 'https://www.linkedin.com/in/remy-van-nieuwenhoven/' },
   { role: 'Director Sponsorships',            name: 'Jayadev Sukumaran',     photo: imgDirectorSponsorship, color: '#c89a2e', linkedin: 'https://www.linkedin.com/in/jayadev-sukumaran-38801b138/' },
   { role: 'Director Public Relations',        name: 'Radha Nikhade',         photo: imgDirectorPR,          color: '#1a7fa8', linkedin: 'https://www.linkedin.com/in/radha-nikhade-2a2548a/' },
-  // Photos pending for these two — falls back to initials in the avatar circle until supplied.
-  { role: 'Advisor', name: 'Prof. dr. Dirk Kolff', photo: null, color: '#b0463c' },
+  // Photo pending for this one — falls back to initials in the avatar circle until supplied.
+  { role: 'Advisor', name: 'Prof. dr. Dirk Kolff', photo: imgAdvisorDirkKolff, color: '#b0463c' },
   { role: 'Advisor', name: 'Mr. Ram Lakhina',      photo: null, color: '#3c8fb0' },
   { role: 'Advisor', name: 'Drs. B N Madan',       photo: imgAdvisorBadriMadan,  color: '#8a6d3b' },
   { role: 'Advisor', name: 'Mr. Vinod Sehdev',     photo: imgAdvisorVinodSehdev, color: '#4a7d4f' },
