@@ -1,3 +1,4 @@
+const path = require('path');
 const PDFDocument = require('pdfkit');
 const { generateQRDataURL } = require('./emailService');
 
@@ -6,6 +7,10 @@ const NAVY_LIGHT = '#16316e';
 const GOLD = '#e8c84a';
 const GOLD_DARK = '#c96b00';
 const CREAM = '#fffdf7';
+// Real logo has a white background (not transparent in practice), so it sits
+// on its own white card rather than directly on the navy header band.
+const LOGO_PATH = path.join(__dirname, '..', 'assets', 'nia-logo.png');
+const LOGO_ASPECT = 85 / 500;
 
 // A landscape "VIP pass" — the QR encodes the member's own memberId
 // (NIA-MBR-xxxxxxxx), the exact same code already used everywhere else in
@@ -28,11 +33,21 @@ async function generatePatronPassPDF(member, tier) {
       const inset = 6;
       doc.rect(inset, inset, W - inset * 2, H - inset * 2).fill(NAVY);
 
-      // Subtle header band.
-      doc.rect(inset, inset, W - inset * 2, 54).fill(NAVY_LIGHT);
-      doc
-        .fillColor(GOLD).font('Helvetica-Bold').fontSize(11)
-        .text('NETHERLANDS INDIA ASSOCIATION', inset + 26, inset + 21, { characterSpacing: 1.5 });
+      // Subtle header band, with the real logo on its own white card (the
+      // source image has a white background, not transparent, so it needs
+      // one rather than sitting directly on the navy band).
+      const headerH = 54;
+      doc.rect(inset, inset, W - inset * 2, headerH).fill(NAVY_LIGHT);
+
+      const logoW = 200;
+      const logoH = logoW * LOGO_ASPECT;
+      const logoPadX = 10, logoPadY = 8;
+      const logoCardW = logoW + logoPadX * 2;
+      const logoCardH = logoH + logoPadY * 2;
+      const logoCardX = inset + 20;
+      const logoCardY = inset + (headerH - logoCardH) / 2;
+      doc.roundedRect(logoCardX, logoCardY, logoCardW, logoCardH, 6).fill(CREAM);
+      doc.image(LOGO_PATH, logoCardX + logoPadX, logoCardY + logoPadY, { width: logoW, height: logoH });
 
       // "PATRON MEMBER" badge/ribbon.
       const badgeY = inset + 74;
