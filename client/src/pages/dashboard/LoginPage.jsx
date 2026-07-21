@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useMemberAuth } from '../../context/MemberAuthContext';
+import { translateApiError } from '../../i18n/translateApiError';
 import '../../styles/auth.css';
 
 export default function DashboardLoginPage() {
+  const { t, i18n } = useTranslation();
   const { login } = useMemberAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -20,7 +23,7 @@ export default function DashboardLoginPage() {
       await login(email, password);
       navigate(location.state?.from || '/dashboard', { replace: true });
     } catch (err) {
-      setError(err.response?.data?.error || 'Login failed. Please try again.');
+      setError(translateApiError(err.response?.data?.error, i18n.language) || t('dashboardAuth.login.errorDefault'));
     } finally {
       setLoading(false);
     }
@@ -29,38 +32,38 @@ export default function DashboardLoginPage() {
   return (
     <div className="auth-page">
       <div className="auth-card">
-        <div className="auth-card__logo">NIA <span>Member Portal</span></div>
-        <h1 className="auth-card__title">Welcome Back</h1>
-        <p className="auth-card__sub">Log in to manage your membership, events and tickets.</p>
+        <div className="auth-card__logo">NIA <span>{t('dashboardAuth.memberPortal')}</span></div>
+        <h1 className="auth-card__title">{t('dashboardAuth.login.title')}</h1>
+        <p className="auth-card__sub">{t('dashboardAuth.login.sub')}</p>
 
         {error && <div className="auth-error">{error}</div>}
 
         <form className="auth-form" onSubmit={handleSubmit}>
           <div className="auth-field">
-            <label className="auth-field__label" htmlFor="email">Email</label>
+            <label className="auth-field__label" htmlFor="email">{t('dashboardAuth.login.email')}</label>
             <input
               id="email" type="email" className="auth-field__input" required
               value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com"
             />
           </div>
           <div className="auth-field">
-            <label className="auth-field__label" htmlFor="password">Password</label>
+            <label className="auth-field__label" htmlFor="password">{t('dashboardAuth.login.password')}</label>
             <input
               id="password" type="password" className="auth-field__input" required
               value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••"
             />
           </div>
           <button type="submit" className="auth-btn" disabled={loading}>
-            {loading ? 'Logging in…' : 'Log In'}
+            {loading ? t('dashboardAuth.login.loggingIn') : t('dashboardAuth.login.logIn')}
           </button>
         </form>
 
         <div className="auth-links">
-          <Link to="/dashboard/forgot-password">Forgot password?</Link>
+          <Link to="/dashboard/forgot-password">{t('dashboardAuth.login.forgotPassword')}</Link>
         </div>
 
         <div className="auth-card__footer">
-          New to NIA? <Link to="/dashboard/register">Create a member account</Link>
+          {t('dashboardAuth.login.newToNia')} <Link to="/dashboard/register">{t('dashboardAuth.login.createAccount')}</Link>
         </div>
       </div>
     </div>

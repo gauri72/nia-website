@@ -1,8 +1,11 @@
+import { useTranslation } from 'react-i18next';
 import { FaUsers } from 'react-icons/fa';
 import ctaLogo from '../../assets/events/CTALogo.png';
 import './AboutCTA.css';
 
 export default function AboutCTA() {
+  const { t } = useTranslation();
+
   return (
     <section className="au-cta">
       <div className="au-cta__inner">
@@ -12,13 +15,10 @@ export default function AboutCTA() {
         </div>
 
         <div className="au-cta__text">
-          <p className="au-cta__body">
-            Want to be part of a community that celebrates two great cultures?
-            Become a member of the Netherlands India Association today.
-          </p>
+          <p className="au-cta__body">{t('about.cta.body')}</p>
           <p className="au-cta__sub">
-            Open to everyone who shares a love for Indo-Dutch friendship —{' '}
-            <strong>join us and make a difference.</strong>
+            {t('about.cta.subPrefix')}{' '}
+            <strong>{t('about.cta.subStrong')}</strong>
           </p>
         </div>
 

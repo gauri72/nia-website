@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FaMedal, FaStar, FaCrown, FaGem, FaTrophy, FaAward, FaUsers, FaArrowRight, FaArrowLeft, FaLock, FaShieldAlt, FaTag, FaCheckCircle } from 'react-icons/fa';
 import { startSponsorshipPayment } from '../../services/paymentService';
 import api from '../../services/api';
+import { translateApiError } from '../../i18n/translateApiError';
 import './SponsorshipPackages.css';
 
 const ICONS = { medal: <FaMedal />, star: <FaStar />, crown: <FaCrown />, gem: <FaGem />, trophy: <FaTrophy />, award: <FaAward /> };
@@ -10,16 +12,14 @@ const ICONS = { medal: <FaMedal />, star: <FaStar />, crown: <FaCrown />, gem: <
 // from its own `color` field, so new/renamed packages still look intentional, not broken.
 const KNOWN_COLOR_SLUGS = ['bronze', 'silver', 'gold', 'platinum'];
 
-const STEPS = ['Choose Package', 'Your Details', 'Review Order', 'Payment'];
-
-function StepBar({ step }) {
+function StepBar({ step, steps }) {
   return (
     <div className="spp-steps">
-      {STEPS.map((label, i) => (
+      {steps.map((label, i) => (
         <div key={i} className={`spp-step${step === i ? ' spp-step--active' : ''}${step > i ? ' spp-step--done' : ''}`}>
           <div className="spp-step__circle">{step > i ? '✓' : i + 1}</div>
           <span className="spp-step__label">{label}</span>
-          {i < STEPS.length - 1 && <div className="spp-step__line" />}
+          {i < steps.length - 1 && <div className="spp-step__line" />}
         </div>
       ))}
     </div>
@@ -27,6 +27,7 @@ function StepBar({ step }) {
 }
 
 export default function SponsorshipPackages() {
+  const { t, i18n } = useTranslation();
   const [tiers, setTiers] = useState(null);
   const [step, setStep]         = useState(0);
   const [selected, setSelected] = useState(null);
@@ -39,6 +40,21 @@ export default function SponsorshipPackages() {
   const [freeSuccess, setFreeSuccess] = useState('');
 
   useEffect(() => { api.get('/sponsorship-tiers').then((r) => setTiers(r.data)); }, []);
+
+  const STEPS = [
+    t('sponsorship.packages.steps.choosePackage'),
+    t('sponsorship.packages.steps.yourDetails'),
+    t('sponsorship.packages.steps.reviewOrder'),
+    t('sponsorship.packages.steps.payment'),
+  ];
+
+  // Known tier slugs (bronze/silver/gold/platinum) get their display name translated;
+  // any other admin-created/renamed tier keeps whatever free-text name was entered,
+  // since that content only exists in the database in one language.
+  function displayName(p) {
+    if (!p) return '';
+    return KNOWN_COLOR_SLUGS.includes(p.slug) ? t(`sponsorship.packages.tierNames.${p.slug}`) : p.name;
+  }
 
   const pkg = tiers?.find(p => p.slug === selected);
   const canProceedStep1 = sponsor.name.trim() && sponsor.email.trim();
@@ -62,9 +78,9 @@ export default function SponsorshipPackages() {
       const { data } = await api.post('/discount-codes/preview', {
         code: discountCode.trim(), productType: 'sponsorship', email: sponsor.email.trim(), originalAmount: pkg.price,
       });
-      setDiscount(data);
+      setDiscount(data.message ? { ...data, message: translateApiError(data.message, i18n.language) } : data);
     } catch {
-      setDiscount({ valid: false, message: 'Could not validate this code right now.' });
+      setDiscount({ valid: false, message: t('sponsorship.packages.errors.discountCheckFailed') });
     } finally {
       setApplyingDiscount(false);
     }
@@ -84,11 +100,11 @@ export default function SponsorshipPackages() {
         discountCode:  discountCode.trim() || undefined,
       });
       if (result.free) {
-        setFreeSuccess(result.message || 'This sponsorship is fully covered by the discount — no payment required.');
+        setFreeSuccess(result.message || t('sponsorship.packages.freeSuccessDefault'));
         setPaying(false);
       }
     } catch (err) {
-      setPayError(err?.response?.data?.error || 'Payment failed. Please try again.');
+      setPayError(translateApiError(err?.response?.data?.error, i18n.language) || t('sponsorship.packages.errors.paymentFailed'));
       setPaying(false);
     }
   }
@@ -98,18 +114,18 @@ export default function SponsorshipPackages() {
       <div className="sp-packages__flow">
 
         <div className="sp-packages__header">
-          <h2 className="sp-packages__heading">Sponsorship Packages</h2>
-          <p className="sp-packages__sub">Support the Netherlands India Association and gain visibility across our events and community.</p>
+          <h2 className="sp-packages__heading">{t('sponsorship.packages.heading')}</h2>
+          <p className="sp-packages__sub">{t('sponsorship.packages.sub')}</p>
         </div>
 
-        <StepBar step={step} />
+        <StepBar step={step} steps={STEPS} />
 
         {/* ══════════════════════════════
             STEP 0 — Choose Package
             ══════════════════════════════ */}
         {step === 0 && (
           <>
-            {!tiers && <p style={{ textAlign: 'center', padding: '2rem' }}>Loading packages…</p>}
+            {!tiers && <p style={{ textAlign: 'center', padding: '2rem' }}>{t('sponsorship.packages.loadingPackages')}</p>}
             {tiers && (
               <div className="spp-cards">
                 {tiers.map((p) => {
@@ -129,8 +145,8 @@ export default function SponsorshipPackages() {
                           <span className="spp-card__badge-icon">{ICONS[p.icon] || <FaMedal />}</span>
                         </div>
                         <div className="spp-card__info">
-                          <p className="spp-card__tier" style={!colorSlug ? { color: p.color } : undefined}>{p.name.toUpperCase()}</p>
-                          <p className="spp-card__sublabel">SPONSORSHIP</p>
+                          <p className="spp-card__tier" style={!colorSlug ? { color: p.color } : undefined}>{displayName(p).toUpperCase()}</p>
+                          <p className="spp-card__sublabel">{t('sponsorship.packages.sublabel')}</p>
                         </div>
                       </div>
 
@@ -143,7 +159,7 @@ export default function SponsorshipPackages() {
 
                       <div className="spp-card__guests">
                         <FaUsers />
-                        <span className="spp-card__guest-label">{p.ticketCount} complimentary tickets</span>
+                        <span className="spp-card__guest-label">{t('sponsorship.packages.ticketsIncluded', { count: p.ticketCount })}</span>
                       </div>
                       {p.perks?.length > 0 && (
                         <ul className="spp-card__perks">
@@ -152,7 +168,7 @@ export default function SponsorshipPackages() {
                       )}
 
                       {selected === p.slug && (
-                        <span className="spp-card__selected-badge">✓ Selected</span>
+                        <span className="spp-card__selected-badge">{t('sponsorship.packages.selectedBadge')}</span>
                       )}
                     </div>
                   );
@@ -163,7 +179,7 @@ export default function SponsorshipPackages() {
             <div className="spp-bottom">
               {selected && (
                 <p className="spp-bottom__summary">
-                  <strong>{pkg?.name} Sponsorship</strong> — €{pkg?.price.toLocaleString()}
+                  <strong>{t('sponsorship.packages.summarySponsorship', { name: displayName(pkg) })}</strong> — €{pkg?.price.toLocaleString()}
                 </p>
               )}
               <button
@@ -171,7 +187,7 @@ export default function SponsorshipPackages() {
                 disabled={!selected}
                 onClick={() => setStep(1)}
               >
-                Continue <FaArrowRight />
+                {t('sponsorship.packages.continue')} <FaArrowRight />
               </button>
             </div>
           </>
@@ -186,42 +202,42 @@ export default function SponsorshipPackages() {
             {/* STEP 1 — Details */}
             {step === 1 && (
               <div className="spp-form-step">
-                <h3 className="spp-form-step__heading">Your Details</h3>
-                <p className="spp-form-step__sub">We'll send your sponsorship confirmation to the email below.</p>
+                <h3 className="spp-form-step__heading">{t('sponsorship.packages.details.heading')}</h3>
+                <p className="spp-form-step__sub">{t('sponsorship.packages.details.sub')}</p>
 
                 <div className="spp-pfield">
-                  <label className="spp-pfield__label">Full Name <span className="spp-required">*</span></label>
-                  <input className="spp-pfield__input" name="name" type="text" placeholder="Your full name" value={sponsor.name} onChange={handleField} />
+                  <label className="spp-pfield__label">{t('sponsorship.packages.details.fullName')} <span className="spp-required">*</span></label>
+                  <input className="spp-pfield__input" name="name" type="text" placeholder={t('sponsorship.packages.details.fullName')} value={sponsor.name} onChange={handleField} />
                 </div>
                 <div className="spp-pfield">
-                  <label className="spp-pfield__label">Email Address <span className="spp-required">*</span></label>
+                  <label className="spp-pfield__label">{t('sponsorship.packages.details.emailAddress')} <span className="spp-required">*</span></label>
                   <input className="spp-pfield__input" name="email" type="email" placeholder="you@company.com" value={sponsor.email} onChange={handleField} />
                 </div>
                 <div className="spp-pfield">
-                  <label className="spp-pfield__label">Organisation <span className="spp-optional">(optional)</span></label>
-                  <input className="spp-pfield__input" name="org" type="text" placeholder="Company or organisation name" value={sponsor.org} onChange={handleField} />
+                  <label className="spp-pfield__label">{t('sponsorship.packages.details.organisation')} <span className="spp-optional">{t('sponsorship.packages.details.optional')}</span></label>
+                  <input className="spp-pfield__input" name="org" type="text" placeholder={t('sponsorship.packages.details.organisationPlaceholder')} value={sponsor.org} onChange={handleField} />
                 </div>
                 <div className="spp-pfield">
-                  <label className="spp-pfield__label">Phone Number <span className="spp-optional">(optional)</span></label>
+                  <label className="spp-pfield__label">{t('sponsorship.packages.details.phoneNumber')} <span className="spp-optional">{t('sponsorship.packages.details.optional')}</span></label>
                   <input className="spp-pfield__input" name="phone" type="tel" placeholder="+31 6 12345678" value={sponsor.phone} onChange={handleField} />
                 </div>
 
                 <div className="spp-pfield">
-                  <label className="spp-pfield__label"><FaTag /> Discount Code <span className="spp-optional">(optional)</span></label>
+                  <label className="spp-pfield__label"><FaTag /> {t('sponsorship.packages.details.discountCode')} <span className="spp-optional">{t('sponsorship.packages.details.optional')}</span></label>
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <input className="spp-pfield__input" placeholder="Optional" value={discountCode} onChange={e => { setDiscountCode(e.target.value); setDiscount(null); }} />
+                    <input className="spp-pfield__input" placeholder={t('sponsorship.packages.details.discountPlaceholder')} value={discountCode} onChange={e => { setDiscountCode(e.target.value); setDiscount(null); }} />
                     <button type="button" className="spp-continue-btn" disabled={!discountCode.trim() || !sponsor.email.trim() || applyingDiscount} onClick={handleApplyDiscount}>
-                      {applyingDiscount ? 'Checking…' : 'Apply'}
+                      {applyingDiscount ? t('sponsorship.packages.details.checking') : t('sponsorship.packages.details.apply')}
                     </button>
                   </div>
-                  {discount?.valid && <span style={{ color: '#2ecc71', fontSize: '0.85rem' }}>✓ €{discount.discount_amount} discount applied</span>}
+                  {discount?.valid && <span style={{ color: '#2ecc71', fontSize: '0.85rem' }}>{t('sponsorship.packages.details.discountApplied', { amount: discount.discount_amount })}</span>}
                   {discount && !discount.valid && <span style={{ color: '#e74c3c', fontSize: '0.85rem' }}>{discount.message}</span>}
                 </div>
 
                 <div className="spp-nav">
-                  <button className="spp-back-btn" onClick={() => setStep(0)}><FaArrowLeft /> Back</button>
+                  <button className="spp-back-btn" onClick={() => setStep(0)}><FaArrowLeft /> {t('sponsorship.packages.back')}</button>
                   <button className="spp-continue-btn" disabled={!canProceedStep1} onClick={() => setStep(2)}>
-                    Continue <FaArrowRight />
+                    {t('sponsorship.packages.continue')} <FaArrowRight />
                   </button>
                 </div>
               </div>
@@ -230,14 +246,14 @@ export default function SponsorshipPackages() {
             {/* STEP 2 — Review */}
             {step === 2 && (
               <div className="spp-review">
-                <h3 className="spp-form-step__heading">Review Your Order</h3>
-                <p className="spp-form-step__sub">Confirm your sponsorship package before proceeding to payment.</p>
+                <h3 className="spp-form-step__heading">{t('sponsorship.packages.review.heading')}</h3>
+                <p className="spp-form-step__sub">{t('sponsorship.packages.review.sub')}</p>
 
                 <div className="spp-review__table">
                   <div className="spp-review__thead">
-                    <span>Package</span>
-                    <span>Tickets</span>
-                    <span>Total</span>
+                    <span>{t('sponsorship.packages.review.colPackage')}</span>
+                    <span>{t('sponsorship.packages.review.colTickets')}</span>
+                    <span>{t('sponsorship.packages.review.colTotal')}</span>
                   </div>
                   <div className="spp-review__row">
                     <span className="spp-review__plan-name">
@@ -245,27 +261,27 @@ export default function SponsorshipPackages() {
                         className={`spp-review__dot${KNOWN_COLOR_SLUGS.includes(pkg?.slug) ? ` spp-review__dot--${pkg.slug}` : ''}`}
                         style={!KNOWN_COLOR_SLUGS.includes(pkg?.slug) ? { background: pkg?.color } : undefined}
                       />
-                      {pkg?.name} Sponsorship
+                      {t('sponsorship.packages.summarySponsorship', { name: displayName(pkg) })}
                     </span>
-                    <span>{pkg?.ticketCount} tickets</span>
+                    <span>{t('sponsorship.packages.review.ticketsCount', { count: pkg?.ticketCount })}</span>
                     <span className="spp-review__line-total">€{pkg?.price.toLocaleString()}</span>
                   </div>
                   {discount?.valid && (
                     <div className="spp-review__row">
-                      <span>Discount ({discountCode.trim().toUpperCase()})</span>
+                      <span>{t('sponsorship.packages.review.discount')} ({discountCode.trim().toUpperCase()})</span>
                       <span />
                       <span className="spp-review__line-total">−€{discount.discount_amount}</span>
                     </div>
                   )}
                   <div className="spp-review__total-row">
-                    <span>Total Payable</span>
+                    <span>{t('sponsorship.packages.review.totalPayable')}</span>
                     <span />
                     <span className="spp-review__grand-total">€{total?.toLocaleString()}</span>
                   </div>
                 </div>
 
                 <div className="spp-review__attendee">
-                  <p className="spp-review__attendee-label">Sponsorship from</p>
+                  <p className="spp-review__attendee-label">{t('sponsorship.packages.review.sponsorshipFrom')}</p>
                   <p className="spp-review__attendee-name">{sponsor.name}</p>
                   {sponsor.org && <p className="spp-review__attendee-email">{sponsor.org}</p>}
                   <p className="spp-review__attendee-email">{sponsor.email}</p>
@@ -273,9 +289,9 @@ export default function SponsorshipPackages() {
                 </div>
 
                 <div className="spp-nav">
-                  <button className="spp-back-btn" onClick={() => setStep(1)}><FaArrowLeft /> Back</button>
+                  <button className="spp-back-btn" onClick={() => setStep(1)}><FaArrowLeft /> {t('sponsorship.packages.back')}</button>
                   <button className="spp-continue-btn" onClick={() => setStep(3)}>
-                    Pay €{total?.toLocaleString()} <FaArrowRight />
+                    {t('sponsorship.packages.review.pay', { amount: total?.toLocaleString() })} <FaArrowRight />
                   </button>
                 </div>
               </div>
@@ -284,22 +300,19 @@ export default function SponsorshipPackages() {
             {/* STEP 3 — Confirm & Pay */}
             {step === 3 && freeSuccess && (
               <div className="spp-payment-step">
-                <h3 className="spp-form-step__heading"><FaCheckCircle style={{ color: '#2ecc71' }} /> You're all set!</h3>
+                <h3 className="spp-form-step__heading"><FaCheckCircle style={{ color: '#2ecc71' }} /> {t('sponsorship.packages.payment.allSet')}</h3>
                 <p className="spp-form-step__sub">{freeSuccess}</p>
-                <p className="spp-payment__disclaimer">A confirmation has been emailed to {sponsor.email}.</p>
+                <p className="spp-payment__disclaimer">{t('sponsorship.packages.payment.confirmationEmailed', { email: sponsor.email })}</p>
               </div>
             )}
 
             {step === 3 && !freeSuccess && (
               <div className="spp-payment-step">
-                <h3 className="spp-form-step__heading">Confirm &amp; Pay</h3>
-                <p className="spp-form-step__sub">
-                  You will be redirected to Mollie's secure checkout to complete your <strong>{pkg?.name}</strong> sponsorship payment of <strong>€{total?.toLocaleString()}</strong>.
-                  All major payment methods are accepted.
-                </p>
+                <h3 className="spp-form-step__heading">{t('sponsorship.packages.payment.confirmPay')}</h3>
+                <p className="spp-form-step__sub">{t('sponsorship.packages.payment.redirectNotice', { name: displayName(pkg), amount: total?.toLocaleString() })}</p>
 
                 <p className="spp-payment__disclaimer">
-                  <FaShieldAlt /> Your payment is encrypted and secure. Our team will contact you after confirmation.
+                  <FaShieldAlt /> {t('sponsorship.packages.payment.secureNotice')}
                 </p>
 
                 {payError && (
@@ -307,13 +320,13 @@ export default function SponsorshipPackages() {
                 )}
 
                 <div className="spp-nav">
-                  <button className="spp-back-btn" onClick={() => setStep(2)} disabled={paying}><FaArrowLeft /> Back</button>
+                  <button className="spp-back-btn" onClick={() => setStep(2)} disabled={paying}><FaArrowLeft /> {t('sponsorship.packages.back')}</button>
                   <button
                     className="spp-continue-btn spp-continue-btn--pay"
                     disabled={paying}
                     onClick={handlePay}
                   >
-                    {paying ? 'Processing…' : <><FaLock /> Pay €{total?.toLocaleString()} securely</>}
+                    {paying ? t('sponsorship.packages.payment.processing') : <><FaLock /> {t('sponsorship.packages.payment.paySecurely', { amount: total?.toLocaleString() })}</>}
                   </button>
                 </div>
               </div>

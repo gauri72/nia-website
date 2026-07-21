@@ -1,29 +1,20 @@
+import { useTranslation } from 'react-i18next';
 import { FaGlobe, FaTv, FaMicrophone } from 'react-icons/fa';
 import './SponsorshipBenefits.css';
 
 const BENEFITS = [
-  {
-    icon: <FaGlobe />,
-    title: 'EXPOSURE ON NIA WEBSITE',
-    desc: null,
-  },
-  {
-    icon: <FaTv />,
-    title: 'VISIBLE ON 3 SCREENS DURING OUR EVENTS',
-    desc: '15 August 2026 & 12 December 2026',
-  },
-  {
-    icon: <FaMicrophone />,
-    title: 'MENTIONING OF SPONSORS ON STAGE',
-    desc: null,
-  },
+  { icon: <FaGlobe />,      key: 'exposure', hasDesc: false },
+  { icon: <FaTv />,         key: 'screens',  hasDesc: true },
+  { icon: <FaMicrophone />, key: 'mention',  hasDesc: false },
 ];
 
 export default function SponsorshipBenefits() {
+  const { t } = useTranslation();
+
   return (
     <section className="sp-benefits">
       <div className="sp-benefits__inner">
-        <p className="sp-benefits__eyebrow">ALL SPONSOR PACKAGES INCLUDE:</p>
+        <p className="sp-benefits__eyebrow">{t('sponsorship.benefits.eyebrow')}</p>
         <div className="sp-benefits__cards">
           {BENEFITS.map((b, i) => (
             <div key={i} className="sp-benefit">
@@ -32,8 +23,8 @@ export default function SponsorshipBenefits() {
                 <span className="sp-benefit__icon">{b.icon}</span>
               </div>
               <div className="sp-benefit__text">
-                <p className="sp-benefit__title">{b.title}</p>
-                {b.desc && <p className="sp-benefit__desc">{b.desc}</p>}
+                <p className="sp-benefit__title">{t(`sponsorship.benefits.${b.key}.title`)}</p>
+                {b.hasDesc && <p className="sp-benefit__desc">{t(`sponsorship.benefits.${b.key}.desc`)}</p>}
               </div>
             </div>
           ))}

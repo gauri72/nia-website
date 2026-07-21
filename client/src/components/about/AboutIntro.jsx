@@ -1,36 +1,26 @@
+import { useTranslation } from 'react-i18next';
 import { FaHandshake, FaUsers } from 'react-icons/fa';
 import aboutNiaImage from '../../assets/home/AboutNiaImage.png';
 import './AboutIntro.css';
 
 const OBJECTIVES = [
-  {
-    icon: <FaHandshake />,
-    color: 'navy',
-    text: 'To promote the friendship, knowledge and understanding of the culture, history, philosophy, religions and social structure of India and the Netherlands between the people of both countries.',
-  },
-  {
-    icon: <FaUsers />,
-    color: 'green',
-    text: 'To further friendly relations between the peoples of India and the Netherlands by widening and deepening personal, cultural and social contacts.',
-  },
+  { key: 'objective1', icon: <FaHandshake />, color: 'navy' },
+  { key: 'objective2', icon: <FaUsers />,      color: 'green' },
 ];
 
 export default function AboutIntro() {
+  const { t } = useTranslation();
+
   return (
     <section className="au-intro">
       <div className="au-intro__inner">
 
         <div className="au-intro__left">
-          <p className="au-intro__eyebrow">WHO WE ARE</p>
-          <h2 className="au-intro__heading">About the Netherlands India Association</h2>
+          <p className="au-intro__eyebrow">{t('about.intro.eyebrow')}</p>
+          <h2 className="au-intro__heading">{t('about.intro.heading')}</h2>
           <div className="au-intro__underline" />
-          <p className="au-intro__body">
-            The Netherlands India Association (NIA) is a vibrant, non-profit organisation
-            dedicated to nurturing the bond between the Dutch and Indian communities. Founded
-            on a shared passion for cultural exchange, we bring together individuals, families,
-            and businesses who celebrate the richness of Indo-Dutch heritage.
-          </p>
-          <p className="au-intro__sub">The aims and objectives of the Association are:</p>
+          <p className="au-intro__body">{t('about.intro.body')}</p>
+          <p className="au-intro__sub">{t('home.aboutNia.subtitle')}</p>
           <ul className="au-intro__objectives">
             {OBJECTIVES.map((obj, i) => (
               <li key={i} className="au-intro__objective">
@@ -39,7 +29,7 @@ export default function AboutIntro() {
                     {obj.icon}
                   </span>
                 </span>
-                <p>{obj.text}</p>
+                <p>{t(`home.aboutNia.${obj.key}`)}</p>
               </li>
             ))}
           </ul>

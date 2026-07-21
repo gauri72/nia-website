@@ -1,8 +1,11 @@
+import { useTranslation } from 'react-i18next';
 import { FaCalendarAlt } from 'react-icons/fa';
 import ctaLogo from '../../assets/events/CTALogo.png';
 import './MembershipCTA.css';
 
 export default function MembershipCTA() {
+  const { t } = useTranslation();
+
   return (
     <section className="mem-cta">
       <div className="mem-cta__inner">
@@ -14,12 +17,10 @@ export default function MembershipCTA() {
 
         {/* Text block */}
         <div className="mem-cta__text">
-          <p className="mem-cta__body">
-            Membership is valid for one calendar year from the date of registration.
-          </p>
+          <p className="mem-cta__body">{t('membership.cta.body')}</p>
           <p className="mem-cta__sub">
-            For more information or to sign up, please contact the{' '}
-            <strong>Netherlands India Association.</strong>
+            {t('membership.cta.subPrefix')}{' '}
+            <strong>{t('membership.cta.subStrong')}</strong>
           </p>
         </div>
 

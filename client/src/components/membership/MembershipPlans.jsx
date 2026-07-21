@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   FaHome, FaStar, FaUsers, FaCalendarAlt, FaTag, FaEnvelope,
   FaAward, FaCrown, FaCheck, FaTicketAlt, FaArrowRight, FaArrowLeft,
@@ -6,60 +7,39 @@ import {
 } from 'react-icons/fa';
 import { startMembershipPayment } from '../../services/paymentService';
 import api from '../../services/api';
+import { translateApiError } from '../../i18n/translateApiError';
 import './MembershipPlans.css';
 
-/* ── Plan data ── */
+/* ── Plan data (translatable copy resolved via i18n keys below) ── */
 const PLANS = [
   {
     id: 'friend',
     icon: <FaHome />,
     tier: 'FRIEND',
-    sublabel: 'MEMBERSHIP',
     price: 60,
     unit: '/ year',
-    tagline: 'Celebrate together at a great value',
     color: 'gold',
-    perkBadge: '🎟️ 20% OFF on All NIA Events',
-    perks: [
-      { icon: <FaUsers />,       text: 'Valid for 2 adults in the same household' },
-      { icon: <FaCalendarAlt />, text: 'Access to all NIA events throughout the year' },
-      { icon: <FaTag />,         text: '20% discount on all event tickets' },
-      { icon: <FaEnvelope />,    text: 'NIA newsletter & community updates' },
-      { icon: <FaUsers />,       text: 'Be part of a growing Dutch-Indian community' },
-    ],
+    perkIcons: [<FaUsers />, <FaCalendarAlt />, <FaTag />, <FaEnvelope />, <FaUsers />],
   },
   {
     id: 'patron',
     icon: <FaStar />,
     tier: 'PATRON',
-    sublabel: 'MEMBERSHIP',
     price: 150,
     unit: '/ year',
-    tagline: 'All events included — celebrate without limits',
     color: 'diamond',
-    perkBadge: '🎟️ Free Entry to All NIA Events',
-    perks: [
-      { icon: <FaUsers />,       text: 'Valid for 2 adults in the same household' },
-      { icon: <FaCalendarAlt />, text: 'Free entry to all NIA events throughout the year' },
-      { icon: <FaTicketAlt />,   text: 'No event ticket costs — fully included' },
-      { icon: <FaEnvelope />,    text: 'NIA newsletter & community updates' },
-      { icon: <FaAward />,       text: 'Recognition as a Patron supporter of the association' },
-      { icon: <FaCrown />,       text: 'Priority access & seating at select events' },
-    ],
+    perkIcons: [<FaUsers />, <FaCalendarAlt />, <FaTicketAlt />, <FaEnvelope />, <FaAward />, <FaCrown />],
   },
 ];
 
-
-const STEPS = ['Choose Plan', 'Your Details', 'Review Order', 'Payment'];
-
-function StepBar({ step }) {
+function StepBar({ step, steps }) {
   return (
     <div className="mp-steps">
-      {STEPS.map((label, i) => (
+      {steps.map((label, i) => (
         <div key={i} className={`mp-step${step === i ? ' mp-step--active' : ''}${step > i ? ' mp-step--done' : ''}`}>
           <div className="mp-step__circle">{step > i ? '✓' : i + 1}</div>
           <span className="mp-step__label">{label}</span>
-          {i < STEPS.length - 1 && <div className="mp-step__line" />}
+          {i < steps.length - 1 && <div className="mp-step__line" />}
         </div>
       ))}
     </div>
@@ -67,6 +47,7 @@ function StepBar({ step }) {
 }
 
 export default function MembershipPlans() {
+  const { t, i18n } = useTranslation();
   const [step, setStep]           = useState(0);
   const [selected, setSelected]   = useState(null);
   const [member, setMember]       = useState({ name: '', email: '', phone: '' });
@@ -78,6 +59,13 @@ export default function MembershipPlans() {
   const [paying, setPaying]   = useState(false);
   const [payError, setPayError] = useState('');
   const [freeSuccess, setFreeSuccess] = useState('');
+
+  const STEPS = [
+    t('membership.plans.steps.choosePlan'),
+    t('membership.plans.steps.yourDetails'),
+    t('membership.plans.steps.reviewOrder'),
+    t('membership.plans.steps.payment'),
+  ];
 
   const plan = PLANS.find(p => p.id === selected);
   const canProceedStep1 = member.name.trim() && member.email.trim() && partner.name.trim();
@@ -106,9 +94,9 @@ export default function MembershipPlans() {
       const { data } = await api.post('/discount-codes/preview', {
         code: discountCode.trim(), productType: 'membership', email: member.email.trim(), originalAmount: plan.price,
       });
-      setDiscount(data);
+      setDiscount(data.message ? { ...data, message: translateApiError(data.message, i18n.language) } : data);
     } catch {
-      setDiscount({ valid: false, message: 'Could not validate this code right now.' });
+      setDiscount({ valid: false, message: t('membership.plans.errors.discountCheckFailed') });
     } finally {
       setApplyingDiscount(false);
     }
@@ -131,11 +119,11 @@ export default function MembershipPlans() {
       // A fully-discounted membership is finalized immediately server-side — there's
       // no Mollie checkout to redirect to. Anything else redirects the browser away.
       if (result.free) {
-        setFreeSuccess(result.message || 'Your membership is fully covered by the discount — no payment required.');
+        setFreeSuccess(result.message || t('membership.plans.freeSuccessDefault'));
         setPaying(false);
       }
     } catch (err) {
-      setPayError(err?.response?.data?.error || 'Payment failed. Please try again.');
+      setPayError(translateApiError(err?.response?.data?.error, i18n.language) || t('membership.plans.errors.paymentFailed'));
       setPaying(false);
     }
   }
@@ -145,11 +133,11 @@ export default function MembershipPlans() {
       <div className="mem-plans__flow">
 
         <div className="mem-plans__header">
-          <h2 className="mem-plans__heading">Membership Plans</h2>
-          <p className="mem-plans__sub">Choose the plan that suits you and complete your registration in minutes.</p>
+          <h2 className="mem-plans__heading">{t('membership.plans.heading')}</h2>
+          <p className="mem-plans__sub">{t('membership.plans.sub')}</p>
         </div>
 
-        <StepBar step={step} />
+        <StepBar step={step} steps={STEPS} />
 
         {/* ══════════════════════════════
             STEP 0 — Choose Plan
@@ -158,11 +146,11 @@ export default function MembershipPlans() {
           <>
             {/* Membership code */}
             <div className="mp-code-row">
-              <label className="mp-field__label"><FaIdCard /> Existing Member Code (optional)</label>
+              <label className="mp-field__label"><FaIdCard /> {t('membership.plans.memberCodeLabel')}</label>
               <div className="mp-code-wrap">
                 <input
                   className="mp-code-input"
-                  placeholder="Member ID"
+                  placeholder={t('membership.plans.memberCodePlaceholder')}
                   value={memberCode}
                   onChange={e => setMemberCode(e.target.value)}
                 />
@@ -185,7 +173,7 @@ export default function MembershipPlans() {
                     </div>
                     <div className="mp-pkg__info">
                       <p className="mp-pkg__tier">{p.tier}</p>
-                      <p className="mp-pkg__sublabel">{p.sublabel}</p>
+                      <p className="mp-pkg__sublabel">{t(`home.membership.tiers.${p.id}.sublabel`)}</p>
                     </div>
                   </div>
 
@@ -194,21 +182,21 @@ export default function MembershipPlans() {
                     <span className="mp-pkg__unit">{p.unit}</span>
                   </div>
 
-                  <p className={`mp-pkg__perk-badge mp-pkg__perk-badge--${p.color}`}>{p.perkBadge}</p>
+                  <p className={`mp-pkg__perk-badge mp-pkg__perk-badge--${p.color}`}>{t(`membership.plans.tiers.${p.id}.perkBadge`)}</p>
 
-                  <p className="mp-pkg__tagline">{p.tagline}</p>
+                  <p className="mp-pkg__tagline">{t(`membership.plans.tiers.${p.id}.tagline`)}</p>
 
                   <ul className="mp-pkg__perks">
-                    {p.perks.map((pk, j) => (
+                    {t(`membership.plans.tiers.${p.id}.perks`, { returnObjects: true }).map((perkText, j) => (
                       <li key={j} className="mp-pkg__perk">
                         <span className={`mp-pkg__perk-check mp-pkg__perk-check--${p.color}`}><FaCheck /></span>
-                        <span className="mp-pkg__perk-text">{pk.text}</span>
+                        <span className="mp-pkg__perk-text">{perkText}</span>
                       </li>
                     ))}
                   </ul>
 
                   {selected === p.id && (
-                    <span className="mp-pkg__selected-badge">✓ Selected</span>
+                    <span className="mp-pkg__selected-badge">{t('membership.plans.selectedBadge')}</span>
                   )}
                 </div>
               ))}
@@ -217,7 +205,7 @@ export default function MembershipPlans() {
             <div className="mp-bottom">
               {selected && (
                 <p className="mp-bottom__summary">
-                  <strong>{plan?.tier} Membership</strong> — €{plan?.price}/year
+                  <strong>{t('membership.plans.summaryMembership', { tier: plan?.tier })}</strong> — €{plan?.price}/{t('membership.plans.perYear')}
                 </p>
               )}
               <button
@@ -225,7 +213,7 @@ export default function MembershipPlans() {
                 disabled={!selected}
                 onClick={() => setStep(1)}
               >
-                Continue <FaArrowRight />
+                {t('membership.plans.continue')} <FaArrowRight />
               </button>
             </div>
           </>
@@ -239,62 +227,62 @@ export default function MembershipPlans() {
 
         {step === 1 && (
           <div className="mp-form-step">
-            <h3 className="mp-form-step__heading">Your Details</h3>
-            <p className="mp-form-step__sub">We'll send your membership confirmation to the email below.</p>
+            <h3 className="mp-form-step__heading">{t('membership.plans.details.heading')}</h3>
+            <p className="mp-form-step__sub">{t('membership.plans.details.sub')}</p>
 
             <div className="mp-pfield">
-              <label className="mp-pfield__label">Full Name <span className="mp-required">*</span></label>
-              <input className="mp-pfield__input" name="name" type="text" placeholder="Your full name" value={member.name} onChange={handleField} />
+              <label className="mp-pfield__label">{t('membership.plans.details.fullName')} <span className="mp-required">*</span></label>
+              <input className="mp-pfield__input" name="name" type="text" placeholder={t('membership.plans.details.fullName')} value={member.name} onChange={handleField} />
             </div>
             <div className="mp-pfield">
-              <label className="mp-pfield__label">Email Address <span className="mp-required">*</span></label>
+              <label className="mp-pfield__label">{t('membership.plans.details.emailAddress')} <span className="mp-required">*</span></label>
               <input className="mp-pfield__input" name="email" type="email" placeholder="you@email.com" value={member.email} onChange={handleField} />
             </div>
             <div className="mp-pfield">
-              <label className="mp-pfield__label">Phone Number <span className="mp-optional">(optional)</span></label>
+              <label className="mp-pfield__label">{t('membership.plans.details.phoneNumber')} <span className="mp-optional">{t('membership.plans.details.optional')}</span></label>
               <input className="mp-pfield__input" name="phone" type="tel" placeholder="+31 6 12345678" value={member.phone} onChange={handleField} />
             </div>
 
             <div className="mp-pfield">
-              <label className="mp-pfield__label"><FaTag /> Discount Code <span className="mp-optional">(optional)</span></label>
+              <label className="mp-pfield__label"><FaTag /> {t('membership.plans.details.discountCode')} <span className="mp-optional">{t('membership.plans.details.optional')}</span></label>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <input
-                  className="mp-pfield__input" placeholder="e.g. code from a promotion"
+                  className="mp-pfield__input" placeholder={t('membership.plans.details.discountPlaceholder')}
                   value={discountCode}
                   onChange={e => { setDiscountCode(e.target.value); setDiscount(null); }}
                 />
                 <button type="button" className="mp-continue-btn" disabled={!discountCode.trim() || !member.email.trim() || applyingDiscount} onClick={handleApplyDiscount}>
-                  {applyingDiscount ? 'Checking…' : 'Apply'}
+                  {applyingDiscount ? t('membership.plans.details.checking') : t('membership.plans.details.apply')}
                 </button>
               </div>
-              {discount?.valid && <span style={{ color: '#2ecc71', fontSize: '0.85rem' }}>✓ €{discount.discount_amount} discount applied</span>}
+              {discount?.valid && <span style={{ color: '#2ecc71', fontSize: '0.85rem' }}>{t('membership.plans.details.discountApplied', { amount: discount.discount_amount })}</span>}
               {discount && !discount.valid && <span style={{ color: '#e74c3c', fontSize: '0.85rem' }}>{discount.message}</span>}
-              {!member.email.trim() && <span className="mp-pfield__hint">Enter your email above first.</span>}
+              {!member.email.trim() && <span className="mp-pfield__hint">{t('membership.plans.details.enterEmailFirst')}</span>}
             </div>
 
             <div className="mp-section-divider">
               <span className="mp-section-divider__line" />
-              <span className="mp-section-divider__label">Partner Details</span>
+              <span className="mp-section-divider__label">{t('membership.plans.details.partnerDetails')}</span>
               <span className="mp-section-divider__line" />
             </div>
 
             <div className="mp-pfield">
-              <label className="mp-pfield__label">Partner's Full Name <span className="mp-required">*</span></label>
-              <input className="mp-pfield__input" name="name" type="text" placeholder="Partner's full name" value={partner.name} onChange={handlePartnerField} />
+              <label className="mp-pfield__label">{t('membership.plans.details.partnerFullName')} <span className="mp-required">*</span></label>
+              <input className="mp-pfield__input" name="name" type="text" placeholder={t('membership.plans.details.partnerFullName')} value={partner.name} onChange={handlePartnerField} />
             </div>
             <div className="mp-pfield">
-              <label className="mp-pfield__label">Partner's Email Address <span className="mp-optional">(optional)</span></label>
+              <label className="mp-pfield__label">{t('membership.plans.details.partnerEmail')} <span className="mp-optional">{t('membership.plans.details.optional')}</span></label>
               <input className="mp-pfield__input" name="email" type="email" placeholder="partner@email.com" value={partner.email} onChange={handlePartnerField} />
             </div>
             <div className="mp-pfield">
-              <label className="mp-pfield__label">Partner's Phone Number <span className="mp-optional">(optional)</span></label>
+              <label className="mp-pfield__label">{t('membership.plans.details.partnerPhone')} <span className="mp-optional">{t('membership.plans.details.optional')}</span></label>
               <input className="mp-pfield__input" name="phone" type="tel" placeholder="+31 6 12345678" value={partner.phone} onChange={handlePartnerField} />
             </div>
 
             <div className="mp-nav">
-              <button className="mp-back-btn" onClick={() => setStep(0)}><FaArrowLeft /> Back</button>
+              <button className="mp-back-btn" onClick={() => setStep(0)}><FaArrowLeft /> {t('membership.plans.back')}</button>
               <button className="mp-continue-btn" disabled={!canProceedStep1} onClick={() => setStep(2)}>
-                Continue <FaArrowRight />
+                {t('membership.plans.continue')} <FaArrowRight />
               </button>
             </div>
           </div>
@@ -305,39 +293,39 @@ export default function MembershipPlans() {
             ══════════════════════════════ */}
         {step === 2 && (
           <div className="mp-review">
-            <h3 className="mp-form-step__heading">Review Your Order</h3>
-            <p className="mp-form-step__sub">Confirm your membership before proceeding to payment.</p>
+            <h3 className="mp-form-step__heading">{t('membership.plans.review.heading')}</h3>
+            <p className="mp-form-step__sub">{t('membership.plans.review.sub')}</p>
 
             <div className="mp-review__table">
               <div className="mp-review__thead">
-                <span>Plan</span>
-                <span>Duration</span>
-                <span>Total</span>
+                <span>{t('membership.plans.review.plan')}</span>
+                <span>{t('membership.plans.review.duration')}</span>
+                <span>{t('membership.plans.review.total')}</span>
               </div>
               <div className="mp-review__row">
                 <span className="mp-review__plan-name">
                   <span className={`mp-review__dot mp-review__dot--${plan?.color}`} />
-                  {plan?.tier} Membership
+                  {t('membership.plans.summaryMembership', { tier: plan?.tier })}
                 </span>
-                <span>1 year</span>
+                <span>{t('membership.plans.review.oneYear')}</span>
                 <span className="mp-review__line-total">€{plan?.price}</span>
               </div>
               {discount?.valid && (
                 <div className="mp-review__row">
-                  <span>Discount ({discountCode.trim().toUpperCase()})</span>
+                  <span>{t('membership.plans.review.discount')} ({discountCode.trim().toUpperCase()})</span>
                   <span />
                   <span className="mp-review__line-total">−€{discount.discount_amount}</span>
                 </div>
               )}
               <div className="mp-review__total-row">
-                <span>Total Payable</span>
+                <span>{t('membership.plans.review.totalPayable')}</span>
                 <span />
                 <span className="mp-review__grand-total">€{total}</span>
               </div>
             </div>
 
             <div className="mp-review__attendee">
-              <p className="mp-review__attendee-label">Primary Member</p>
+              <p className="mp-review__attendee-label">{t('membership.plans.review.primaryMember')}</p>
               <p className="mp-review__attendee-name">{member.name}</p>
               <p className="mp-review__attendee-email">{member.email}</p>
               {member.phone && <p className="mp-review__attendee-email">{member.phone}</p>}
@@ -345,7 +333,7 @@ export default function MembershipPlans() {
 
             {partner.name && (
               <div className="mp-review__attendee">
-                <p className="mp-review__attendee-label">Partner</p>
+                <p className="mp-review__attendee-label">{t('membership.plans.review.partner')}</p>
                 <p className="mp-review__attendee-name">{partner.name}</p>
                 {partner.email && <p className="mp-review__attendee-email">{partner.email}</p>}
                 {partner.phone && <p className="mp-review__attendee-email">{partner.phone}</p>}
@@ -353,9 +341,9 @@ export default function MembershipPlans() {
             )}
 
             <div className="mp-nav">
-              <button className="mp-back-btn" onClick={() => setStep(1)}><FaArrowLeft /> Back</button>
+              <button className="mp-back-btn" onClick={() => setStep(1)}><FaArrowLeft /> {t('membership.plans.back')}</button>
               <button className="mp-continue-btn" onClick={() => setStep(3)}>
-                Pay €{total} <FaArrowRight />
+                {t('membership.plans.review.pay', { amount: total })} <FaArrowRight />
               </button>
             </div>
           </div>
@@ -366,22 +354,19 @@ export default function MembershipPlans() {
             ══════════════════════════════ */}
         {step === 3 && freeSuccess && (
           <div className="mp-payment-step">
-            <h3 className="mp-form-step__heading"><FaCheckCircle style={{ color: '#2ecc71' }} /> You're all set!</h3>
+            <h3 className="mp-form-step__heading"><FaCheckCircle style={{ color: '#2ecc71' }} /> {t('membership.plans.payment.allSet')}</h3>
             <p className="mp-form-step__sub">{freeSuccess}</p>
-            <p className="mp-payment__disclaimer">Your membership confirmation has been emailed to {member.email}.</p>
+            <p className="mp-payment__disclaimer">{t('membership.plans.payment.confirmationEmailed', { email: member.email })}</p>
           </div>
         )}
 
         {step === 3 && !freeSuccess && (
           <div className="mp-payment-step">
-            <h3 className="mp-form-step__heading">Confirm &amp; Pay</h3>
-            <p className="mp-form-step__sub">
-              You will be redirected to Mollie's secure checkout to pay <strong>€{total}</strong>.
-              All major payment methods are accepted (iDEAL, card, PayPal and more).
-            </p>
+            <h3 className="mp-form-step__heading">{t('membership.plans.payment.confirmPay')}</h3>
+            <p className="mp-form-step__sub">{t('membership.plans.payment.redirectNotice', { amount: total })}</p>
 
             <p className="mp-payment__disclaimer">
-              <FaShieldAlt /> Your payment is encrypted and secure. Membership will be activated after payment.
+              <FaShieldAlt /> {t('membership.plans.payment.secureNotice')}
             </p>
 
             {payError && (
@@ -389,13 +374,13 @@ export default function MembershipPlans() {
             )}
 
             <div className="mp-nav">
-              <button className="mp-back-btn" onClick={() => setStep(2)} disabled={paying}><FaArrowLeft /> Back</button>
+              <button className="mp-back-btn" onClick={() => setStep(2)} disabled={paying}><FaArrowLeft /> {t('membership.plans.back')}</button>
               <button
                 className="mp-continue-btn mp-continue-btn--pay"
                 disabled={paying}
                 onClick={handlePay}
               >
-                {paying ? 'Processing…' : <><FaLock /> Pay €{total} securely</>}
+                {paying ? t('membership.plans.payment.processing') : <><FaLock /> {t('membership.plans.payment.paySecurely', { amount: total })}</>}
               </button>
             </div>
           </div>

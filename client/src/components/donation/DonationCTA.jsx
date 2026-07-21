@@ -1,8 +1,11 @@
+import { useTranslation } from 'react-i18next';
 import { FaHandHoldingHeart } from 'react-icons/fa';
 import ctaLogo from '../../assets/events/CTALogo.png';
 import './DonationCTA.css';
 
 export default function DonationCTA() {
+  const { t } = useTranslation();
+
   return (
     <section className="don-cta">
       <div className="don-cta__inner">
@@ -12,12 +15,10 @@ export default function DonationCTA() {
         </div>
 
         <div className="don-cta__text">
-          <p className="don-cta__body">
-            Every contribution, no matter the size, makes a real difference to our community.
-          </p>
+          <p className="don-cta__body">{t('donation.cta.body')}</p>
           <p className="don-cta__sub">
-            Prefer bank transfer or have questions? Contact the{' '}
-            <strong>Netherlands India Association.</strong>
+            {t('donation.cta.subPrefix')}{' '}
+            <strong>{t('donation.cta.subStrong')}</strong>
           </p>
         </div>
 

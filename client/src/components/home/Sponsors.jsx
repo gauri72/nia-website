@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FaChevronLeft, FaChevronRight, FaHandshake } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import api from '../../services/api';
@@ -18,6 +19,7 @@ function initialsOf(name) {
 }
 
 function SponsorCarousel({ sponsors }) {
+  const { t } = useTranslation();
   const [active, setActive]   = useState(0);
   const [dir, setDir]         = useState('next');
   const [animKey, setAnimKey] = useState(0);
@@ -69,7 +71,7 @@ function SponsorCarousel({ sponsors }) {
       onMouseEnter={() => clearInterval(timerRef.current)}
       onMouseLeave={resetTimer}
     >
-      <button className="sp-lc__arrow sp-lc__arrow--prev" onClick={() => { prev(); resetTimer(); }} aria-label="Previous">
+      <button className="sp-lc__arrow sp-lc__arrow--prev" onClick={() => { prev(); resetTimer(); }} aria-label={t('home.sponsors.ariaPrevious')}>
         <FaChevronLeft />
       </button>
 
@@ -83,7 +85,7 @@ function SponsorCarousel({ sponsors }) {
         </div>
       </div>
 
-      <button className="sp-lc__arrow sp-lc__arrow--next" onClick={() => { next(); resetTimer(); }} aria-label="Next">
+      <button className="sp-lc__arrow sp-lc__arrow--next" onClick={() => { next(); resetTimer(); }} aria-label={t('home.sponsors.ariaNext')}>
         <FaChevronRight />
       </button>
 
@@ -94,7 +96,7 @@ function SponsorCarousel({ sponsors }) {
             className={`sp-lc__dot${i === active ? ' sp-lc__dot--active' : ''}`}
             style={{ '--sponsor-color': FALLBACK_COLOR }}
             onClick={() => { go(i, i > active ? 'next' : 'prev'); resetTimer(); }}
-            aria-label={`Sponsor ${i + 1}`}
+            aria-label={t('home.sponsors.ariaSponsor', { n: i + 1 })}
           />
         ))}
       </div>
@@ -107,6 +109,7 @@ function SponsorCarousel({ sponsors }) {
 }
 
 export default function Sponsors() {
+  const { t } = useTranslation();
   const [sponsors, setSponsors] = useState(null); // null = still loading
 
   useEffect(() => {
@@ -123,22 +126,22 @@ export default function Sponsors() {
 
         {/* Left: tagline */}
         <div className="hs-sp__tagline-col">
-          <p className="hs-sp__eyebrow">PROUDLY SUPPORTED BY</p>
+          <p className="hs-sp__eyebrow">{t('home.sponsors.eyebrow')}</p>
           <p className="hs-sp__tagline">
-            OUR<br />VALUED<br />
-            <span className="hs-sp__tagline--gold">SPONSORS.</span>
+            {t('home.sponsors.tagline1')}<br />{t('home.sponsors.tagline2')}<br />
+            <span className="hs-sp__tagline--gold">{t('home.sponsors.tagline3')}</span>
           </p>
           <div className="hs-sp__rule">
             <span className="hs-sp__rule-line" />
             <span className="hs-sp__rule-diamond">✦</span>
             <span className="hs-sp__rule-line" />
           </div>
-          <p className="hs-sp__script">Thank you for your support!</p>
+          <p className="hs-sp__script">{t('home.sponsors.script')}</p>
         </div>
 
         {/* Centre: logo carousel */}
         <div className="hs-sp__carousel-col">
-          <p className="hs-sp__section-label">OUR SPONSORS</p>
+          <p className="hs-sp__section-label">{t('home.sponsors.sectionLabel')}</p>
           <SponsorCarousel sponsors={sponsors} />
         </div>
 
@@ -147,9 +150,9 @@ export default function Sponsors() {
           <div className="hs-sp__cta-icon-wrap">
             <FaHandshake className="hs-sp__cta-icon" />
           </div>
-          <p className="hs-sp__cta-title">BECOME A SPONSOR</p>
-          <p className="hs-sp__cta-sub">MAKE A LASTING IMPACT!</p>
-          <Link to="/sponsorship" className="hs-sp__cta-btn">VIEW PACKAGES →</Link>
+          <p className="hs-sp__cta-title">{t('home.sponsors.ctaTitle')}</p>
+          <p className="hs-sp__cta-sub">{t('home.sponsors.ctaSub')}</p>
+          <Link to="/sponsorship" className="hs-sp__cta-btn">{t('home.sponsors.ctaBtn')}</Link>
         </div>
 
       </div>

@@ -1,11 +1,14 @@
+import { useTranslation } from 'react-i18next';
 import { FaFacebookF, FaInstagram, FaLinkedinIn, FaTwitter, FaWhatsapp, FaMapMarkerAlt, FaPhone, FaUserPlus, FaArrowRight } from 'react-icons/fa';
 import footerLogo from '../../assets/home/FooterLogo.png';
 import voiceLogo from '../../assets/footer/voice-logo.png';
 import './Footer.css';
 
-const USEFUL_LINKS = ['Home', 'About NIA', 'What we do', 'Upcoming Events', 'News & Activities', 'Policy'];
+const USEFUL_LINK_KEYS = ['home', 'about', 'whatWeDo', 'upcomingEvents', 'news', 'policy'];
 
 export default function Footer() {
+  const { t } = useTranslation();
+
   return (
     <footer className="footer">
       <div className="footer__main">
@@ -15,7 +18,7 @@ export default function Footer() {
           <div className="footer__logo">
             <img src={footerLogo} alt="Netherlands India Association" className="footer__logo-img" />
           </div>
-          <p className="footer__socials-heading">Follow us</p>
+          <p className="footer__socials-heading">{t('footer.followUs')}</p>
           <div className="footer__socials">
             <a href="https://www.facebook.com/thenetherlandindia/" target="_blank" rel="noopener noreferrer" aria-label="Facebook"  className="footer-social"><span className="footer-social__icon footer-social__icon--fb"><FaFacebookF /></span></a>
             <a href="https://www.instagram.com/thenetherlandindia/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="footer-social"><span className="footer-social__icon footer-social__icon--ig"><FaInstagram /></span></a>
@@ -30,10 +33,10 @@ export default function Footer() {
 
         {/* ── Useful Links col ── */}
         <div className="footer__col">
-          <h4 className="footer__col-heading">Useful Links</h4>
+          <h4 className="footer__col-heading">{t('footer.usefulLinks.heading')}</h4>
           <ul className="footer__links">
-            {USEFUL_LINKS.map((link) => (
-              <li key={link}><a href="#">{link}</a></li>
+            {USEFUL_LINK_KEYS.map((key) => (
+              <li key={key}><a href="#">{t(`footer.usefulLinks.${key}`)}</a></li>
             ))}
           </ul>
         </div>
@@ -44,12 +47,12 @@ export default function Footer() {
         {/* ── Address col ── */}
         <div className="footer__col">
           <h4 className="footer__col-heading">
-            <FaMapMarkerAlt className="footer-col-icon" /> Address
+            <FaMapMarkerAlt className="footer-col-icon" /> {t('footer.address.heading')}
           </h4>
           <address className="footer__address">
-            Burg. Patijnlaan 1062<br />
-            2585 CB Den Haag<br />
-            The Netherlands
+            {t('footer.address.line1')}<br />
+            {t('footer.address.line2')}<br />
+            {t('footer.address.line3')}
           </address>
         </div>
 
@@ -59,14 +62,14 @@ export default function Footer() {
         {/* ── Contact col ── */}
         <div className="footer__col">
           <h4 className="footer__col-heading">
-            <FaPhone className="footer-col-icon" /> Contact
+            <FaPhone className="footer-col-icon" /> {t('footer.contact.heading')}
           </h4>
           <div className="footer__contact-btns">
             <a href="#" className="footer-btn">
-              Contact Us <FaArrowRight />
+              {t('footer.contact.contactUs')} <FaArrowRight />
             </a>
             <a href="#" className="footer-btn">
-              Register as a Member <FaUserPlus />
+              {t('footer.contact.registerAsMember')} <FaUserPlus />
             </a>
           </div>
         </div>
@@ -74,13 +77,13 @@ export default function Footer() {
       </div>
 
       <div className="footer__bottom">
-        <p>© 2026 – The Netherlands India Association – All rights reserved</p>
+        <p>{t('footer.copyright')}</p>
         <div className="footer__credit">
-          <span className="footer__credit-text">Designed &amp; Developed by</span>
+          <span className="footer__credit-text">{t('footer.credit.designedBy')}</span>
           <a href="https://stichtingthevoice.nl/voice-venture-studio" target="_blank" rel="noopener noreferrer" aria-label="V.O.I.C.E. Venture Studio">
             <img src={voiceLogo} alt="Voice Venture Studio" className="footer__credit-logo" />
           </a>
-          <span className="footer__credit-text">V.O.I.C.E. Venture Studio</span>
+          <span className="footer__credit-text">{t('footer.credit.studio')}</span>
         </div>
       </div>
     </footer>

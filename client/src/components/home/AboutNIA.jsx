@@ -1,30 +1,25 @@
+import { useTranslation } from 'react-i18next';
 import { FaHandshake, FaUsers } from 'react-icons/fa';
 import aboutNiaImage from '../../assets/home/AboutNiaImage.png';
 import './AboutNIA.css';
 
 const OBJECTIVES = [
-  {
-    icon: <FaHandshake />,
-    color: 'navy',
-    text: 'To promote the friendship, knowledge and understanding of the culture, history, philosophy, religions and social structure of India and the Netherlands between the people of both countries.',
-  },
-  {
-    icon: <FaUsers />,
-    color: 'green',
-    text: 'To further friendly relations between the peoples of India and the Netherlands by widening and deepening personal, cultural and social contacts.',
-  },
+  { key: 'objective1', icon: <FaHandshake />, color: 'navy' },
+  { key: 'objective2', icon: <FaUsers />,      color: 'green' },
 ];
 
 export default function AboutNIA() {
+  const { t } = useTranslation();
+
   return (
     <section className="about" id="about">
       <div className="about__inner">
 
         {/* Blue-shaded card panel */}
         <div className="about__left">
-          <h2 className="about__heading">About NIA</h2>
+          <h2 className="about__heading">{t('home.aboutNia.heading')}</h2>
           <div className="about__underline" />
-          <p className="about__subtitle">The aims and objectives of the Association are:</p>
+          <p className="about__subtitle">{t('home.aboutNia.subtitle')}</p>
           <ul className="about__objectives">
             {OBJECTIVES.map((obj, i) => (
               <li key={i} className="about__objective">
@@ -34,7 +29,7 @@ export default function AboutNIA() {
                     {obj.icon}
                   </span>
                 </span>
-                <p>{obj.text}</p>
+                <p>{t(`home.aboutNia.${obj.key}`)}</p>
               </li>
             ))}
           </ul>

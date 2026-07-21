@@ -1,32 +1,28 @@
+import { useTranslation } from 'react-i18next';
 import { FaMusic, FaUtensils, FaHandshake, FaStar } from 'react-icons/fa';
 import './AboutEvent.css';
 
 const HIGHLIGHTS = [
-  { icon: <FaMusic />,     label: 'Cultural\nPerformances' },
-  { icon: <FaUtensils />,  label: 'Delicious\nCuisine' },
-  { icon: <FaHandshake />, label: 'Community\nTogetherness' },
-  { icon: <FaStar />,      label: 'Surprises &\nMemorable Moments' },
+  { icon: <FaMusic />,     key: 'performances' },
+  { icon: <FaUtensils />,  key: 'cuisine' },
+  { icon: <FaHandshake />, key: 'togetherness' },
+  { icon: <FaStar />,      key: 'surprises' },
 ];
 
 export default function AboutEvent() {
+  const { t } = useTranslation();
+
   return (
     <section className="about-event">
       <div className="about-event__inner">
 
         {/* Left — text */}
         <div className="about-event__left">
-          <h2 className="about-event__heading">About The Event</h2>
-          <p className="about-event__body">
-            Join us for a historic celebration as we mark India's 80th Independence Day
-            and the 75th Anniversary of NIA.
-          </p>
-          <p className="about-event__body">
-            An evening filled with cultural performances, delicious cuisine, inspiring
-            moments and togetherness as we honour our heritage and strengthen the bond
-            between two nations.
-          </p>
+          <h2 className="about-event__heading">{t('events.about.heading')}</h2>
+          <p className="about-event__body">{t('events.about.body1')}</p>
+          <p className="about-event__body">{t('events.about.body2')}</p>
           <a href="#tickets" className="about-event__btn">
-            EVENT HIGHLIGHTS &nbsp;→
+            {t('events.about.highlightsBtn')} &nbsp;→
           </a>
         </div>
 
@@ -36,7 +32,7 @@ export default function AboutEvent() {
             <div key={i} className="about-event__highlight">
               <div className="about-event__highlight-icon">{h.icon}</div>
               <p className="about-event__highlight-label" style={{ whiteSpace: 'pre-line' }}>
-                {h.label}
+                {t(`events.about.highlights.${h.key}`)}
               </p>
             </div>
           ))}

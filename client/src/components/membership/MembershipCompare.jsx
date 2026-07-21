@@ -1,26 +1,30 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { FaCheck, FaMinus, FaUsers, FaCalendarAlt, FaTag, FaEnvelope, FaAward, FaCrown, FaArrowRight } from 'react-icons/fa';
 import { useMemberAuth } from '../../context/MemberAuthContext';
 import memberApi from '../../services/memberApi';
 import './MembershipCompare.css';
 
 const ROWS = [
-  { icon: <FaUsers />,       feature: 'Adults covered',      friend: '2',              patron: '2' },
-  { icon: <FaCalendarAlt />, feature: 'Event access',        friend: 'check',          patron: 'check' },
-  { icon: <FaTag />,         feature: 'Event pricing',       friend: '20% discount',   patron: 'Free' },
-  { icon: <FaEnvelope />,    feature: 'Newsletter',          friend: 'check',          patron: 'check' },
-  { icon: <FaAward />,       feature: 'Patron recognition',  friend: 'dash',           patron: 'check' },
-  { icon: <FaCrown />,       feature: 'Priority access',     friend: 'dash',           patron: 'check' },
+  { icon: <FaUsers />,       key: 'adultsCovered',     friend: '2',       patron: '2' },
+  { icon: <FaCalendarAlt />, key: 'eventAccess',       friend: 'check',   patron: 'check' },
+  { icon: <FaTag />,         key: 'eventPricing',      friend: 'discount20', patron: 'free' },
+  { icon: <FaEnvelope />,    key: 'newsletter',        friend: 'check',   patron: 'check' },
+  { icon: <FaAward />,       key: 'patronRecognition', friend: 'dash',    patron: 'check' },
+  { icon: <FaCrown />,       key: 'priorityAccess',    friend: 'dash',    patron: 'check' },
 ];
 
-function Cell({ value, col }) {
+function Cell({ value, col, t }) {
   if (value === 'check') return <span className={`mc-check mc-check--${col}`}><FaCheck /></span>;
   if (value === 'dash')  return <span className="mc-dash"><FaMinus /></span>;
+  if (value === 'discount20') return <span className={`mc-text mc-text--${col}`}>{t('membership.compare.discount20')}</span>;
+  if (value === 'free') return <span className={`mc-text mc-text--${col}`}>{t('membership.compare.free')}</span>;
   return <span className={`mc-text mc-text--${col}`}>{value}</span>;
 }
 
 export default function MembershipCompare() {
+  const { t } = useTranslation();
   const { member } = useMemberAuth();
   const [patronTier, setPatronTier] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -51,7 +55,7 @@ export default function MembershipCompare() {
 
         <div className="mem-compare__title-row">
           <span className="mem-compare__deco">✦</span>
-          <h2 className="mem-compare__heading">PLAN COMPARISON</h2>
+          <h2 className="mem-compare__heading">{t('membership.compare.heading')}</h2>
           <span className="mem-compare__deco">✦</span>
         </div>
 
@@ -59,7 +63,7 @@ export default function MembershipCompare() {
           <table className="mc-table">
             <thead>
               <tr>
-                <th className="mc-th mc-th--feature">FEATURE</th>
+                <th className="mc-th mc-th--feature">{t('membership.compare.colFeature')}</th>
                 <th className="mc-th mc-th--friend">FRIEND &nbsp;€60</th>
                 <th className="mc-th mc-th--patron">PATRON &nbsp;€150</th>
               </tr>
@@ -69,13 +73,13 @@ export default function MembershipCompare() {
                 <tr key={i} className={`mc-tr${i % 2 === 0 ? ' mc-tr--even' : ''}`}>
                   <td className="mc-td mc-td--feature">
                     <span className="mc-feature-icon">{row.icon}</span>
-                    {row.feature}
+                    {t(`membership.compare.rows.${row.key}`)}
                   </td>
                   <td className="mc-td mc-td--friend">
-                    <Cell value={row.friend} col="friend" />
+                    <Cell value={row.friend} col="friend" t={t} />
                   </td>
                   <td className="mc-td mc-td--patron">
-                    <Cell value={row.patron} col="patron" />
+                    <Cell value={row.patron} col="patron" t={t} />
                   </td>
                 </tr>
               ))}
@@ -84,34 +88,30 @@ export default function MembershipCompare() {
         </div>
 
         <div className="mc-upgrade">
-          <h3 className="mc-upgrade__heading">Already a Friend member? Upgrade to Patron anytime.</h3>
-          <p className="mc-upgrade__text">
-            If you have more than 180 days left on your Friend membership, upgrading only costs the difference between
-            the two tiers (€90). With 180 days or fewer remaining, upgrading costs the full Patron price (€150).
-            Either way, your new Patron validity starts fresh for a full year from the day you upgrade.
-          </p>
+          <h3 className="mc-upgrade__heading">{t('membership.compare.upgradeHeading')}</h3>
+          <p className="mc-upgrade__text">{t('membership.compare.upgradeText')}</p>
 
           {!member && (
             <Link to="/dashboard/login" state={{ from: '/dashboard/membership' }} className="mc-upgrade__btn">
-              Log In to Upgrade <FaArrowRight />
+              {t('membership.compare.logInToUpgrade')} <FaArrowRight />
             </Link>
           )}
 
           {member && isPatron && (
-            <p className="mc-upgrade__already">✓ You're already a Patron member — thank you for your support!</p>
+            <p className="mc-upgrade__already">{t('membership.compare.alreadyPatron')}</p>
           )}
 
           {member && !isPatron && (
             <>
-              {previewLoading && <p className="mc-upgrade__text">Calculating your upgrade price…</p>}
+              {previewLoading && <p className="mc-upgrade__text">{t('membership.compare.calculatingPrice')}</p>}
               {preview && (
                 <p className="mc-upgrade__price">
-                  Your price: <strong>€{preview.amount}</strong>
+                  {t('membership.compare.yourPrice')} <strong>€{preview.amount}</strong>
                   <span className="mc-upgrade__price-note">{preview.message}</span>
                 </p>
               )}
               <Link to="/dashboard/membership" className="mc-upgrade__btn">
-                Upgrade to Patron <FaArrowRight />
+                {t('membership.compare.upgradeToPatron')} <FaArrowRight />
               </Link>
             </>
           )}

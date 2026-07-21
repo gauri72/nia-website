@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FaStar, FaUserTie, FaChevronLeft, FaChevronRight, FaLinkedinIn } from 'react-icons/fa';
 import imgPresident          from '../../assets/about-us/president.jpg';
 import imgVicePresident      from '../../assets/about-us/vice-president.jpg';
@@ -13,18 +14,18 @@ import imgAdvisorDirkKolff    from '../../assets/about-us/advisor-dirk-kolff.jpe
 import './AboutStructure.css';
 
 const BOARD = [
-  { role: 'President',                        name: 'Shivam Joshi',          photo: imgPresident,           color: '#e8641a', linkedin: 'https://www.linkedin.com/in/shivam-joshi-2a22659b/' },
-  { role: 'Vice President / Acting Treasurer', name: 'Shanti Pahladsingh',   photo: imgVicePresident,       color: '#5b8dd9', linkedin: 'https://www.linkedin.com/in/shanti-pahladsingh-942b9830/' },
-  { role: 'Secretary',                        name: 'Victor van Bijlert',    photo: imgSecretary,           color: '#2d7d3a', linkedin: 'https://www.linkedin.com/in/victor-van-bijlert-38a6a529/' },
-  { role: 'Director Marketing',               name: 'Remy van Nieuwenhoven', photo: imgDirectorMarketing,   color: '#7B2D8B', linkedin: 'https://www.linkedin.com/in/remy-van-nieuwenhoven/' },
-  { role: 'Director Sponsorships',            name: 'Jayadev Sukumaran',     photo: imgDirectorSponsorship, color: '#c89a2e', linkedin: 'https://www.linkedin.com/in/jayadev-sukumaran-38801b138/' },
-  { role: 'Director Public Relations',        name: 'Radha Nikhade',         photo: imgDirectorPR,          color: '#1a7fa8', linkedin: 'https://www.linkedin.com/in/radha-nikhade-2a2548a/' },
+  { roleKey: 'president',               name: 'Shivam Joshi',          photo: imgPresident,           color: '#e8641a', linkedin: 'https://www.linkedin.com/in/shivam-joshi-2a22659b/' },
+  { roleKey: 'vicePresidentTreasurer',  name: 'Shanti Pahladsingh',   photo: imgVicePresident,       color: '#5b8dd9', linkedin: 'https://www.linkedin.com/in/shanti-pahladsingh-942b9830/' },
+  { roleKey: 'secretary',               name: 'Victor van Bijlert',    photo: imgSecretary,           color: '#2d7d3a', linkedin: 'https://www.linkedin.com/in/victor-van-bijlert-38a6a529/' },
+  { roleKey: 'directorMarketing',       name: 'Remy van Nieuwenhoven', photo: imgDirectorMarketing,   color: '#7B2D8B', linkedin: 'https://www.linkedin.com/in/remy-van-nieuwenhoven/' },
+  { roleKey: 'directorSponsorships',    name: 'Jayadev Sukumaran',     photo: imgDirectorSponsorship, color: '#c89a2e', linkedin: 'https://www.linkedin.com/in/jayadev-sukumaran-38801b138/' },
+  { roleKey: 'directorPR',              name: 'Radha Nikhade',         photo: imgDirectorPR,          color: '#1a7fa8', linkedin: 'https://www.linkedin.com/in/radha-nikhade-2a2548a/' },
   // Photo pending for this one — falls back to initials in the avatar circle until supplied.
-  { role: 'Advisor', name: 'Prof. dr. Dirk Kolff', photo: imgAdvisorDirkKolff, color: '#b0463c' },
-  { role: 'Advisor', name: 'Mr. Ram Lakhina',      photo: null, color: '#3c8fb0' },
-  { role: 'Advisor', name: 'Drs. B N Madan',       photo: imgAdvisorBadriMadan,  color: '#8a6d3b' },
-  { role: 'Advisor', name: 'Mr. Vinod Sehdev',     photo: imgAdvisorVinodSehdev, color: '#4a7d4f' },
-  { role: 'Advisor', name: 'Mr. Dev Pal Singh',    photo: imgAdvisorDevPalSingh, color: '#6b5b9e' },
+  { roleKey: 'advisor', name: 'Prof. dr. Dirk Kolff', photo: imgAdvisorDirkKolff, color: '#b0463c' },
+  { roleKey: 'advisor', name: 'Mr. Ram Lakhina',      photo: null, color: '#3c8fb0' },
+  { roleKey: 'advisor', name: 'Drs. B N Madan',       photo: imgAdvisorBadriMadan,  color: '#8a6d3b' },
+  { roleKey: 'advisor', name: 'Mr. Vinod Sehdev',     photo: imgAdvisorVinodSehdev, color: '#4a7d4f' },
+  { roleKey: 'advisor', name: 'Mr. Dev Pal Singh',    photo: imgAdvisorDevPalSingh, color: '#6b5b9e' },
 ];
 
 function initials(name) {
@@ -36,6 +37,7 @@ function initials(name) {
 const INTERVAL = 4000;
 
 function OfficeBearersCarousel() {
+  const { t } = useTranslation();
   const [active, setActive]   = useState(0);
   const [dir, setDir]         = useState('next');
   const [animKey, setAnimKey] = useState(0);
@@ -66,6 +68,7 @@ function OfficeBearersCarousel() {
   }, [next]);
 
   const member = BOARD[active];
+  const memberRole = t(`about.structure.roles.${member.roleKey}`);
 
   return (
     <div
@@ -73,7 +76,7 @@ function OfficeBearersCarousel() {
       onMouseEnter={() => clearInterval(timerRef.current)}
       onMouseLeave={resetTimer}
     >
-      <button className="ob-carousel__arrow ob-carousel__arrow--prev" onClick={() => { prev(); resetTimer(); }} aria-label="Previous">
+      <button className="ob-carousel__arrow ob-carousel__arrow--prev" onClick={() => { prev(); resetTimer(); }} aria-label={t('home.sponsors.ariaPrevious')}>
         <FaChevronLeft />
       </button>
 
@@ -88,7 +91,7 @@ function OfficeBearersCarousel() {
             {!member.photo && <span className="ob-avatar__initials">{initials(member.name)}</span>}
           </div>
           <p className="ob-carousel__name">{member.name}</p>
-          <p className="ob-carousel__role">{member.role}</p>
+          <p className="ob-carousel__role">{memberRole}</p>
           {member.linkedin && (
             <a
               href={member.linkedin}
@@ -103,7 +106,7 @@ function OfficeBearersCarousel() {
         </div>
       </div>
 
-      <button className="ob-carousel__arrow ob-carousel__arrow--next" onClick={() => { next(); resetTimer(); }} aria-label="Next">
+      <button className="ob-carousel__arrow ob-carousel__arrow--next" onClick={() => { next(); resetTimer(); }} aria-label={t('home.sponsors.ariaNext')}>
         <FaChevronRight />
       </button>
 
@@ -114,7 +117,7 @@ function OfficeBearersCarousel() {
             className={`ob-carousel__dot${i === active ? ' ob-carousel__dot--active' : ''}`}
             style={{ '--member-color': b.color }}
             onClick={() => { go(i, i > active ? 'next' : 'prev'); resetTimer(); }}
-            aria-label={`${b.role}`}
+            aria-label={t(`about.structure.roles.${b.roleKey}`)}
           />
         ))}
       </div>
@@ -127,13 +130,15 @@ function OfficeBearersCarousel() {
 }
 
 export default function AboutStructure() {
+  const { t } = useTranslation();
+
   return (
     <section className="au-struct">
       <div className="au-struct__inner">
 
         <div className="au-struct__header">
-          <p className="au-struct__eyebrow">HOW WE ARE ORGANISED</p>
-          <h2 className="au-struct__heading">Structure of the Association</h2>
+          <p className="au-struct__eyebrow">{t('about.structure.eyebrow')}</p>
+          <h2 className="au-struct__heading">{t('home.assocStructure.heading')}</h2>
           <div className="au-struct__underline" />
         </div>
 
@@ -142,12 +147,8 @@ export default function AboutStructure() {
           <div className="au-struct__card au-struct__card--orange">
             <span className="au-struct__card-icon au-struct__card-icon--orange"><FaStar /></span>
             <div>
-              <h3 className="au-struct__card-title">Honorary Membership</h3>
-              <p className="au-struct__card-text">
-                Honorary membership may be conferred upon individuals who have made an outstanding
-                contribution to Indo-Dutch cultural cooperation. It is the highest distinction
-                the Association can bestow, recognising exceptional service and dedication.
-              </p>
+              <h3 className="au-struct__card-title">{t('about.structure.honoraryTitle')}</h3>
+              <p className="au-struct__card-text">{t('about.structure.honoraryText')}</p>
             </div>
           </div>
 
@@ -156,30 +157,30 @@ export default function AboutStructure() {
         {/* Office Bearers carousel */}
         <div className="au-struct__roles-header">
           <FaUserTie className="au-struct__roles-icon" />
-          <h3 className="au-struct__roles-title">Office Bearers</h3>
+          <h3 className="au-struct__roles-title">{t('about.structure.officeBearers')}</h3>
         </div>
 
         <div className="au-ob-dark">
           <div className="au-ob-dark__row">
 
             <div className="au-ob-dark__tagline-col">
-              <p className="au-ob-dark__eyebrow">MEET THE TEAM</p>
+              <p className="au-ob-dark__eyebrow">{t('about.structure.meetTeam')}</p>
               <p className="au-ob-dark__tagline">
-                THE PEOPLE<br />WHO DRIVE<br />
-                <span className="au-ob-dark__tagline--gold">NIA FORWARD.</span>
+                {t('about.structure.taglineLine1')}<br />{t('about.structure.taglineLine2')}<br />
+                <span className="au-ob-dark__tagline--gold">{t('about.structure.taglineLine3')}</span>
               </p>
               <div className="au-ob-dark__rule">
                 <span className="au-ob-dark__rule-line" />
                 <span className="au-ob-dark__rule-diamond">✦</span>
                 <span className="au-ob-dark__rule-line" />
               </div>
-              <p className="au-ob-dark__script">Serving our community!</p>
+              <p className="au-ob-dark__script">{t('about.structure.script')}</p>
             </div>
 
             <OfficeBearersCarousel />
 
             <div className="au-ob-dark__info-col">
-              <p className="au-ob-dark__contact-label">GET IN TOUCH</p>
+              <p className="au-ob-dark__contact-label">{t('about.structure.getInTouch')}</p>
               <a href="mailto:secretary@niaonline.org" className="au-ob-dark__contact-email">secretary@niaonline.org</a>
             </div>
 

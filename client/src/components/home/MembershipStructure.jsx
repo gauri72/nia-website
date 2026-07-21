@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { FaHome, FaStar, FaUsers } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import membershipImage from '../../assets/home/MembershipStructureImage.png';
@@ -8,26 +9,23 @@ const TIERS = [
     id: 'friend',
     icon: <FaHome />,
     label: 'FRIEND',
-    sublabel: 'MEMBERSHIP',
     price: '€60',
     unit: '/ year',
     color: 'gold',
-    perk: '🎟️ 20% OFF on All NIA Events',
   },
   {
     id: 'patron',
     icon: <FaStar />,
     label: 'PATRON',
-    sublabel: 'MEMBERSHIP',
     price: '€150',
     unit: '/ year',
     color: 'diamond',
-    perk: '🎟️ Free Entry to All NIA Events',
   },
 ];
 
 export default function MembershipStructure() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleTierClick = (tierId) => {
     navigate('/membership');
@@ -42,12 +40,9 @@ export default function MembershipStructure() {
 
         {/* ── Left panel with border ── */}
         <div className="membership__left">
-          <h2 className="membership__heading">Membership</h2>
+          <h2 className="membership__heading">{t('home.membership.heading')}</h2>
           <div className="membership__underline" />
-          <p className="membership__intro">
-            Individuals and families who agree with the objectives of the Association can become members
-            by filling in the membership form and paying the annual contribution.
-          </p>
+          <p className="membership__intro">{t('home.membership.intro')}</p>
 
           <div className="membership__tiers">
             {TIERS.map((tier) => (
@@ -59,7 +54,7 @@ export default function MembershipStructure() {
                   </div>
                   <div className="tier-card__info">
                     <p className="tier-card__label">{tier.label}</p>
-                    <p className="tier-card__sublabel">{tier.sublabel}</p>
+                    <p className="tier-card__sublabel">{t(`home.membership.tiers.${tier.id}.sublabel`)}</p>
                   </div>
                 </div>
 
@@ -68,7 +63,7 @@ export default function MembershipStructure() {
                   <span className="tier-card__unit">{tier.unit}</span>
                 </div>
 
-                <p className="tier-card__perk">{tier.perk}</p>
+                <p className="tier-card__perk">{t(`home.membership.tiers.${tier.id}.perk`)}</p>
 
               </div>
             ))}
@@ -87,8 +82,8 @@ export default function MembershipStructure() {
               <FaUsers />
             </div>
             <div className="membership__info-card">
-              <p>The Executive Board plans and organizes activities that support our mission and bring our communities together.</p>
-              <p>Members guide our direction through the General Meeting and active participation.</p>
+              <p>{t('home.membership.infoCard.line1')}</p>
+              <p>{t('home.membership.infoCard.line2')}</p>
             </div>
           </div>
         </div>

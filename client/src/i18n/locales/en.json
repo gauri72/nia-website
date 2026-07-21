@@ -1,0 +1,653 @@
+{
+  "navbar": {
+    "links": {
+      "home": "Home",
+      "events": "Events",
+      "membership": "Membership",
+      "sponsorship": "Sponsorship",
+      "donation": "Donation",
+      "about": "About Us"
+    },
+    "tagline": {
+      "main": "Bridging Two Great Cultures",
+      "sub": "Netherlands & India — Together Since 1950"
+    },
+    "eventPill": {
+      "label": "🎉 NEXT EVENT",
+      "date": "15 Aug 2026",
+      "name": "India Independence Day"
+    },
+    "cta": {
+      "buyTickets": "Buy Tickets",
+      "getMembership": "Get Membership",
+      "logIn": "Log In"
+    },
+    "toggleMenu": "Toggle menu",
+    "languageToggle": "Switch to Dutch"
+  },
+  "footer": {
+    "followUs": "Follow us",
+    "usefulLinks": {
+      "heading": "Useful Links",
+      "home": "Home",
+      "about": "About NIA",
+      "whatWeDo": "What we do",
+      "upcomingEvents": "Upcoming Events",
+      "news": "News & Activities",
+      "policy": "Policy"
+    },
+    "address": {
+      "heading": "Address",
+      "line1": "Burg. Patijnlaan 1062",
+      "line2": "2585 CB Den Haag",
+      "line3": "The Netherlands"
+    },
+    "contact": {
+      "heading": "Contact",
+      "contactUs": "Contact Us",
+      "registerAsMember": "Register as a Member"
+    },
+    "copyright": "© 2026 – The Netherlands India Association – All rights reserved",
+    "credit": {
+      "designedBy": "Designed & Developed by",
+      "studio": "V.O.I.C.E. Venture Studio"
+    }
+  },
+  "home": {
+    "aboutNia": {
+      "heading": "About NIA",
+      "subtitle": "The aims and objectives of the Association are:",
+      "objective1": "To promote the friendship, knowledge and understanding of the culture, history, philosophy, religions and social structure of India and the Netherlands between the people of both countries.",
+      "objective2": "To further friendly relations between the peoples of India and the Netherlands by widening and deepening personal, cultural and social contacts."
+    },
+    "membership": {
+      "heading": "Membership",
+      "intro": "Individuals and families who agree with the objectives of the Association can become members by filling in the membership form and paying the annual contribution.",
+      "tiers": {
+        "friend": {
+          "sublabel": "MEMBERSHIP",
+          "perk": "🎟️ 20% OFF on All NIA Events"
+        },
+        "patron": {
+          "sublabel": "MEMBERSHIP",
+          "perk": "🎟️ Free Entry to All NIA Events"
+        }
+      },
+      "infoCard": {
+        "line1": "The Executive Board plans and organizes activities that support our mission and bring our communities together.",
+        "line2": "Members guide our direction through the General Meeting and active participation."
+      }
+    },
+    "assocStructure": {
+      "heading": "Structure of the Association",
+      "card1": "Honorary membership may be conferred upon individuals who have made an outstanding contribution to Indo-Dutch cultural cooperation.",
+      "card2": "The Association is managed by an Executive Board. The General Meeting consists of members. The Executive Board comprises the office bearers: President, Vice-President, Secretary and Treasurer."
+    },
+    "activities": {
+      "heading": "Activities",
+      "subtitle": "The Association organizes about four to five activities every year, sometimes in cooperation with other organizations.\nThese activities bring the Dutch and Indian communities together in the Netherlands.",
+      "items": {
+        "independenceDay": "Indian Independence Day",
+        "christmasGala": "Christmas Gala Dinner",
+        "kingsDay": "Kings Day Celebrations",
+        "keukenhof": "Keukenhof Visit",
+        "membersOuting": "NIA Members Outing"
+      }
+    },
+    "sponsors": {
+      "eyebrow": "PROUDLY SUPPORTED BY",
+      "tagline1": "OUR",
+      "tagline2": "VALUED",
+      "tagline3": "SPONSORS.",
+      "script": "Thank you for your support!",
+      "sectionLabel": "OUR SPONSORS",
+      "ctaTitle": "BECOME A SPONSOR",
+      "ctaSub": "MAKE A LASTING IMPACT!",
+      "ctaBtn": "VIEW PACKAGES →",
+      "ariaPrevious": "Previous",
+      "ariaNext": "Next",
+      "ariaSponsor": "Sponsor {{n}}"
+    }
+  },
+  "about": {
+    "intro": {
+      "eyebrow": "WHO WE ARE",
+      "heading": "About the Netherlands India Association",
+      "body": "The Netherlands India Association (NIA) is a vibrant, non-profit organisation dedicated to nurturing the bond between the Dutch and Indian communities. Founded on a shared passion for cultural exchange, we bring together individuals, families, and businesses who celebrate the richness of Indo-Dutch heritage."
+    },
+    "mission": {
+      "eyebrow": "OUR MISSION & VALUES",
+      "heading": "What Drives Us",
+      "intro": "The Netherlands India Association is built on a foundation of cultural pride, human connection, and a belief that shared experiences make the world a richer place.",
+      "values": {
+        "culturalBridge": {
+          "title": "Cultural Bridge",
+          "desc": "We connect two great civilisations — Dutch and Indian — through art, music, cuisine, festivals, and shared stories that span centuries."
+        },
+        "communityFirst": {
+          "title": "Community First",
+          "desc": "Every event, initiative, and programme we run is designed to bring people together and strengthen the bonds within our community."
+        },
+        "mutualRespect": {
+          "title": "Mutual Respect",
+          "desc": "We celebrate diversity and promote understanding between cultures, honouring both the Dutch and Indian ways of life equally."
+        },
+        "inspireEducate": {
+          "title": "Inspire & Educate",
+          "desc": "From cultural workshops to heritage talks, we create meaningful experiences that inspire curiosity and deepen appreciation for both nations."
+        }
+      }
+    },
+    "structure": {
+      "eyebrow": "HOW WE ARE ORGANISED",
+      "honoraryTitle": "Honorary Membership",
+      "honoraryText": "Honorary membership may be conferred upon individuals who have made an outstanding contribution to Indo-Dutch cultural cooperation. It is the highest distinction the Association can bestow, recognising exceptional service and dedication.",
+      "officeBearers": "Office Bearers",
+      "meetTeam": "MEET THE TEAM",
+      "taglineLine1": "THE PEOPLE",
+      "taglineLine2": "WHO DRIVE",
+      "taglineLine3": "NIA FORWARD.",
+      "script": "Serving our community!",
+      "getInTouch": "GET IN TOUCH",
+      "roles": {
+        "president": "President",
+        "vicePresidentTreasurer": "Vice President / Acting Treasurer",
+        "secretary": "Secretary",
+        "directorMarketing": "Director Marketing",
+        "directorSponsorships": "Director Sponsorships",
+        "directorPR": "Director Public Relations",
+        "advisor": "Advisor"
+      }
+    },
+    "cta": {
+      "body": "Want to be part of a community that celebrates two great cultures? Become a member of the Netherlands India Association today.",
+      "subPrefix": "Open to everyone who shares a love for Indo-Dutch friendship —",
+      "subStrong": "join us and make a difference."
+    }
+  },
+  "membership": {
+    "plans": {
+      "heading": "Membership Plans",
+      "sub": "Choose the plan that suits you and complete your registration in minutes.",
+      "steps": {
+        "choosePlan": "Choose Plan",
+        "yourDetails": "Your Details",
+        "reviewOrder": "Review Order",
+        "payment": "Payment"
+      },
+      "memberCodeLabel": "Existing Member Code (optional)",
+      "memberCodePlaceholder": "Member ID",
+      "tiers": {
+        "friend": {
+          "tagline": "Celebrate together at a great value",
+          "perkBadge": "🎟️ 20% OFF on All NIA Events",
+          "perks": [
+            "Valid for 2 adults in the same household",
+            "Access to all NIA events throughout the year",
+            "20% discount on all event tickets",
+            "NIA newsletter & community updates",
+            "Be part of a growing Dutch-Indian community"
+          ]
+        },
+        "patron": {
+          "tagline": "All events included — celebrate without limits",
+          "perkBadge": "🎟️ Free Entry to All NIA Events",
+          "perks": [
+            "Valid for 2 adults in the same household",
+            "Free entry to all NIA events throughout the year",
+            "No event ticket costs — fully included",
+            "NIA newsletter & community updates",
+            "Recognition as a Patron supporter of the association",
+            "Priority access & seating at select events"
+          ]
+        }
+      },
+      "selectedBadge": "✓ Selected",
+      "summaryMembership": "{{tier}} Membership",
+      "perYear": "year",
+      "continue": "Continue",
+      "back": "Back",
+      "details": {
+        "heading": "Your Details",
+        "sub": "We'll send your membership confirmation to the email below.",
+        "fullName": "Full Name",
+        "emailAddress": "Email Address",
+        "phoneNumber": "Phone Number",
+        "optional": "(optional)",
+        "discountCode": "Discount Code",
+        "discountPlaceholder": "e.g. code from a promotion",
+        "checking": "Checking…",
+        "apply": "Apply",
+        "discountApplied": "✓ €{{amount}} discount applied",
+        "enterEmailFirst": "Enter your email above first.",
+        "partnerDetails": "Partner Details",
+        "partnerFullName": "Partner's Full Name",
+        "partnerEmail": "Partner's Email Address",
+        "partnerPhone": "Partner's Phone Number"
+      },
+      "review": {
+        "heading": "Review Your Order",
+        "sub": "Confirm your membership before proceeding to payment.",
+        "plan": "Plan",
+        "duration": "Duration",
+        "total": "Total",
+        "oneYear": "1 year",
+        "discount": "Discount",
+        "totalPayable": "Total Payable",
+        "primaryMember": "Primary Member",
+        "partner": "Partner",
+        "pay": "Pay €{{amount}}"
+      },
+      "payment": {
+        "allSet": "You're all set!",
+        "confirmationEmailed": "Your membership confirmation has been emailed to {{email}}.",
+        "confirmPay": "Confirm & Pay",
+        "redirectNotice": "You will be redirected to Mollie's secure checkout to pay €{{amount}}. All major payment methods are accepted (iDEAL, card, PayPal and more).",
+        "secureNotice": "Your payment is encrypted and secure. Membership will be activated after payment.",
+        "processing": "Processing…",
+        "paySecurely": "Pay €{{amount}} securely"
+      },
+      "errors": {
+        "discountCheckFailed": "Could not validate this code right now.",
+        "paymentFailed": "Payment failed. Please try again."
+      },
+      "freeSuccessDefault": "Your membership is fully covered by the discount — no payment required."
+    },
+    "compare": {
+      "heading": "PLAN COMPARISON",
+      "colFeature": "FEATURE",
+      "rows": {
+        "adultsCovered": "Adults covered",
+        "eventAccess": "Event access",
+        "eventPricing": "Event pricing",
+        "newsletter": "Newsletter",
+        "patronRecognition": "Patron recognition",
+        "priorityAccess": "Priority access"
+      },
+      "discount20": "20% discount",
+      "free": "Free",
+      "upgradeHeading": "Already a Friend member? Upgrade to Patron anytime.",
+      "upgradeText": "If you have more than 180 days left on your Friend membership, upgrading only costs the difference between the two tiers (€90). With 180 days or fewer remaining, upgrading costs the full Patron price (€150). Either way, your new Patron validity starts fresh for a full year from the day you upgrade.",
+      "logInToUpgrade": "Log In to Upgrade",
+      "alreadyPatron": "✓ You're already a Patron member — thank you for your support!",
+      "calculatingPrice": "Calculating your upgrade price…",
+      "yourPrice": "Your price:",
+      "upgradeToPatron": "Upgrade to Patron"
+    },
+    "cta": {
+      "body": "Membership is valid for one calendar year from the date of registration.",
+      "subPrefix": "For more information or to sign up, please contact the",
+      "subStrong": "Netherlands India Association."
+    }
+  },
+  "donation": {
+    "form": {
+      "heading": "Make a Donation",
+      "sub": "Choose an amount and complete your donation in a few simple steps.",
+      "steps": {
+        "chooseAmount": "Choose Amount",
+        "yourDetails": "Your Details",
+        "review": "Review",
+        "payment": "Payment"
+      },
+      "tiers": {
+        "supporter": {
+          "tagline": "Help us run a community activity",
+          "perks": [
+            "Sponsors one community activity",
+            "Named in our newsletter thank-you list",
+            "Warm gratitude from the NIA team"
+          ]
+        },
+        "friend": {
+          "tagline": "Fund refreshments at a cultural event",
+          "perks": [
+            "Funds refreshments at an event",
+            "Personal thank-you email from NIA",
+            "Named in event acknowledgements"
+          ]
+        },
+        "patron": {
+          "tagline": "Cover décor for a cultural evening",
+          "perks": [
+            "Covers full décor for a cultural evening",
+            "Recognised at the event",
+            "Certificate of appreciation",
+            "Featured in NIA social media post"
+          ]
+        },
+        "champion": {
+          "tagline": "Co-sponsor a flagship event segment",
+          "perks": [
+            "Co-sponsors a flagship event segment",
+            "Logo / name on event banner",
+            "VIP recognition at the event",
+            "Featured article in NIA newsletter"
+          ]
+        }
+      },
+      "causes": {
+        "general": "General Community Fund",
+        "events": "Cultural Events & Festivals",
+        "youth": "Youth & Education Programmes",
+        "welfare": "Community Welfare Initiatives"
+      },
+      "selectedBadge": "✓ Selected",
+      "customAmountLabel": "Or enter a custom amount:",
+      "customAmountPlaceholder": "Your amount",
+      "donateTowards": "Donate Towards",
+      "summaryLabel": "Donation",
+      "continue": "Continue",
+      "back": "Back",
+      "details": {
+        "heading": "Your Details",
+        "sub": "We'll send your donation receipt to the email below.",
+        "fullName": "Full Name",
+        "emailAddress": "Email Address",
+        "phoneNumber": "Phone Number",
+        "optional": "(optional)"
+      },
+      "review": {
+        "heading": "Review Your Donation",
+        "sub": "Confirm the details before proceeding to payment.",
+        "cause": "Cause",
+        "amount": "Amount",
+        "totalPayable": "Total Payable",
+        "donationFrom": "Donation from",
+        "pay": "Pay {{amount}}"
+      },
+      "payment": {
+        "confirmDonate": "Confirm & Donate",
+        "redirectNotice": "You will be redirected to Mollie's secure checkout to complete your donation of {{amount}}. All major payment methods are accepted (iDEAL, card, PayPal and more).",
+        "secureNotice": "Your payment is encrypted and secure.",
+        "redirecting": "Redirecting…",
+        "donateSecurely": "Donate {{amount}} securely"
+      },
+      "errors": {
+        "paymentFailed": "Payment failed. Please try again."
+      }
+    },
+    "impact": {
+      "eyebrow": "YOUR IMPACT",
+      "heading": "What Your Donation Powers",
+      "intro": "Every euro goes directly toward cultural events, community programmes, and initiatives that bring the Dutch-Indian community closer together.",
+      "items": {
+        "heritage": { "label": "Years of Heritage", "desc": "Celebrating Dutch-Indian culture and traditions since our founding." },
+        "members": { "label": "Community Members", "desc": "A thriving network of families and individuals across the Netherlands." },
+        "events": { "label": "Events Per Year", "desc": "From Independence Day galas to cultural festivals and community nights." },
+        "funded": { "label": "Community-Funded", "desc": "Every programme runs on the generosity of members like you." }
+      }
+    },
+    "cta": {
+      "body": "Every contribution, no matter the size, makes a real difference to our community.",
+      "subPrefix": "Prefer bank transfer or have questions? Contact the",
+      "subStrong": "Netherlands India Association."
+    }
+  },
+  "sponsorship": {
+    "benefits": {
+      "eyebrow": "ALL SPONSOR PACKAGES INCLUDE:",
+      "exposure": { "title": "EXPOSURE ON NIA WEBSITE" },
+      "screens": { "title": "VISIBLE ON 3 SCREENS DURING OUR EVENTS", "desc": "15 August 2026 & 12 December 2026" },
+      "mention": { "title": "MENTIONING OF SPONSORS ON STAGE" }
+    },
+    "events": {
+      "benefits": {
+        "exposure": "EXPOSURE ON\nNIA WEBSITE",
+        "screens": "VISIBLE ON 3 SCREENS\nDURING OUR EVENTS",
+        "screensDesc": "15 AUGUST 2026 & 12 DECEMBER 2026",
+        "mention": "MENTIONING OF\nSPONSORS ON STAGE"
+      },
+      "flagshipHeading": "OUR FLAGSHIP EVENTS 2026",
+      "flagship": {
+        "independence": { "title": "79TH INDEPENDENCE DAY", "date": "15TH AUGUST 2026" },
+        "christmas": { "title": "CHRISTMAS GALA DINNER", "date": "12TH DECEMBER 2026" }
+      }
+    },
+    "compare": {
+      "heading": "PACKAGE COMPARISON",
+      "colBenefits": "BENEFITS",
+      "tierLabels": {
+        "bronze": "BRONZE",
+        "silver": "SILVER",
+        "gold": "GOLD",
+        "platinum": "PLATINUM"
+      },
+      "rows": [
+        "Logo placement on event boards & banners",
+        "Brief mention about your company during event",
+        "Promotional video during the event",
+        "Company listed as sponsor on website for 1 year",
+        "Place company banners & brochures at event",
+        "Seating with VIPs during the event",
+        "Chance to speak on stage (~3 mins)",
+        "Complimentary tickets (entry + dinner + drinks)"
+      ]
+    },
+    "packages": {
+      "heading": "Sponsorship Packages",
+      "sub": "Support the Netherlands India Association and gain visibility across our events and community.",
+      "steps": {
+        "choosePackage": "Choose Package",
+        "yourDetails": "Your Details",
+        "reviewOrder": "Review Order",
+        "payment": "Payment"
+      },
+      "loadingPackages": "Loading packages…",
+      "sublabel": "SPONSORSHIP",
+      "ticketsIncluded": "{{count}} complimentary tickets",
+      "selectedBadge": "✓ Selected",
+      "summarySponsorship": "{{name}} Sponsorship",
+      "continue": "Continue",
+      "back": "Back",
+      "tierNames": {
+        "bronze": "Bronze",
+        "silver": "Silver",
+        "gold": "Gold",
+        "platinum": "Platinum"
+      },
+      "details": {
+        "heading": "Your Details",
+        "sub": "We'll send your sponsorship confirmation to the email below.",
+        "fullName": "Full Name",
+        "emailAddress": "Email Address",
+        "phoneNumber": "Phone Number",
+        "optional": "(optional)",
+        "organisation": "Organisation",
+        "organisationPlaceholder": "Company or organisation name",
+        "discountCode": "Discount Code",
+        "discountPlaceholder": "Optional",
+        "checking": "Checking…",
+        "apply": "Apply",
+        "discountApplied": "✓ €{{amount}} discount applied"
+      },
+      "review": {
+        "heading": "Review Your Order",
+        "sub": "Confirm your sponsorship package before proceeding to payment.",
+        "colPackage": "Package",
+        "colTickets": "Tickets",
+        "colTotal": "Total",
+        "ticketsCount": "{{count}} tickets",
+        "discount": "Discount",
+        "totalPayable": "Total Payable",
+        "sponsorshipFrom": "Sponsorship from",
+        "pay": "Pay €{{amount}}"
+      },
+      "payment": {
+        "allSet": "You're all set!",
+        "confirmationEmailed": "A confirmation has been emailed to {{email}}.",
+        "confirmPay": "Confirm & Pay",
+        "redirectNotice": "You will be redirected to Mollie's secure checkout to complete your {{name}} sponsorship payment of €{{amount}}. All major payment methods are accepted.",
+        "secureNotice": "Your payment is encrypted and secure. Our team will contact you after confirmation.",
+        "processing": "Processing…",
+        "paySecurely": "Pay €{{amount}} securely"
+      },
+      "errors": {
+        "discountCheckFailed": "Could not validate this code right now.",
+        "paymentFailed": "Payment failed. Please try again."
+      },
+      "freeSuccessDefault": "This sponsorship is fully covered by the discount — no payment required."
+    }
+  },
+  "events": {
+    "info": {
+      "date": { "label": "DATE", "primary": "15TH AUGUST 2026", "secondary": "SATURDAY" },
+      "time": { "label": "TIME", "primary": "18:00", "secondary": "ONWARDS" },
+      "venue": { "label": "VENUE", "primary": "DE DUINPAN", "secondary": "Sportlaan 34, 2191 XH De Zilk\nGemeente Noordwijk" },
+      "theme": { "label": "EVENT THEME", "primary": "India, Netherlands", "secondary": "and Water" },
+      "viewOnMap": "View on Map"
+    },
+    "about": {
+      "heading": "About The Event",
+      "body1": "Join us for a historic celebration as we mark India's 80th Independence Day and the 75th Anniversary of NIA.",
+      "body2": "An evening filled with cultural performances, delicious cuisine, inspiring moments and togetherness as we honour our heritage and strengthen the bond between two nations.",
+      "highlightsBtn": "EVENT HIGHLIGHTS",
+      "highlights": {
+        "performances": "Cultural\nPerformances",
+        "cuisine": "Delicious\nCuisine",
+        "togetherness": "Community\nTogetherness",
+        "surprises": "Surprises &\nMemorable Moments"
+      }
+    },
+    "venue": {
+      "venueHeading": "Venue",
+      "viewOnMap": "VIEW ON MAP",
+      "organizedByHeading": "Organized By",
+      "orgDesc": "Celebrating 75 years of connection,\ncommunity and friendship.",
+      "aboutNiaBtn": "ABOUT NIA"
+    },
+    "cta": {
+      "title": "Let's Celebrate Together!",
+      "sub": "Honouring the past, celebrating the present,\ninspiring the future.",
+      "becomeMemberBtn": "BECOME A MEMBER"
+    },
+    "booking": {
+      "heading": "Book Your Tickets",
+      "sub": "Secure your spot at our upcoming event in just a few steps.",
+      "steps": {
+        "selectTickets": "Select Tickets",
+        "yourDetails": "Your Details",
+        "reviewOrder": "Review Order",
+        "payment": "Payment"
+      },
+      "membershipCodeLabel": "Membership Code",
+      "discountCodeLabel": "Discount Code",
+      "discountCodePlaceholder": "e.g. NIA10",
+      "discountValidateHint": "We'll validate this once you enter your email on the next step.",
+      "tickets": {
+        "regular": { "type": "Regular Entry", "perks": ["No drinks included", "No food included"] },
+        "vip": { "type": "VIP Experience", "badge": "BEST VALUE", "perks": ["2 drinks included", "Food included"] },
+        "child": { "type": "Child (6–12 yrs)", "perks": ["Per child", "Accompanied by adult"] }
+      },
+      "perPerson": "/ person",
+      "qtyLabel": "Qty",
+      "decreaseAria": "Decrease",
+      "increaseAria": "Increase",
+      "secureBookingNote": "Secure Booking",
+      "limitedSeatsNote": "Limited Seats — Book Early!",
+      "continue": "Continue",
+      "back": "Back",
+      "aiHints": {
+        "vipMultiple": "Great choice — VIP for {{qty}} saves time at the bar!",
+        "regularUpsell": "Tip: upgrading to VIP for {{qty}} is only €{{diff}} more and includes food & drinks.",
+        "discountSaved": "Discount applied — you save €{{amount}}!"
+      },
+      "details": {
+        "heading": "Your Details",
+        "sub": "We'll send your tickets to the email address below.",
+        "fullName": "Full Name",
+        "emailAddress": "Email Address",
+        "phoneNumber": "Phone Number",
+        "optional": "(optional)",
+        "emailInvalidHint": "Please enter a valid email address (e.g. you@email.com) — this is where your tickets will be sent.",
+        "otherAttendeesLabel_one": "Names of Other Attendees ({{count}} person)",
+        "otherAttendeesLabel_other": "Names of Other Attendees ({{count}} people)",
+        "otherAttendeesHint_one": "Please list the other {{count}} attendee, one name per line.",
+        "otherAttendeesHint_other": "Please list the other {{count}} attendees, one name per line.",
+        "checking": "Checking…"
+      },
+      "review": {
+        "heading": "Review Your Order",
+        "sub": "Check your tickets before proceeding to payment.",
+        "colTicket": "Ticket",
+        "colPrice": "Price",
+        "colQty": "Qty",
+        "colTotal": "Total",
+        "membershipDiscount": "Membership Discount",
+        "discountWithCode": "Discount ({{code}})",
+        "totalPayable": "Total Payable",
+        "ticketsFor": "Tickets for",
+        "allAttendees": "All Attendees ({{count}})",
+        "youSuffix": "(you)",
+        "pay": "Pay €{{amount}}"
+      },
+      "payment": {
+        "allSet": "You're all set!",
+        "ticketsEmailed": "Your tickets have been emailed to {{email}}.",
+        "confirmPay": "Confirm & Pay",
+        "redirectNotice": "You will be redirected to Mollie's secure checkout to complete payment of €{{amount}}. All major payment methods are accepted (iDEAL, card, PayPal and more).",
+        "secureNotice": "Your payment is encrypted and secure. Tickets will be emailed instantly after payment.",
+        "processing": "Processing…",
+        "paySecurely": "Pay €{{amount}} securely"
+      },
+      "errors": {
+        "paymentFailed": "Payment failed. Please try again."
+      },
+      "freeSuccessDefault": "Your tickets are fully covered by the discount — no payment required."
+    }
+  },
+  "dashboardAuth": {
+    "memberPortal": "Member Portal",
+    "login": {
+      "title": "Welcome Back",
+      "sub": "Log in to manage your membership, events and tickets.",
+      "email": "Email",
+      "password": "Password",
+      "loggingIn": "Logging in…",
+      "logIn": "Log In",
+      "forgotPassword": "Forgot password?",
+      "newToNia": "New to NIA?",
+      "createAccount": "Create a member account",
+      "errorDefault": "Login failed. Please try again."
+    },
+    "register": {
+      "title": "Create Your Account",
+      "sub": "Join the Netherlands India Association community.",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "phone": "Phone",
+      "optional": "(optional)",
+      "passwordPlaceholder": "At least 8 characters",
+      "creatingAccount": "Creating account…",
+      "createAccountBtn": "Create Account",
+      "alreadyMember": "Already a member?",
+      "logInLink": "Log in",
+      "errorDefault": "Registration failed. Please try again."
+    },
+    "forgotPassword": {
+      "title": "Forgot Password",
+      "sub": "Enter your email and we'll send you a reset link.",
+      "sending": "Sending…",
+      "sendResetLink": "Send Reset Link",
+      "backToLogin": "Back to Login",
+      "errorDefault": "Something went wrong. Please try again."
+    },
+    "resetPassword": {
+      "missingLink": "Missing or invalid reset link.",
+      "requestNewLink": "Request a new link",
+      "title": "Reset Password",
+      "sub": "Choose a new password for your account.",
+      "newPassword": "New Password",
+      "resetting": "Resetting…",
+      "resetPasswordBtn": "Reset Password",
+      "errorDefault": "Reset failed. The link may have expired."
+    },
+    "verifyEmail": {
+      "title": "Email Verification",
+      "verifying": "Verifying your email…",
+      "goToLogin": "Go to Login",
+      "missingToken": "Missing verification token.",
+      "errorDefault": "Verification failed."
+    }
+  }
+}

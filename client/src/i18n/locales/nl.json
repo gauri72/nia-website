@@ -1,0 +1,653 @@
+{
+  "navbar": {
+    "links": {
+      "home": "Home",
+      "events": "Evenementen",
+      "membership": "Lidmaatschap",
+      "sponsorship": "Sponsoring",
+      "donation": "Doneren",
+      "about": "Over Ons"
+    },
+    "tagline": {
+      "main": "Een Brug Tussen Twee Grote Culturen",
+      "sub": "Nederland & India — Samen Sinds 1950"
+    },
+    "eventPill": {
+      "label": "🎉 VOLGEND EVENEMENT",
+      "date": "15 aug 2026",
+      "name": "Indiase Onafhankelijkheidsdag"
+    },
+    "cta": {
+      "buyTickets": "Tickets Kopen",
+      "getMembership": "Word Lid",
+      "logIn": "Inloggen"
+    },
+    "toggleMenu": "Menu wisselen",
+    "languageToggle": "Switch to English"
+  },
+  "footer": {
+    "followUs": "Volg ons",
+    "usefulLinks": {
+      "heading": "Nuttige Links",
+      "home": "Home",
+      "about": "Over NIA",
+      "whatWeDo": "Wat we doen",
+      "upcomingEvents": "Aankomende Evenementen",
+      "news": "Nieuws & Activiteiten",
+      "policy": "Beleid"
+    },
+    "address": {
+      "heading": "Adres",
+      "line1": "Burg. Patijnlaan 1062",
+      "line2": "2585 CB Den Haag",
+      "line3": "Nederland"
+    },
+    "contact": {
+      "heading": "Contact",
+      "contactUs": "Neem Contact Op",
+      "registerAsMember": "Word Lid"
+    },
+    "copyright": "© 2026 – The Netherlands India Association – Alle rechten voorbehouden",
+    "credit": {
+      "designedBy": "Ontworpen & Ontwikkeld door",
+      "studio": "V.O.I.C.E. Venture Studio"
+    }
+  },
+  "home": {
+    "aboutNia": {
+      "heading": "Over NIA",
+      "subtitle": "De doelen van de Vereniging zijn:",
+      "objective1": "Het bevorderen van vriendschap, kennis en begrip van de cultuur, geschiedenis, filosofie, religies en maatschappelijke structuur van India en Nederland tussen de bevolking van beide landen.",
+      "objective2": "Het bevorderen van vriendschappelijke betrekkingen tussen de volkeren van India en Nederland door persoonlijke, culturele en sociale contacten te verbreden en te verdiepen."
+    },
+    "membership": {
+      "heading": "Lidmaatschap",
+      "intro": "Individuen en gezinnen die de doelstellingen van de Vereniging onderschrijven, kunnen lid worden door het lidmaatschapsformulier in te vullen en de jaarlijkse contributie te betalen.",
+      "tiers": {
+        "friend": {
+          "sublabel": "LIDMAATSCHAP",
+          "perk": "🎟️ 20% Korting op Alle NIA-evenementen"
+        },
+        "patron": {
+          "sublabel": "LIDMAATSCHAP",
+          "perk": "🎟️ Gratis Toegang tot Alle NIA-evenementen"
+        }
+      },
+      "infoCard": {
+        "line1": "Het Bestuur plant en organiseert activiteiten die onze missie ondersteunen en onze gemeenschappen samenbrengen.",
+        "line2": "Leden bepalen mede onze koers via de Algemene Vergadering en actieve deelname."
+      }
+    },
+    "assocStructure": {
+      "heading": "Structuur van de Vereniging",
+      "card1": "Erelidmaatschap kan worden toegekend aan personen die een uitzonderlijke bijdrage hebben geleverd aan de Indiaas-Nederlandse culturele samenwerking.",
+      "card2": "De Vereniging wordt bestuurd door een Bestuur. De Algemene Vergadering bestaat uit leden. Het Bestuur bestaat uit de bestuursleden: Voorzitter, Vicevoorzitter, Secretaris en Penningmeester."
+    },
+    "activities": {
+      "heading": "Activiteiten",
+      "subtitle": "De Vereniging organiseert jaarlijks ongeveer vier tot vijf activiteiten, soms in samenwerking met andere organisaties.\nDeze activiteiten brengen de Nederlandse en Indiase gemeenschappen in Nederland samen.",
+      "items": {
+        "independenceDay": "Indiase Onafhankelijkheidsdag",
+        "christmasGala": "Kerst Gala Diner",
+        "kingsDay": "Koningsdag Viering",
+        "keukenhof": "Bezoek aan de Keukenhof",
+        "membersOuting": "NIA Ledenuitje"
+      }
+    },
+    "sponsors": {
+      "eyebrow": "MET TROTS ONDERSTEUND DOOR",
+      "tagline1": "ONZE",
+      "tagline2": "GEWAARDEERDE",
+      "tagline3": "SPONSORS.",
+      "script": "Bedankt voor uw steun!",
+      "sectionLabel": "ONZE SPONSORS",
+      "ctaTitle": "WORD SPONSOR",
+      "ctaSub": "MAAK EEN BLIJVENDE IMPACT!",
+      "ctaBtn": "BEKIJK PAKKETTEN →",
+      "ariaPrevious": "Vorige",
+      "ariaNext": "Volgende",
+      "ariaSponsor": "Sponsor {{n}}"
+    }
+  },
+  "about": {
+    "intro": {
+      "eyebrow": "WIE WIJ ZIJN",
+      "heading": "Over de Netherlands India Association",
+      "body": "De Netherlands India Association (NIA) is een bruisende non-profitorganisatie die zich inzet voor het koesteren van de band tussen de Nederlandse en Indiase gemeenschap. Ontstaan vanuit een gedeelde passie voor culturele uitwisseling, brengen wij individuen, gezinnen en bedrijven samen die de rijkdom van het Indiaas-Nederlandse erfgoed vieren."
+    },
+    "mission": {
+      "eyebrow": "ONZE MISSIE & WAARDEN",
+      "heading": "Wat Ons Drijft",
+      "intro": "De Netherlands India Association is gebouwd op een fundament van culturele trots, menselijke verbondenheid en de overtuiging dat gedeelde ervaringen de wereld rijker maken.",
+      "values": {
+        "culturalBridge": {
+          "title": "Culturele Brug",
+          "desc": "Wij verbinden twee grote beschavingen — Nederlands en Indiaas — door middel van kunst, muziek, gastronomie, festivals en gedeelde verhalen die eeuwen omspannen."
+        },
+        "communityFirst": {
+          "title": "Gemeenschap Voorop",
+          "desc": "Elk evenement, initiatief en programma dat wij organiseren is erop gericht mensen samen te brengen en de banden binnen onze gemeenschap te versterken."
+        },
+        "mutualRespect": {
+          "title": "Wederzijds Respect",
+          "desc": "Wij vieren diversiteit en bevorderen begrip tussen culturen, met evenveel waardering voor de Nederlandse en Indiase levenswijze."
+        },
+        "inspireEducate": {
+          "title": "Inspireren & Informeren",
+          "desc": "Van culturele workshops tot lezingen over erfgoed: wij creëren waardevolle ervaringen die nieuwsgierigheid stimuleren en de waardering voor beide landen verdiepen."
+        }
+      }
+    },
+    "structure": {
+      "eyebrow": "HOE WIJ ZIJN GEORGANISEERD",
+      "honoraryTitle": "Erelidmaatschap",
+      "honoraryText": "Erelidmaatschap kan worden toegekend aan personen die een uitzonderlijke bijdrage hebben geleverd aan de Indiaas-Nederlandse culturele samenwerking. Het is de hoogste onderscheiding die de Vereniging kan verlenen, als erkenning voor uitzonderlijke inzet en toewijding.",
+      "officeBearers": "Bestuursleden",
+      "meetTeam": "MAAK KENNIS MET HET TEAM",
+      "taglineLine1": "DE MENSEN",
+      "taglineLine2": "DIE NIA",
+      "taglineLine3": "VOORUIT BRENGEN.",
+      "script": "In dienst van onze gemeenschap!",
+      "getInTouch": "NEEM CONTACT OP",
+      "roles": {
+        "president": "Voorzitter",
+        "vicePresidentTreasurer": "Vicevoorzitter / Waarnemend Penningmeester",
+        "secretary": "Secretaris",
+        "directorMarketing": "Directeur Marketing",
+        "directorSponsorships": "Directeur Sponsoring",
+        "directorPR": "Directeur Public Relations",
+        "advisor": "Adviseur"
+      }
+    },
+    "cta": {
+      "body": "Wilt u deel uitmaken van een gemeenschap die twee grote culturen viert? Word vandaag nog lid van de Netherlands India Association.",
+      "subPrefix": "Open voor iedereen met een liefde voor de Indiaas-Nederlandse vriendschap —",
+      "subStrong": "sluit u bij ons aan en maak het verschil."
+    }
+  },
+  "membership": {
+    "plans": {
+      "heading": "Lidmaatschapsplannen",
+      "sub": "Kies het plan dat bij u past en rond uw registratie in enkele minuten af.",
+      "steps": {
+        "choosePlan": "Kies Plan",
+        "yourDetails": "Uw Gegevens",
+        "reviewOrder": "Bestelling Controleren",
+        "payment": "Betaling"
+      },
+      "memberCodeLabel": "Bestaande Lidcode (optioneel)",
+      "memberCodePlaceholder": "Lid-ID",
+      "tiers": {
+        "friend": {
+          "tagline": "Samen vieren voor een geweldige prijs",
+          "perkBadge": "🎟️ 20% Korting op Alle NIA-evenementen",
+          "perks": [
+            "Geldig voor 2 volwassenen in hetzelfde huishouden",
+            "Toegang tot alle NIA-evenementen het hele jaar door",
+            "20% korting op alle evenemententickets",
+            "NIA-nieuwsbrief & communityupdates",
+            "Word onderdeel van een groeiende Nederlands-Indiase gemeenschap"
+          ]
+        },
+        "patron": {
+          "tagline": "Alle evenementen inbegrepen — vier zonder beperkingen",
+          "perkBadge": "🎟️ Gratis Toegang tot Alle NIA-evenementen",
+          "perks": [
+            "Geldig voor 2 volwassenen in hetzelfde huishouden",
+            "Gratis toegang tot alle NIA-evenementen het hele jaar door",
+            "Geen kosten voor evenemententickets — volledig inbegrepen",
+            "NIA-nieuwsbrief & communityupdates",
+            "Erkenning als Patron-ondersteuner van de vereniging",
+            "Voorrangstoegang & voorkeursplaatsen bij geselecteerde evenementen"
+          ]
+        }
+      },
+      "selectedBadge": "✓ Geselecteerd",
+      "summaryMembership": "{{tier}} Lidmaatschap",
+      "perYear": "jaar",
+      "continue": "Doorgaan",
+      "back": "Terug",
+      "details": {
+        "heading": "Uw Gegevens",
+        "sub": "We sturen uw lidmaatschapsbevestiging naar onderstaand e-mailadres.",
+        "fullName": "Volledige Naam",
+        "emailAddress": "E-mailadres",
+        "phoneNumber": "Telefoonnummer",
+        "optional": "(optioneel)",
+        "discountCode": "Kortingscode",
+        "discountPlaceholder": "bijv. code van een actie",
+        "checking": "Controleren…",
+        "apply": "Toepassen",
+        "discountApplied": "✓ €{{amount}} korting toegepast",
+        "enterEmailFirst": "Vul eerst uw e-mailadres hierboven in.",
+        "partnerDetails": "Partnergegevens",
+        "partnerFullName": "Volledige Naam Partner",
+        "partnerEmail": "E-mailadres Partner",
+        "partnerPhone": "Telefoonnummer Partner"
+      },
+      "review": {
+        "heading": "Controleer Uw Bestelling",
+        "sub": "Bevestig uw lidmaatschap voordat u verdergaat naar de betaling.",
+        "plan": "Plan",
+        "duration": "Duur",
+        "total": "Totaal",
+        "oneYear": "1 jaar",
+        "discount": "Korting",
+        "totalPayable": "Te Betalen Bedrag",
+        "primaryMember": "Hoofdlid",
+        "partner": "Partner",
+        "pay": "Betaal €{{amount}}"
+      },
+      "payment": {
+        "allSet": "U bent helemaal klaar!",
+        "confirmationEmailed": "Uw lidmaatschapsbevestiging is verzonden naar {{email}}.",
+        "confirmPay": "Bevestigen & Betalen",
+        "redirectNotice": "U wordt doorgestuurd naar de beveiligde checkout van Mollie om €{{amount}} te betalen. Alle gangbare betaalmethoden worden geaccepteerd (iDEAL, kaart, PayPal en meer).",
+        "secureNotice": "Uw betaling is versleuteld en veilig. Het lidmaatschap wordt geactiveerd na betaling.",
+        "processing": "Verwerken…",
+        "paySecurely": "Betaal €{{amount}} veilig"
+      },
+      "errors": {
+        "discountCheckFailed": "Deze code kon op dit moment niet worden gevalideerd.",
+        "paymentFailed": "Betaling mislukt. Probeer het opnieuw."
+      },
+      "freeSuccessDefault": "Uw lidmaatschap wordt volledig gedekt door de korting — geen betaling vereist."
+    },
+    "compare": {
+      "heading": "PLANVERGELIJKING",
+      "colFeature": "KENMERK",
+      "rows": {
+        "adultsCovered": "Volwassenen gedekt",
+        "eventAccess": "Toegang tot evenementen",
+        "eventPricing": "Prijzen evenementen",
+        "newsletter": "Nieuwsbrief",
+        "patronRecognition": "Patron-erkenning",
+        "priorityAccess": "Voorrangstoegang"
+      },
+      "discount20": "20% korting",
+      "free": "Gratis",
+      "upgradeHeading": "Al Friend-lid? Upgrade op elk moment naar Patron.",
+      "upgradeText": "Als u nog meer dan 180 dagen over heeft op uw Friend-lidmaatschap, kost upgraden alleen het verschil tussen de twee niveaus (€90). Bij 180 dagen of minder betaalt u de volledige Patron-prijs (€150). In beide gevallen begint uw nieuwe Patron-geldigheid opnieuw voor een volledig jaar vanaf de dag van upgraden.",
+      "logInToUpgrade": "Log In om te Upgraden",
+      "alreadyPatron": "✓ U bent al Patron-lid — bedankt voor uw steun!",
+      "calculatingPrice": "Uw upgradeprijs wordt berekend…",
+      "yourPrice": "Uw prijs:",
+      "upgradeToPatron": "Upgrade naar Patron"
+    },
+    "cta": {
+      "body": "Het lidmaatschap is geldig voor één kalenderjaar vanaf de registratiedatum.",
+      "subPrefix": "Voor meer informatie of om u aan te melden, neem contact op met de",
+      "subStrong": "Netherlands India Association."
+    }
+  },
+  "donation": {
+    "form": {
+      "heading": "Doe een Donatie",
+      "sub": "Kies een bedrag en rond uw donatie in een paar eenvoudige stappen af.",
+      "steps": {
+        "chooseAmount": "Kies Bedrag",
+        "yourDetails": "Uw Gegevens",
+        "review": "Controleren",
+        "payment": "Betaling"
+      },
+      "tiers": {
+        "supporter": {
+          "tagline": "Help ons een gemeenschapsactiviteit te organiseren",
+          "perks": [
+            "Sponsort één gemeenschapsactiviteit",
+            "Vermeld in onze dankbetuiging in de nieuwsbrief",
+            "Warme dank van het NIA-team"
+          ]
+        },
+        "friend": {
+          "tagline": "Financier versnaperingen bij een cultureel evenement",
+          "perks": [
+            "Financiert versnaperingen bij een evenement",
+            "Persoonlijke dank-e-mail van NIA",
+            "Vermeld in de dankbetuigingen van het evenement"
+          ]
+        },
+        "patron": {
+          "tagline": "Bekostig de decoratie voor een culturele avond",
+          "perks": [
+            "Bekostigt de volledige decoratie voor een culturele avond",
+            "Erkenning tijdens het evenement",
+            "Blijk van waardering (certificaat)",
+            "Vermeld in een social media-bericht van NIA"
+          ]
+        },
+        "champion": {
+          "tagline": "Mede-sponsor van een hoofdonderdeel van het evenement",
+          "perks": [
+            "Mede-sponsort een hoofdonderdeel van het evenement",
+            "Logo/naam op de evenementenbanner",
+            "VIP-erkenning tijdens het evenement",
+            "Uitgelicht artikel in de NIA-nieuwsbrief"
+          ]
+        }
+      },
+      "causes": {
+        "general": "Algemeen Gemeenschapsfonds",
+        "events": "Culturele Evenementen & Festivals",
+        "youth": "Jeugd- & Onderwijsprogramma's",
+        "welfare": "Initiatieven voor Gemeenschapswelzijn"
+      },
+      "selectedBadge": "✓ Geselecteerd",
+      "customAmountLabel": "Of voer een aangepast bedrag in:",
+      "customAmountPlaceholder": "Uw bedrag",
+      "donateTowards": "Doneren Aan",
+      "summaryLabel": "Donatie",
+      "continue": "Doorgaan",
+      "back": "Terug",
+      "details": {
+        "heading": "Uw Gegevens",
+        "sub": "We sturen uw donatiebewijs naar onderstaand e-mailadres.",
+        "fullName": "Volledige Naam",
+        "emailAddress": "E-mailadres",
+        "phoneNumber": "Telefoonnummer",
+        "optional": "(optioneel)"
+      },
+      "review": {
+        "heading": "Controleer Uw Donatie",
+        "sub": "Bevestig de gegevens voordat u verdergaat naar de betaling.",
+        "cause": "Doel",
+        "amount": "Bedrag",
+        "totalPayable": "Te Betalen Bedrag",
+        "donationFrom": "Donatie van",
+        "pay": "Betaal {{amount}}"
+      },
+      "payment": {
+        "confirmDonate": "Bevestigen & Doneren",
+        "redirectNotice": "U wordt doorgestuurd naar de beveiligde checkout van Mollie om uw donatie van {{amount}} te voltooien. Alle gangbare betaalmethoden worden geaccepteerd (iDEAL, kaart, PayPal en meer).",
+        "secureNotice": "Uw betaling is versleuteld en veilig.",
+        "redirecting": "Doorsturen…",
+        "donateSecurely": "Doneer {{amount}} veilig"
+      },
+      "errors": {
+        "paymentFailed": "Betaling mislukt. Probeer het opnieuw."
+      }
+    },
+    "impact": {
+      "eyebrow": "UW IMPACT",
+      "heading": "Waar Uw Donatie Voor Zorgt",
+      "intro": "Elke euro gaat rechtstreeks naar culturele evenementen, gemeenschapsprogramma's en initiatieven die de Nederlands-Indiase gemeenschap dichter bij elkaar brengen.",
+      "items": {
+        "heritage": { "label": "Jaar Erfgoed", "desc": "Het vieren van de Nederlands-Indiase cultuur en tradities sinds onze oprichting." },
+        "members": { "label": "Gemeenschapsleden", "desc": "Een bloeiend netwerk van gezinnen en individuen door heel Nederland." },
+        "events": { "label": "Evenementen Per Jaar", "desc": "Van gala's op Onafhankelijkheidsdag tot culturele festivals en gemeenschapsavonden." },
+        "funded": { "label": "Gemeenschapsgefinancierd", "desc": "Elk programma draait op de vrijgevigheid van leden zoals u." }
+      }
+    },
+    "cta": {
+      "body": "Elke bijdrage, hoe groot of klein ook, maakt een echt verschil voor onze gemeenschap.",
+      "subPrefix": "Liever een bankoverschrijving of heeft u vragen? Neem contact op met de",
+      "subStrong": "Netherlands India Association."
+    }
+  },
+  "sponsorship": {
+    "benefits": {
+      "eyebrow": "ALLE SPONSORPAKKETTEN OMVATTEN:",
+      "exposure": { "title": "VERMELDING OP NIA-WEBSITE" },
+      "screens": { "title": "ZICHTBAAR OP 3 SCHERMEN TIJDENS ONZE EVENEMENTEN", "desc": "15 augustus 2026 & 12 december 2026" },
+      "mention": { "title": "VERMELDING VAN SPONSORS OP HET PODIUM" }
+    },
+    "events": {
+      "benefits": {
+        "exposure": "VERMELDING OP\nNIA-WEBSITE",
+        "screens": "ZICHTBAAR OP 3 SCHERMEN\nTIJDENS ONZE EVENEMENTEN",
+        "screensDesc": "15 AUGUSTUS 2026 & 12 DECEMBER 2026",
+        "mention": "VERMELDING VAN\nSPONSORS OP HET PODIUM"
+      },
+      "flagshipHeading": "ONZE HOOFDEVENEMENTEN 2026",
+      "flagship": {
+        "independence": { "title": "79E ONAFHANKELIJKHEIDSDAG", "date": "15 AUGUSTUS 2026" },
+        "christmas": { "title": "KERST GALA DINER", "date": "12 DECEMBER 2026" }
+      }
+    },
+    "compare": {
+      "heading": "PAKKETVERGELIJKING",
+      "colBenefits": "VOORDELEN",
+      "tierLabels": {
+        "bronze": "BRONS",
+        "silver": "ZILVER",
+        "gold": "GOUD",
+        "platinum": "PLATINA"
+      },
+      "rows": [
+        "Logoplaatsing op evenementenborden & banners",
+        "Korte vermelding van uw bedrijf tijdens het evenement",
+        "Promotievideo tijdens het evenement",
+        "Bedrijf vermeld als sponsor op de website gedurende 1 jaar",
+        "Plaatsing van bedrijfsbanners & brochures op het evenement",
+        "Zitplaatsen bij VIP's tijdens het evenement",
+        "Mogelijkheid om op het podium te spreken (~3 min)",
+        "Gratis tickets (entree + diner + drankjes)"
+      ]
+    },
+    "packages": {
+      "heading": "Sponsorpakketten",
+      "sub": "Ondersteun de Netherlands India Association en verkrijg zichtbaarheid tijdens onze evenementen en binnen onze gemeenschap.",
+      "steps": {
+        "choosePackage": "Kies Pakket",
+        "yourDetails": "Uw Gegevens",
+        "reviewOrder": "Bestelling Controleren",
+        "payment": "Betaling"
+      },
+      "loadingPackages": "Pakketten laden…",
+      "sublabel": "SPONSORING",
+      "ticketsIncluded": "{{count}} gratis tickets",
+      "selectedBadge": "✓ Geselecteerd",
+      "summarySponsorship": "{{name}} Sponsoring",
+      "continue": "Doorgaan",
+      "back": "Terug",
+      "tierNames": {
+        "bronze": "Brons",
+        "silver": "Zilver",
+        "gold": "Goud",
+        "platinum": "Platina"
+      },
+      "details": {
+        "heading": "Uw Gegevens",
+        "sub": "We sturen uw sponsorbevestiging naar onderstaand e-mailadres.",
+        "fullName": "Volledige Naam",
+        "emailAddress": "E-mailadres",
+        "phoneNumber": "Telefoonnummer",
+        "optional": "(optioneel)",
+        "organisation": "Organisatie",
+        "organisationPlaceholder": "Naam van bedrijf of organisatie",
+        "discountCode": "Kortingscode",
+        "discountPlaceholder": "Optioneel",
+        "checking": "Controleren…",
+        "apply": "Toepassen",
+        "discountApplied": "✓ €{{amount}} korting toegepast"
+      },
+      "review": {
+        "heading": "Controleer Uw Bestelling",
+        "sub": "Bevestig uw sponsorpakket voordat u verdergaat naar de betaling.",
+        "colPackage": "Pakket",
+        "colTickets": "Tickets",
+        "colTotal": "Totaal",
+        "ticketsCount": "{{count}} tickets",
+        "discount": "Korting",
+        "totalPayable": "Te Betalen Bedrag",
+        "sponsorshipFrom": "Sponsoring van",
+        "pay": "Betaal €{{amount}}"
+      },
+      "payment": {
+        "allSet": "U bent helemaal klaar!",
+        "confirmationEmailed": "Een bevestiging is verzonden naar {{email}}.",
+        "confirmPay": "Bevestigen & Betalen",
+        "redirectNotice": "U wordt doorgestuurd naar de beveiligde checkout van Mollie om uw {{name}}-sponsoring van €{{amount}} te voltooien. Alle gangbare betaalmethoden worden geaccepteerd.",
+        "secureNotice": "Uw betaling is versleuteld en veilig. Ons team neemt na bevestiging contact met u op.",
+        "processing": "Verwerken…",
+        "paySecurely": "Betaal €{{amount}} veilig"
+      },
+      "errors": {
+        "discountCheckFailed": "Deze code kon op dit moment niet worden gevalideerd.",
+        "paymentFailed": "Betaling mislukt. Probeer het opnieuw."
+      },
+      "freeSuccessDefault": "Deze sponsoring wordt volledig gedekt door de korting — geen betaling vereist."
+    }
+  },
+  "events": {
+    "info": {
+      "date": { "label": "DATUM", "primary": "15 AUGUSTUS 2026", "secondary": "ZATERDAG" },
+      "time": { "label": "TIJD", "primary": "18:00", "secondary": "EN VERDER" },
+      "venue": { "label": "LOCATIE", "primary": "DE DUINPAN", "secondary": "Sportlaan 34, 2191 XH De Zilk\nGemeente Noordwijk" },
+      "theme": { "label": "THEMA VAN HET EVENEMENT", "primary": "India, Nederland", "secondary": "en Water" },
+      "viewOnMap": "Bekijk op Kaart"
+    },
+    "about": {
+      "heading": "Over Het Evenement",
+      "body1": "Doe met ons mee aan een historische viering ter gelegenheid van India's 80e Onafhankelijkheidsdag en het 75-jarig bestaan van NIA.",
+      "body2": "Een avond vol culturele optredens, heerlijke gerechten, inspirerende momenten en saamhorigheid, waarin we ons erfgoed eren en de band tussen twee naties versterken.",
+      "highlightsBtn": "HOOGTEPUNTEN VAN HET EVENEMENT",
+      "highlights": {
+        "performances": "Culturele\nOptredens",
+        "cuisine": "Heerlijke\nGerechten",
+        "togetherness": "Saamhorigheid in de\nGemeenschap",
+        "surprises": "Verrassingen &\nOnvergetelijke Momenten"
+      }
+    },
+    "venue": {
+      "venueHeading": "Locatie",
+      "viewOnMap": "BEKIJK OP KAART",
+      "organizedByHeading": "Georganiseerd Door",
+      "orgDesc": "Ter viering van 75 jaar verbondenheid,\ngemeenschap en vriendschap.",
+      "aboutNiaBtn": "OVER NIA"
+    },
+    "cta": {
+      "title": "Laten We Samen Vieren!",
+      "sub": "Het verleden eren, het heden vieren,\nde toekomst inspireren.",
+      "becomeMemberBtn": "WORD LID"
+    },
+    "booking": {
+      "heading": "Boek Uw Tickets",
+      "sub": "Verzeker uzelf van een plek bij ons aankomende evenement in slechts een paar stappen.",
+      "steps": {
+        "selectTickets": "Selecteer Tickets",
+        "yourDetails": "Uw Gegevens",
+        "reviewOrder": "Bestelling Controleren",
+        "payment": "Betaling"
+      },
+      "membershipCodeLabel": "Lidmaatschapscode",
+      "discountCodeLabel": "Kortingscode",
+      "discountCodePlaceholder": "bijv. NIA10",
+      "discountValidateHint": "We controleren dit zodra u uw e-mailadres op de volgende stap invoert.",
+      "tickets": {
+        "regular": { "type": "Reguliere Toegang", "perks": ["Geen drankjes inbegrepen", "Geen eten inbegrepen"] },
+        "vip": { "type": "VIP-ervaring", "badge": "BESTE WAARDE", "perks": ["2 drankjes inbegrepen", "Eten inbegrepen"] },
+        "child": { "type": "Kind (6–12 jaar)", "perks": ["Per kind", "Onder begeleiding van volwassene"] }
+      },
+      "perPerson": "/ persoon",
+      "qtyLabel": "Aantal",
+      "decreaseAria": "Verlagen",
+      "increaseAria": "Verhogen",
+      "secureBookingNote": "Veilig Boeken",
+      "limitedSeatsNote": "Beperkt Aantal Plaatsen — Boek Snel!",
+      "continue": "Doorgaan",
+      "back": "Terug",
+      "aiHints": {
+        "vipMultiple": "Goede keuze — VIP voor {{qty}} bespaart tijd aan de bar!",
+        "regularUpsell": "Tip: upgraden naar VIP voor {{qty}} kost slechts €{{diff}} extra en omvat eten & drinken.",
+        "discountSaved": "Korting toegepast — u bespaart €{{amount}}!"
+      },
+      "details": {
+        "heading": "Uw Gegevens",
+        "sub": "We sturen uw tickets naar het onderstaande e-mailadres.",
+        "fullName": "Volledige Naam",
+        "emailAddress": "E-mailadres",
+        "phoneNumber": "Telefoonnummer",
+        "optional": "(optioneel)",
+        "emailInvalidHint": "Voer een geldig e-mailadres in (bijv. u@email.com) — hier worden uw tickets naartoe gestuurd.",
+        "otherAttendeesLabel_one": "Namen van Overige Deelnemers ({{count}} persoon)",
+        "otherAttendeesLabel_other": "Namen van Overige Deelnemers ({{count}} personen)",
+        "otherAttendeesHint_one": "Vermeld de andere {{count}} deelnemer, één naam per regel.",
+        "otherAttendeesHint_other": "Vermeld de andere {{count}} deelnemers, één naam per regel.",
+        "checking": "Controleren…"
+      },
+      "review": {
+        "heading": "Controleer Uw Bestelling",
+        "sub": "Controleer uw tickets voordat u verdergaat naar de betaling.",
+        "colTicket": "Ticket",
+        "colPrice": "Prijs",
+        "colQty": "Aantal",
+        "colTotal": "Totaal",
+        "membershipDiscount": "Lidmaatschapskorting",
+        "discountWithCode": "Korting ({{code}})",
+        "totalPayable": "Te Betalen Bedrag",
+        "ticketsFor": "Tickets voor",
+        "allAttendees": "Alle Deelnemers ({{count}})",
+        "youSuffix": "(u)",
+        "pay": "Betaal €{{amount}}"
+      },
+      "payment": {
+        "allSet": "U bent helemaal klaar!",
+        "ticketsEmailed": "Uw tickets zijn verzonden naar {{email}}.",
+        "confirmPay": "Bevestigen & Betalen",
+        "redirectNotice": "U wordt doorgestuurd naar de beveiligde checkout van Mollie om de betaling van €{{amount}} te voltooien. Alle gangbare betaalmethoden worden geaccepteerd (iDEAL, kaart, PayPal en meer).",
+        "secureNotice": "Uw betaling is versleuteld en veilig. Tickets worden direct na betaling per e-mail verzonden.",
+        "processing": "Verwerken…",
+        "paySecurely": "Betaal €{{amount}} veilig"
+      },
+      "errors": {
+        "paymentFailed": "Betaling mislukt. Probeer het opnieuw."
+      },
+      "freeSuccessDefault": "Uw tickets worden volledig gedekt door de korting — geen betaling vereist."
+    }
+  },
+  "dashboardAuth": {
+    "memberPortal": "Ledenportaal",
+    "login": {
+      "title": "Welkom Terug",
+      "sub": "Log in om uw lidmaatschap, evenementen en tickets te beheren.",
+      "email": "E-mail",
+      "password": "Wachtwoord",
+      "loggingIn": "Inloggen…",
+      "logIn": "Inloggen",
+      "forgotPassword": "Wachtwoord vergeten?",
+      "newToNia": "Nieuw bij NIA?",
+      "createAccount": "Maak een lidaccount aan",
+      "errorDefault": "Inloggen mislukt. Probeer het opnieuw."
+    },
+    "register": {
+      "title": "Maak Uw Account Aan",
+      "sub": "Word lid van de Netherlands India Association gemeenschap.",
+      "firstName": "Voornaam",
+      "lastName": "Achternaam",
+      "phone": "Telefoon",
+      "optional": "(optioneel)",
+      "passwordPlaceholder": "Minimaal 8 tekens",
+      "creatingAccount": "Account aanmaken…",
+      "createAccountBtn": "Account Aanmaken",
+      "alreadyMember": "Al lid?",
+      "logInLink": "Inloggen",
+      "errorDefault": "Registratie mislukt. Probeer het opnieuw."
+    },
+    "forgotPassword": {
+      "title": "Wachtwoord Vergeten",
+      "sub": "Voer uw e-mailadres in en we sturen u een resetlink.",
+      "sending": "Verzenden…",
+      "sendResetLink": "Verstuur Resetlink",
+      "backToLogin": "Terug naar Inloggen",
+      "errorDefault": "Er is iets misgegaan. Probeer het opnieuw."
+    },
+    "resetPassword": {
+      "missingLink": "Ontbrekende of ongeldige resetlink.",
+      "requestNewLink": "Vraag een nieuwe link aan",
+      "title": "Wachtwoord Resetten",
+      "sub": "Kies een nieuw wachtwoord voor uw account.",
+      "newPassword": "Nieuw Wachtwoord",
+      "resetting": "Bezig met resetten…",
+      "resetPasswordBtn": "Wachtwoord Resetten",
+      "errorDefault": "Resetten mislukt. De link is mogelijk verlopen."
+    },
+    "verifyEmail": {
+      "title": "E-mailverificatie",
+      "verifying": "Uw e-mail wordt geverifieerd…",
+      "goToLogin": "Ga naar Inloggen",
+      "missingToken": "Verificatietoken ontbreekt.",
+      "errorDefault": "Verificatie mislukt."
+    }
+  }
+}
