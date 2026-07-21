@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import ScrollToTop from './components/ScrollToTop';
+import CookieConsentBanner from './components/home/CookieConsentBanner';
 import HomePage           from './pages/HomePage';
 import AboutPage          from './pages/AboutPage';
 import EventsPage         from './pages/EventsPage';
@@ -8,6 +9,7 @@ import SponsorshipPage    from './pages/SponsorshipPage';
 import DonationPage       from './pages/DonationPage';
 import PaymentSuccessPage from './pages/PaymentSuccessPage';
 import PaymentCancelPage  from './pages/PaymentCancelPage';
+import PrivacyPolicyPage  from './pages/PrivacyPolicyPage';
 
 import { AdminAuthProvider } from './context/AdminAuthContext';
 import { MemberAuthProvider } from './context/MemberAuthContext';
@@ -63,6 +65,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
+      <CookieConsentBanner />
       <AdminAuthProvider>
         <MemberAuthProvider>
           <Routes>
@@ -74,6 +77,7 @@ export default function App() {
             <Route path="/donation"         element={<DonationPage />} />
             <Route path="/payment/success"  element={<PaymentSuccessPage />} />
             <Route path="/payment/cancel"   element={<PaymentCancelPage />} />
+            <Route path="/privacy-policy"   element={<PrivacyPolicyPage />} />
 
             {/* ── Admin Panel ─────────────────────────────────── */}
             <Route path="/admin/login"           element={<AdminLoginPage />} />

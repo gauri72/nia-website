@@ -34,7 +34,7 @@
       "whatWeDo": "Wat we doen",
       "upcomingEvents": "Aankomende Evenementen",
       "news": "Nieuws & Activiteiten",
-      "policy": "Beleid"
+      "policy": "Privacybeleid"
     },
     "address": {
       "heading": "Adres",
@@ -648,6 +648,56 @@
       "goToLogin": "Ga naar Inloggen",
       "missingToken": "Verificatietoken ontbreekt.",
       "errorDefault": "Verificatie mislukt."
+    }
+  },
+  "cookieConsent": {
+    "title": "Cookiemelding",
+    "body": "Wij gebruiken functionele opslag op deze website om u ingelogd te houden en uw taalvoorkeur te onthouden. Wij gebruiken momenteel geen analytische of advertentiecookies.",
+    "learnMore": "Meer informatie",
+    "accept": "Accepteren",
+    "decline": "Weigeren"
+  },
+  "privacyPolicy": {
+    "title": "Privacy- & Cookiebeleid",
+    "lastUpdated": "Laatst bijgewerkt: juli 2026",
+    "intro": "De Netherlands India Association (NIA) respecteert uw privacy. Op deze pagina leest u welke informatie wij verzamelen wanneer u deze website gebruikt, waarom wij dit doen, en welke keuzes en rechten u heeft.",
+    "sections": {
+      "whoWeAre": {
+        "heading": "Wie wij zijn",
+        "body": "De Netherlands India Association (NIA) is een non-profit culturele en maatschappelijke organisatie, gevestigd aan de Burg. Patijnlaan 1062, 2585 CB Den Haag. Voor vragen over privacy kunt u contact met ons opnemen via secretary@niaonline.org."
+      },
+      "dataWeCollect": {
+        "heading": "Welke informatie wij verzamelen",
+        "body": "Wij verzamelen de informatie die u rechtstreeks aan ons verstrekt, bijvoorbeeld wanneer u:\n\n• Zich aanmeldt voor een lidmaatschap, inlogt op het ledenportaal, of uw profiel bijwerkt — naam, e-mailadres, telefoonnummer en lidmaatschapsgegevens.\n• Evenemententickets koopt, een donatie doet, of zich aanmeldt als sponsor — naam, e-mailadres, telefoonnummer en (bij sponsoring) bedrijfsgegevens.\n• Rechtstreeks per e-mail contact met ons opneemt.\n\nWij verzamelen geen gevoelige persoonsgegevens (zoals gegevens over gezondheid, religie of politieke opvattingen) en verzamelen niet bewust informatie van kinderen zonder betrokkenheid van een ouder of voogd."
+      },
+      "howWeUseIt": {
+        "heading": "Hoe wij uw informatie gebruiken",
+        "body": "Wij gebruiken de verzamelde informatie om: uw lidmaatschap of ledenaccount aan te maken en te beheren; betalingen voor tickets, donaties en sponsoring te verwerken; u bevestigingen, kwitanties en communicatie over lidmaatschap of evenementen te sturen; en te reageren op vragen die u rechtstreeks aan ons stelt. Wij verkopen uw persoonsgegevens niet en gebruiken deze niet voor geautomatiseerde profilering of gerichte advertenties."
+      },
+      "cookies": {
+        "heading": "Cookies en vergelijkbare technologieën",
+        "body": "Deze website gebruikt momenteel geen tracking-, analytische of advertentiecookies. Wij gebruiken de lokale opslag van uw browser (een technologie vergelijkbaar met cookies) uitsluitend voor functionele doeleinden: om u ingelogd te houden op uw leden- of beheerdersaccount, om uw gekozen taal (Nederlands of Engels) te onthouden, en om te onthouden dat u op deze cookiemelding heeft gereageerd. Niets hiervan wordt gebruikt om u op andere websites te volgen. Mocht dit ooit veranderen — bijvoorbeeld als wij in de toekomst analytics toevoegen — dan werken wij deze melding bij en vragen wij, waar vereist, eerst om uw toestemming."
+      },
+      "thirdParties": {
+        "heading": "Betalingsverwerking",
+        "body": "Betalingen voor tickets, lidmaatschap, donaties en sponsoring worden verwerkt door Mollie B.V., een erkende Nederlandse betalingsdienstverlener. Wanneer u via deze website betaalt, worden uw betalingsgegevens (zoals kaart- of iDEAL-gegevens) rechtstreeks door Mollie verwerkt onder hun eigen privacy- en beveiligingsbeleid — NIA ontvangt of bewaart uw volledige betaalkaartgegevens niet."
+      },
+      "dataRetention": {
+        "heading": "Hoe lang wij uw informatie bewaren",
+        "body": "Wij bewaren lidmaatschaps- en transactiegegevens zolang uw lidmaatschap actief is, en daarna zolang wettelijk vereist is op grond van de Nederlandse boekhoud- en belastingverplichtingen. Als u ons vraagt uw account te verwijderen, doen wij dit, behalve wanneer wij wettelijk verplicht zijn bepaalde gegevens te bewaren (bijvoorbeeld financiële gegevens die betrekking hebben op een voltooide betaling)."
+      },
+      "yourRights": {
+        "heading": "Uw rechten",
+        "body": "Op grond van de Algemene Verordening Gegevensbescherming (AVG) heeft u het recht om: inzage te krijgen in de persoonsgegevens die wij over u bewaren; ons te vragen onjuiste gegevens te corrigeren; ons te vragen uw gegevens te verwijderen; het gebruik ervan te beperken of hiertegen bezwaar te maken; en een kopie van uw gegevens in een overdraagbaar formaat te ontvangen. Om een van deze rechten uit te oefenen, mailt u naar secretary@niaonline.org. U heeft ook het recht om een klacht in te dienen bij de Autoriteit Persoonsgegevens als u van mening bent dat wij niet correct met uw gegevens zijn omgegaan."
+      },
+      "changes": {
+        "heading": "Wijzigingen in dit beleid",
+        "body": "Wij kunnen dit beleid van tijd tot tijd bijwerken, bijvoorbeeld wanneer wij nieuwe functionaliteiten aan de website toevoegen. Wij werken de datum bovenaan deze pagina bij zodra wij een inhoudelijke wijziging doorvoeren."
+      },
+      "contact": {
+        "heading": "Contact",
+        "body": "Heeft u vragen over dit beleid of over hoe wij met uw gegevens omgaan? Neem dan contact met ons op via secretary@niaonline.org of per post via Burg. Patijnlaan 1062, 2585 CB Den Haag."
+      }
     }
   }
 }

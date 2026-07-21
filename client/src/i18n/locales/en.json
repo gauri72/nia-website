@@ -34,7 +34,7 @@
       "whatWeDo": "What we do",
       "upcomingEvents": "Upcoming Events",
       "news": "News & Activities",
-      "policy": "Policy"
+      "policy": "Privacy Policy"
     },
     "address": {
       "heading": "Address",
@@ -648,6 +648,56 @@
       "goToLogin": "Go to Login",
       "missingToken": "Missing verification token.",
       "errorDefault": "Verification failed."
+    }
+  },
+  "cookieConsent": {
+    "title": "Cookie notice",
+    "body": "We use functional storage on this site to keep you logged in and remember your language preference. We don't currently use analytics or advertising cookies.",
+    "learnMore": "Learn more",
+    "accept": "Accept",
+    "decline": "Decline"
+  },
+  "privacyPolicy": {
+    "title": "Privacy & Cookie Policy",
+    "lastUpdated": "Last updated: July 2026",
+    "intro": "The Netherlands India Association (NIA) respects your privacy. This page explains what information we collect when you use this website, why we collect it, and the choices and rights you have.",
+    "sections": {
+      "whoWeAre": {
+        "heading": "Who we are",
+        "body": "The Netherlands India Association (NIA) is a non-profit cultural and community organisation based at Burg. Patijnlaan 1062, 2585 CB Den Haag, the Netherlands. For any privacy-related question, you can reach us at secretary@niaonline.org."
+      },
+      "dataWeCollect": {
+        "heading": "What information we collect",
+        "body": "We collect the information you provide directly to us, such as when you:\n\n• Register for a membership, sign in to the member dashboard, or update your profile — name, email address, phone number, and membership details.\n• Buy event tickets, make a donation, or apply for sponsorship — name, email address, phone number, and (for sponsorships) organisation details.\n• Contact us directly by email.\n\nWe do not collect sensitive personal data (such as health, religious, or political information) and we do not knowingly collect information from children without a parent or guardian's involvement."
+      },
+      "howWeUseIt": {
+        "heading": "How we use your information",
+        "body": "We use the information we collect to: create and manage your membership or member account; process ticket, donation, and sponsorship payments; send you confirmations, receipts, and membership or event-related communications; and respond to questions you send us directly. We do not sell your personal information, and we do not use it for automated profiling or targeted advertising."
+      },
+      "cookies": {
+        "heading": "Cookies and similar technologies",
+        "body": "This website does not currently use tracking, analytics, or advertising cookies. We use your browser's local storage (a similar technology to cookies) for strictly functional purposes only: to keep you signed in to your member or admin account, to remember your chosen language (English or Dutch), and to remember that you've responded to this cookie notice. None of this is used to track you across other websites. If that ever changes — for example, if we add analytics in the future — we will update this notice and ask for your consent first, where required."
+      },
+      "thirdParties": {
+        "heading": "Payment processing",
+        "body": "Ticket, membership, donation, and sponsorship payments are processed by Mollie B.V., a licensed Dutch payment service provider. When you pay through this website, your payment details (such as card or iDEAL information) are handled directly by Mollie under its own privacy and security policies — NIA does not receive or store your full payment card details."
+      },
+      "dataRetention": {
+        "heading": "How long we keep your information",
+        "body": "We keep membership and transaction records for as long as your membership is active, and afterwards for as long as required by Dutch accounting and tax obligations. If you ask us to delete your account, we will do so except where we're legally required to retain certain records (for example, financial records related to a completed payment)."
+      },
+      "yourRights": {
+        "heading": "Your rights",
+        "body": "Under the General Data Protection Regulation (GDPR), you have the right to: access the personal information we hold about you; ask us to correct inaccurate information; ask us to delete your information; restrict or object to how we use it; and receive a copy of your information in a portable format. To exercise any of these rights, email secretary@niaonline.org. You also have the right to lodge a complaint with the Dutch Data Protection Authority (Autoriteit Persoonsgegevens) if you believe we have not handled your information properly."
+      },
+      "changes": {
+        "heading": "Changes to this policy",
+        "body": "We may update this policy from time to time, for example if we start using new tools on the website. We'll update the date at the top of this page whenever we make a meaningful change."
+      },
+      "contact": {
+        "heading": "Contact us",
+        "body": "If you have any questions about this policy or how we handle your information, please contact us at secretary@niaonline.org or by post at Burg. Patijnlaan 1062, 2585 CB Den Haag, the Netherlands."
+      }
     }
   }
 }

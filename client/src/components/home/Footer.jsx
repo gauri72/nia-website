@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { FaFacebookF, FaInstagram, FaLinkedinIn, FaTwitter, FaWhatsapp, FaMapMarkerAlt, FaPhone, FaUserPlus, FaArrowRight } from 'react-icons/fa';
 import footerLogo from '../../assets/home/FooterLogo.png';
 import voiceLogo from '../../assets/footer/voice-logo.png';
@@ -36,7 +37,11 @@ export default function Footer() {
           <h4 className="footer__col-heading">{t('footer.usefulLinks.heading')}</h4>
           <ul className="footer__links">
             {USEFUL_LINK_KEYS.map((key) => (
-              <li key={key}><a href="#">{t(`footer.usefulLinks.${key}`)}</a></li>
+              <li key={key}>
+                {key === 'policy'
+                  ? <Link to="/privacy-policy">{t(`footer.usefulLinks.${key}`)}</Link>
+                  : <a href="#">{t(`footer.usefulLinks.${key}`)}</a>}
+              </li>
             ))}
           </ul>
         </div>
