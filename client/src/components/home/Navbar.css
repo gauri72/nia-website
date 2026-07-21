@@ -202,6 +202,8 @@
     align-items: center;
     order: 1;
     flex: 0 0 auto;
+    padding: 0.2rem;
+    margin-left: -0.4rem;
   }
 
   .navbar__links {
@@ -224,17 +226,28 @@
     gap: 0.3rem;
   }
 
+  /* Fixed, shared height + border-box on both the CTAs and the language
+     toggle so a bordered button and a borderless one still line up exactly
+     — padding/border differences would otherwise throw the heights off. */
+  .navbar__actions .navbar__cta,
+  .navbar__actions .navbar__lang-toggle {
+    box-sizing: border-box;
+    height: 2.35rem;
+  }
+
   .navbar__actions .navbar__cta {
     display: flex;
-    font-size: 0.66rem;
-    padding: 0.4rem 0.5rem;
-    gap: 0.25rem;
+    font-size: 0.78rem;
+    padding: 0 0.65rem;
+    gap: 0.3rem;
   }
 
   /* Language toggle shrinks to a flag-only square button — the one element
      that gives way so the burger and all 3 CTA labels keep their text. */
   .navbar__actions .navbar__lang-toggle {
-    padding: 0.4rem;
+    padding: 0;
+    width: 2.35rem;
+    justify-content: center;
     gap: 0;
   }
   .navbar__actions .navbar__lang-toggle .navbar__lang-code {
@@ -262,13 +275,17 @@
   .navbar__event-pill__name { font-size: 0.58rem; }
 
   .navbar__actions { gap: 0.25rem; }
+  .navbar__actions .navbar__cta,
+  .navbar__actions .navbar__lang-toggle {
+    height: 2.15rem;
+  }
   .navbar__actions .navbar__cta {
-    font-size: 0.62rem;
-    padding: 0.38rem 0.42rem;
-    gap: 0.2rem;
+    font-size: 0.7rem;
+    padding: 0 0.5rem;
+    gap: 0.22rem;
   }
   .navbar__actions .navbar__lang-toggle {
-    padding: 0.38rem;
+    width: 2.15rem;
   }
   .navbar__lang-flag {
     font-size: 0.95rem;
@@ -279,12 +296,16 @@
    compact labeled CTAs keep everything on row 1 even here. ── */
 @media (max-width: 360px) {
   .navbar__actions { gap: 0.2rem; }
+  .navbar__actions .navbar__cta,
+  .navbar__actions .navbar__lang-toggle {
+    height: 2rem;
+  }
   .navbar__actions .navbar__cta {
-    font-size: 0.58rem;
-    padding: 0.34rem 0.38rem;
+    font-size: 0.64rem;
+    padding: 0 0.42rem;
     gap: 0.18rem;
   }
   .navbar__actions .navbar__lang-toggle {
-    padding: 0.34rem;
+    width: 2rem;
   }
 }
