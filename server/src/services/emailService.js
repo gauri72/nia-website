@@ -262,7 +262,8 @@ const VIP_PASS_SUBJECT = `Your VIP Passes for NIA's Historic Celebration`;
 // email lists all guest names but only shows one QR image. qrSrc mirrors
 // buildTicketConfirmationBody's cid:/data: split for send vs. preview.
 function buildVipPassBody(ticket, guestNames, qrSrc) {
-  const firstName = ticket.name.trim().split(/\s+/)[0];
+  const nameWithoutTitle = ticket.name.trim().replace(/^(mr|mrs|ms|miss|dr|prof|shri|smt|shrimati)\.?\s+/i, '');
+  const firstName = nameWithoutTitle.split(/\s+/)[0] || ticket.name.trim();
 
   const guestListHtml = guestNames.map((n) => `<div class="detail-row"><span class="label">Guest</span><span class="value">${n}</span></div>`).join('');
 
