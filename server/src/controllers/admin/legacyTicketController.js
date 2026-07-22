@@ -2,6 +2,7 @@ const Ticket = require('../../models/Ticket');
 const { refundPayment } = require('../../services/mollieService');
 const {
   generateTicketPDF, generateQRDataURL, sendTicketConfirmation, sendTicketRefundConfirmation, sendVipPassEmail,
+  renderTicketConfirmationPreview, renderVipPassPreview,
 } = require('../../services/emailService');
 const { generateVipPassBatchPDF } = require('../../services/vipPassService');
 
@@ -126,6 +127,27 @@ async function resendEmail(req, res, next) {
   }
 }
 
+// ── GET /api/admin/legacy-tickets/:id/email-preview ────────────────
+// Renders the exact email a guest would receive, without sending anything —
+// lets an admin sanity-check names/QR/copy before or after the real send.
+async function emailPreview(req, res, next) {
+  try {
+    const ticket = await Ticket.findById(req.params.id);
+    if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
+
+    if (ticket.payment_provider === 'vip_complimentary') {
+      const guestNames = (ticket.attendee_names || ticket.name).split('\n').filter(Boolean);
+      const { subject, html } = await renderVipPassPreview(ticket, guestNames);
+      return res.json({ subject, html });
+    }
+
+    const { subject, html } = await renderTicketConfirmationPreview(ticket);
+    return res.json({ subject, html });
+  } catch (err) {
+    next(err);
+  }
+}
+
 // ── POST /api/admin/legacy-tickets/:id/refund ─────────────────────
 async function refund(req, res, next) {
   try {
@@ -167,4 +189,4 @@ async function refund(req, res, next) {
   }
 }
 
-module.exports = { list, getById, downloadPdf, downloadQr, resendEmail, refund };
+module.exports = { list, getById, downloadPdf, downloadQr, resendEmail, emailPreview, refund };

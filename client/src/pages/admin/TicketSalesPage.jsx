@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Ticket, Euro, Users, FileText, QrCode, Send, Undo2, Search, Gift } from 'lucide-react';
+import { Ticket, Euro, Users, FileText, QrCode, Send, Undo2, Search, Gift, Eye } from 'lucide-react';
 import adminApi from '../../services/adminApi';
 import StatusBadge from '../../components/admin/StatusBadge';
 import StatCard from '../../components/admin/StatCard';
@@ -98,6 +98,18 @@ export default function TicketSalesPage() {
       push(err.response?.data?.error || 'Could not resend email', 'error');
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function handlePreviewEmail(ticket) {
+    try {
+      const r = await adminApi.get(`/admin/legacy-tickets/${ticket._id}/email-preview`);
+      const blob = new Blob([r.data.html], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      setTimeout(() => URL.revokeObjectURL(url), 30000);
+    } catch (err) {
+      push(err.response?.data?.error || 'Could not load email preview', 'error');
     }
   }
 
@@ -289,6 +301,7 @@ export default function TicketSalesPage() {
               <Button variant="secondary" size="sm" onClick={() => handleDownloadPdf(detail)}><FileText /> Download PDF</Button>
               <Button variant="secondary" size="sm" onClick={() => handleDownloadQr(detail)}><QrCode /> Download QR</Button>
               <Button variant="secondary" size="sm" disabled={busy} onClick={() => handleResendEmail(detail)}><Send /> Resend Email</Button>
+              <Button variant="secondary" size="sm" onClick={() => handlePreviewEmail(detail)}><Eye /> Preview Email</Button>
             </div>
 
             {detail.ticket_status !== 'refunded' && (
@@ -356,6 +369,7 @@ export default function TicketSalesPage() {
               </div>
               <div className="flex gap-2">
                 <Button variant="secondary" onClick={() => handleDownloadPdf(vipResult)}><FileText /> Download PDF</Button>
+                <Button variant="secondary" onClick={() => handlePreviewEmail(vipResult)}><Eye /> Preview Email</Button>
                 <Button variant="secondary" onClick={() => setVipOpen(false)}>Close</Button>
               </div>
             </div>

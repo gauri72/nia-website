@@ -122,6 +122,7 @@ router.get( '/legacy-tickets/:id',             legacyTicketController.getById);
 router.get( '/legacy-tickets/:id/pdf',         legacyTicketController.downloadPdf);
 router.get( '/legacy-tickets/:id/qr',          legacyTicketController.downloadQr);
 router.post('/legacy-tickets/:id/resend-email', legacyTicketController.resendEmail);
+router.get( '/legacy-tickets/:id/email-preview', legacyTicketController.emailPreview);
 router.post('/legacy-tickets/:id/refund',      requireRole(['super_admin']), legacyTicketController.refund);
 router.post('/vip-passes',                     requireRole(['super_admin']), vipPassController.create);
 

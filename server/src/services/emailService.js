@@ -182,26 +182,23 @@ async function sendMembershipReceipt(membership) {
 }
 
 // ── Event Ticket ──────────────────────────────────────────────
-async function sendTicketConfirmation(ticket) {
-  const transporter = createTransporter();
+const TICKET_CONFIRMATION_SUBJECT = (ticket) => `🎟️ NIA Event Tickets Confirmed — ${ticket.ticketNumber}`;
+
+// qrSrc is either `cid:...` (real send, referencing an attached image) or a
+// data: URL (preview, self-contained with no attachment involved) — kept as
+// one body builder so the preview can never drift from what actually sends.
+function buildTicketConfirmationBody(ticket, qrSrc) {
   const ticketLines = ticket.tickets.map(t =>
     `<div class="detail-row"><span class="label">${t.ticket_type} × ${t.quantity}</span><span class="value">€${t.line_total.toFixed(2)}</span></div>`
   ).join('');
 
-  // Generate QR as a buffer and embed as CID — data: URIs are blocked by most email clients
-  const qrDataUrl = await generateQRDataURL(ticket.ticketNumber);
-  const qrBuffer  = Buffer.from(qrDataUrl.replace(/^data:image\/png;base64,/, ''), 'base64');
-  const qrCid     = `qr-${ticket.ticketNumber}@nia`;
-
   const qrBlock = `
     <div class="qr-block">
-      <img src="cid:${qrCid}" alt="QR Code" width="160" height="160" style="display:block;margin:0 auto;" />
+      <img src="${qrSrc}" alt="QR Code" width="160" height="160" style="display:block;margin:0 auto;" />
       <p>Scan at event entry — ${ticket.ticketNumber}</p>
     </div>`;
 
-  const pdfBuffer = await generateTicketPDF(ticket);
-
-  const body = `
+  return `
     <p>Dear <strong>${ticket.name}</strong>,</p>
     <p>🎟️ Your tickets for the NIA event have been confirmed! Your PDF ticket with QR code is attached.</p>
     <div class="highlight"><strong>Ticket Number:</strong> ${ticket.ticketNumber}</div>
@@ -212,11 +209,23 @@ async function sendTicketConfirmation(ticket) {
     <div class="detail-row"><span class="label">Payment ID</span><span class="value">${ticket.mollie_payment_id}</span></div>
     ${qrBlock}
     <p style="margin-top:20px;">Please present your ticket (PDF or this email) at the event entrance. We look forward to seeing you! 🇮🇳🇳🇱</p>`;
+}
+
+async function sendTicketConfirmation(ticket) {
+  const transporter = createTransporter();
+
+  // Generate QR as a buffer and embed as CID — data: URIs are blocked by most email clients
+  const qrDataUrl = await generateQRDataURL(ticket.ticketNumber);
+  const qrBuffer  = Buffer.from(qrDataUrl.replace(/^data:image\/png;base64,/, ''), 'base64');
+  const qrCid     = `qr-${ticket.ticketNumber}@nia`;
+
+  const pdfBuffer = await generateTicketPDF(ticket);
+  const body = buildTicketConfirmationBody(ticket, `cid:${qrCid}`);
 
   await transporter.sendMail({
     from: FROM,
     to: ticket.email,
-    subject: `🎟️ NIA Event Tickets Confirmed — ${ticket.ticketNumber}`,
+    subject: TICKET_CONFIRMATION_SUBJECT(ticket),
     html: htmlWrap('Event Ticket Confirmation', body),
     attachments: [
       {
@@ -235,18 +244,24 @@ async function sendTicketConfirmation(ticket) {
   console.log(`[Email] Ticket confirmation + PDF sent to ${ticket.email}`);
 }
 
+// Read-only render for the admin panel's "Preview Email" action — same
+// markup sendTicketConfirmation sends, just with the QR inlined as a data
+// URL instead of a CID reference, since there's no attachment to point at.
+async function renderTicketConfirmationPreview(ticket) {
+  const qrDataUrl = await generateQRDataURL(ticket.ticketNumber);
+  const body = buildTicketConfirmationBody(ticket, qrDataUrl);
+  return { subject: TICKET_CONFIRMATION_SUBJECT(ticket), html: htmlWrap('Event Ticket Confirmation', body) };
+}
+
+const VIP_PASS_SUBJECT = `Your VIP Passes for NIA's Historic Celebration`;
+
 // Warm, personally-invited-guest tone — deliberately distinct from the
 // transactional "your tickets are confirmed" copy sendTicketConfirmation
 // uses, since this isn't a purchase. Every guest in the party shares the
 // same ticket.ticketNumber/QR (one check-in for the whole group), so the
-// email lists all guest names but only shows one QR image.
-async function sendVipPassEmail(ticket, guestNames, pdfBuffer) {
-  const transporter = createTransporter();
-
-  const qrDataUrl = await generateQRDataURL(ticket.ticketNumber);
-  const qrBuffer  = Buffer.from(qrDataUrl.replace(/^data:image\/png;base64,/, ''), 'base64');
-  const qrCid     = `qr-${ticket.ticketNumber}@nia`;
-
+// email lists all guest names but only shows one QR image. qrSrc mirrors
+// buildTicketConfirmationBody's cid:/data: split for send vs. preview.
+function buildVipPassBody(ticket, guestNames, qrSrc) {
   const firstName = ticket.name.trim().split(/\s+/)[0];
 
   const guestListHtml = guestNames.map((n) => `<div class="detail-row"><span class="label">Guest</span><span class="value">${n}</span></div>`).join('');
@@ -254,11 +269,11 @@ async function sendVipPassEmail(ticket, guestNames, pdfBuffer) {
   const qrBlock = `
     <div class="qr-block">
       <p style="margin-bottom:8px;"><strong>Entry QR Code</strong></p>
-      <img src="cid:${qrCid}" alt="QR Code" width="160" height="160" style="display:block;margin:0 auto;" />
+      <img src="${qrSrc}" alt="QR Code" width="160" height="160" style="display:block;margin:0 auto;" />
       <p>${ticket.ticketNumber}</p>
     </div>`;
 
-  const body = `
+  return `
     <p>Dear ${firstName} Ji,</p>
     <p>It gives us great pleasure to welcome all of you as our Honoured VIP Guests at the celebration of India's 80th Independence Day and NIA's 75th Anniversary.</p>
     <p>Attached are the VIP Passes for all of you. No ticket purchase is required.</p>
@@ -269,11 +284,21 @@ async function sendVipPassEmail(ticket, guestNames, pdfBuffer) {
     <p style="margin-top:20px;">We look forward to celebrating this historic occasion together and sharing an evening filled with culture, music, friendship, and community spirit.</p>
     <p>Thank you for being an important part of the NIA community. 🇮🇳🇳🇱</p>
     <p>Warm regards,<br>The Netherlands India Association</p>`;
+}
+
+async function sendVipPassEmail(ticket, guestNames, pdfBuffer) {
+  const transporter = createTransporter();
+
+  const qrDataUrl = await generateQRDataURL(ticket.ticketNumber);
+  const qrBuffer  = Buffer.from(qrDataUrl.replace(/^data:image\/png;base64,/, ''), 'base64');
+  const qrCid     = `qr-${ticket.ticketNumber}@nia`;
+
+  const body = buildVipPassBody(ticket, guestNames, `cid:${qrCid}`);
 
   await transporter.sendMail({
     from: FROM,
     to: ticket.email,
-    subject: `Your VIP Passes for NIA's Historic Celebration`,
+    subject: VIP_PASS_SUBJECT,
     html: htmlWrap('Your VIP Pass', body),
     attachments: [
       {
@@ -290,6 +315,13 @@ async function sendVipPassEmail(ticket, guestNames, pdfBuffer) {
     ],
   });
   console.log(`[Email] VIP pass PDF sent to ${ticket.email} (${guestNames.length} guest${guestNames.length === 1 ? '' : 's'})`);
+}
+
+// Read-only render for the admin panel's "Preview Email" action.
+async function renderVipPassPreview(ticket, guestNames) {
+  const qrDataUrl = await generateQRDataURL(ticket.ticketNumber);
+  const body = buildVipPassBody(ticket, guestNames, qrDataUrl);
+  return { subject: VIP_PASS_SUBJECT, html: htmlWrap('Your VIP Pass', body) };
 }
 
 async function sendTicketReceipt(ticket) {
@@ -927,7 +959,9 @@ module.exports = {
   sendExpiryNotice,
   sendEventReminder,
   sendTicketConfirmation,
+  renderTicketConfirmationPreview,
   sendVipPassEmail,
+  renderVipPassPreview,
   sendTicketRefundConfirmation,
   sendMembershipPaymentConfirmation,
   sendSponsorshipConfirmation,
