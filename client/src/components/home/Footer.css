@@ -163,6 +163,23 @@
   gap: 0.4rem;
 }
 
+.footer__bottom a,
+.footer__cookie-settings-btn {
+  color: #8a96a8;
+  text-decoration: underline;
+  font-size: inherit;
+}
+.footer__bottom a:hover,
+.footer__cookie-settings-btn:hover {
+  color: #fff;
+}
+.footer__cookie-settings-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
 .footer__credit {
   display: flex;
   align-items: center;

@@ -652,10 +652,35 @@
   },
   "cookieConsent": {
     "title": "Cookiemelding",
-    "body": "Wij gebruiken functionele opslag op deze website om u ingelogd te houden en uw taalvoorkeur te onthouden. Wij gebruiken momenteel geen analytische of advertentiecookies.",
-    "learnMore": "Meer informatie",
-    "accept": "Accepteren",
-    "decline": "Weigeren"
+    "body": "Wij gebruiken cookies en vergelijkbare opslagtechnologieën om deze website te laten werken en, met uw toestemming, om te begrijpen hoe deze wordt gebruikt. Kies hieronder uw voorkeuren.",
+    "managePreferences": "Voorkeuren Beheren",
+    "rejectNonEssential": "Niet-noodzakelijke Weigeren",
+    "acceptAll": "Alles Accepteren",
+    "cookieSettings": "Cookie-instellingen",
+    "modal": {
+      "title": "Cookievoorkeuren",
+      "intro": "Wij gebruiken verschillende soorten cookies en vergelijkbare opslagtechnologieën om deze website te laten werken. Kies hieronder welke categorieën u toestaat — u kunt op elk moment van gedachten veranderen via \"Cookie-instellingen\" in de footer.",
+      "close": "Sluiten",
+      "savePreferences": "Voorkeuren Opslaan"
+    },
+    "categories": {
+      "necessary": {
+        "name": "Strikt Noodzakelijk",
+        "desc": "Vereist voor het functioneren van de website — om u ingelogd te houden, uw cookiekeuze te onthouden en voor beveiliging. Deze kunnen niet worden uitgeschakeld."
+      },
+      "functional": {
+        "name": "Functioneel",
+        "desc": "Onthoudt uw voorkeuren, zoals uw gekozen taal (Nederlands of Engels), voor een meer persoonlijke ervaring."
+      },
+      "analytics": {
+        "name": "Analytisch",
+        "desc": "Zou ons helpen begrijpen hoe bezoekers deze website gebruiken, zodat wij deze kunnen verbeteren. Wij gebruiken momenteel geen analytische tools — dit staat hier zodat u de controle heeft mocht dit ooit veranderen."
+      },
+      "marketing": {
+        "name": "Marketing",
+        "desc": "Zou worden gebruikt om de effectiviteit van toekomstige advertenties te meten. Wij gebruiken momenteel geen marketing- of advertentiecookies — dit staat hier zodat u de controle heeft mocht dit ooit veranderen."
+      }
+    }
   },
   "privacyPolicy": {
     "title": "Privacy- & Cookiebeleid",
@@ -676,7 +701,7 @@
       },
       "cookies": {
         "heading": "Cookies en vergelijkbare technologieën",
-        "body": "Deze website gebruikt momenteel geen tracking-, analytische of advertentiecookies. Wij gebruiken de lokale opslag van uw browser (een technologie vergelijkbaar met cookies) uitsluitend voor functionele doeleinden: om u ingelogd te houden op uw leden- of beheerdersaccount, om uw gekozen taal (Nederlands of Engels) te onthouden, en om te onthouden dat u op deze cookiemelding heeft gereageerd. Niets hiervan wordt gebruikt om u op andere websites te volgen. Mocht dit ooit veranderen — bijvoorbeeld als wij in de toekomst analytics toevoegen — dan werken wij deze melding bij en vragen wij, waar vereist, eerst om uw toestemming."
+        "body": "Wanneer u deze website voor het eerst bezoekt, vragen wij u welke categorieën cookies en vergelijkbare opslagtechnologieën (zoals de lokale opslag van uw browser) u toestaat:\n\n• Strikt noodzakelijk — altijd actief. Houdt u ingelogd, onthoudt uw cookiekeuze en ondersteunt de beveiliging. Zonder deze kan de website niet functioneren.\n• Functioneel — onthoudt uw gekozen taal (Nederlands of Engels) voor een meer persoonlijke ervaring.\n• Analytisch en Marketing — categorieën die wij hebben ingebouwd met het oog op de toekomst. Wij gebruiken momenteel geen enkele analytische of advertentietool, dus het toestaan van deze categorieën heeft vandaag geen effect. Mocht dit ooit veranderen, dan gebruiken wij deze uitsluitend voor bezoekers die hiermee hebben ingestemd, en werken wij dit beleid eerst bij.\n\nU kunt uw keuze op elk moment wijzigen via de link \"Cookie-instellingen\" in de footer van elke pagina."
       },
       "thirdParties": {
         "heading": "Betalingsverwerking",

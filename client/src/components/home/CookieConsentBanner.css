@@ -45,6 +45,7 @@
   display: flex;
   gap: 0.6rem;
   flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
 .cookie-banner__btn {
@@ -76,6 +77,29 @@
   color: #fff;
 }
 
+/* Used both in the banner (dark bg, "Manage Preferences") and, with the
+   --bordered modifier, inside the light-background preferences modal. */
+.cookie-banner__btn--ghost {
+  background: transparent;
+  color: #cdd5e0;
+  border: none;
+  text-decoration: underline;
+  padding: 0.55rem 0.4rem;
+}
+.cookie-banner__btn--ghost:hover {
+  color: #fff;
+}
+.cookie-banner__btn--ghost.cookie-banner__btn--bordered {
+  color: #0F1F4B;
+  border: 1.5px solid #d6dceb;
+  text-decoration: none;
+  padding: 0.55rem 1.1rem;
+}
+.cookie-banner__btn--ghost.cookie-banner__btn--bordered:hover {
+  border-color: #0F1F4B;
+  background: #f6f8fc;
+}
+
 @media (max-width: 640px) {
   .cookie-banner__inner {
     padding: 1rem;
@@ -84,7 +108,11 @@
     width: 100%;
     justify-content: stretch;
   }
-  .cookie-banner__btn {
+  .cookie-banner__btn:not(.cookie-banner__btn--ghost) {
     flex: 1;
+  }
+  .cookie-banner__actions .cookie-banner__btn--ghost {
+    flex: 1 1 100%;
+    text-align: center;
   }
 }

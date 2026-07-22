@@ -13,6 +13,7 @@ import PrivacyPolicyPage  from './pages/PrivacyPolicyPage';
 
 import { AdminAuthProvider } from './context/AdminAuthContext';
 import { MemberAuthProvider } from './context/MemberAuthContext';
+import { CookieConsentProvider } from './context/CookieConsentContext';
 import ProtectedAdminRoute from './routes/ProtectedAdminRoute';
 import ProtectedMemberRoute from './routes/ProtectedMemberRoute';
 import AdminLayout from './layouts/AdminLayout';
@@ -65,10 +66,11 @@ export default function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
-      <CookieConsentBanner />
-      <AdminAuthProvider>
-        <MemberAuthProvider>
-          <Routes>
+      <CookieConsentProvider>
+        <CookieConsentBanner />
+        <AdminAuthProvider>
+          <MemberAuthProvider>
+            <Routes>
             <Route path="/"                 element={<HomePage />} />
             <Route path="/about"            element={<AboutPage />} />
             <Route path="/events"           element={<EventsPage />} />
@@ -133,10 +135,11 @@ export default function App() {
               <Route path="tickets" element={<MyTicketsPage />} />
               <Route path="profile" element={<DashboardProfilePage />} />
               <Route path="notifications" element={<DashboardNotificationsPage />} />
-            </Route>
-          </Routes>
-        </MemberAuthProvider>
-      </AdminAuthProvider>
+              </Route>
+            </Routes>
+          </MemberAuthProvider>
+        </AdminAuthProvider>
+      </CookieConsentProvider>
     </BrowserRouter>
   );
 }

@@ -652,10 +652,35 @@
   },
   "cookieConsent": {
     "title": "Cookie notice",
-    "body": "We use functional storage on this site to keep you logged in and remember your language preference. We don't currently use analytics or advertising cookies.",
-    "learnMore": "Learn more",
-    "accept": "Accept",
-    "decline": "Decline"
+    "body": "We use cookies and similar storage technologies to run this site and, with your permission, to understand how it's used. Choose your preferences below.",
+    "managePreferences": "Manage Preferences",
+    "rejectNonEssential": "Reject Non-Essential",
+    "acceptAll": "Accept All",
+    "cookieSettings": "Cookie Settings",
+    "modal": {
+      "title": "Cookie Preferences",
+      "intro": "We use different types of cookies and similar storage technologies to run this website. Choose which categories to allow below — you can change your mind at any time via \"Cookie Settings\" in the footer.",
+      "close": "Close",
+      "savePreferences": "Save Preferences"
+    },
+    "categories": {
+      "necessary": {
+        "name": "Strictly Necessary",
+        "desc": "Required for the site to function — keeping you signed in, remembering your cookie choice, and security. These can't be switched off."
+      },
+      "functional": {
+        "name": "Functional",
+        "desc": "Remembers your preferences, such as your chosen language (English or Dutch), for a more personalised experience."
+      },
+      "analytics": {
+        "name": "Analytics",
+        "desc": "Would help us understand how visitors use this site, so we can improve it. We don't currently use any analytics tools — this is here so you're in control if that ever changes."
+      },
+      "marketing": {
+        "name": "Marketing",
+        "desc": "Would be used to measure the effectiveness of any future advertising. We don't currently run any marketing or advertising cookies — this is here so you're in control if that ever changes."
+      }
+    }
   },
   "privacyPolicy": {
     "title": "Privacy & Cookie Policy",
@@ -676,7 +701,7 @@
       },
       "cookies": {
         "heading": "Cookies and similar technologies",
-        "body": "This website does not currently use tracking, analytics, or advertising cookies. We use your browser's local storage (a similar technology to cookies) for strictly functional purposes only: to keep you signed in to your member or admin account, to remember your chosen language (English or Dutch), and to remember that you've responded to this cookie notice. None of this is used to track you across other websites. If that ever changes — for example, if we add analytics in the future — we will update this notice and ask for your consent first, where required."
+        "body": "When you first visit this site, we ask you to choose which categories of cookies and similar storage technologies (like your browser's local storage) you're comfortable with:\n\n• Strictly Necessary — always on. Keeps you signed in, remembers your cookie choice, and supports security. The site can't function without these.\n• Functional — remembers your chosen language (English or Dutch) for a more personalised experience.\n• Analytics and Marketing — categories we've built in for the future. We do not currently use any analytics or advertising tools of any kind, so choosing to allow these categories has no effect today. If that ever changes, we will only start using them for visitors who have opted in, and will update this policy first.\n\nYou can change your choice at any time using the \"Cookie Settings\" link in the footer of every page."
       },
       "thirdParties": {
         "heading": "Payment processing",

@@ -3,12 +3,14 @@ import { Link } from 'react-router-dom';
 import { FaFacebookF, FaInstagram, FaLinkedinIn, FaTwitter, FaWhatsapp, FaMapMarkerAlt, FaPhone, FaUserPlus, FaArrowRight } from 'react-icons/fa';
 import footerLogo from '../../assets/home/FooterLogo.png';
 import voiceLogo from '../../assets/footer/voice-logo.png';
+import { useCookieConsent } from '../../context/CookieConsentContext';
 import './Footer.css';
 
 const USEFUL_LINK_KEYS = ['home', 'about', 'whatWeDo', 'upcomingEvents', 'news', 'policy'];
 
 export default function Footer() {
   const { t } = useTranslation();
+  const { openPreferences } = useCookieConsent();
 
   return (
     <footer className="footer">
@@ -82,7 +84,15 @@ export default function Footer() {
       </div>
 
       <div className="footer__bottom">
-        <p>{t('footer.copyright')}</p>
+        <p>
+          {t('footer.copyright')}
+          {' · '}
+          <Link to="/privacy-policy">{t('footer.usefulLinks.policy')}</Link>
+          {' · '}
+          <button type="button" className="footer__cookie-settings-btn" onClick={openPreferences}>
+            {t('cookieConsent.cookieSettings')}
+          </button>
+        </p>
         <div className="footer__credit">
           <span className="footer__credit-text">{t('footer.credit.designedBy')}</span>
           <a href="https://stichtingthevoice.nl/voice-venture-studio" target="_blank" rel="noopener noreferrer" aria-label="V.O.I.C.E. Venture Studio">
