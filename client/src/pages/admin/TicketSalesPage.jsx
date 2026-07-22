@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Ticket, Euro, Users, FileText, QrCode, Send, Undo2, Search } from 'lucide-react';
+import { Ticket, Euro, Users, FileText, QrCode, Send, Undo2, Search, Gift } from 'lucide-react';
 import adminApi from '../../services/adminApi';
 import StatusBadge from '../../components/admin/StatusBadge';
 import StatCard from '../../components/admin/StatCard';
@@ -52,6 +52,11 @@ export default function TicketSalesPage() {
   const [refundAmount, setRefundAmount] = useState('');
   const [busy, setBusy] = useState(false);
   const { toasts, push } = useToasts();
+
+  const [vipOpen, setVipOpen] = useState(false);
+  const [vipForm, setVipForm] = useState({ name: '', email: '', quantity: 1, guestNamesText: '' });
+  const [vipBusy, setVipBusy] = useState(false);
+  const [vipResult, setVipResult] = useState(null);
 
   function load() {
     setData(null);
@@ -119,12 +124,54 @@ export default function TicketSalesPage() {
     }
   }
 
+  function openVipModal() {
+    setVipForm({ name: '', email: '', quantity: 1, guestNamesText: '' });
+    setVipResult(null);
+    setVipOpen(true);
+  }
+
+  async function handleCreateVip() {
+    const quantity = parseInt(vipForm.quantity, 10);
+    const guestNames = vipForm.guestNamesText.split('\n').map((n) => n.trim()).filter(Boolean);
+
+    if (!vipForm.name.trim() || !vipForm.email.trim()) {
+      push('Name and email are required', 'error');
+      return;
+    }
+    if (!quantity || quantity < 1) {
+      push('Quantity must be at least 1', 'error');
+      return;
+    }
+    if (guestNames.length !== quantity) {
+      push(`You listed ${guestNames.length} guest name${guestNames.length === 1 ? '' : 's'} but selected a quantity of ${quantity} — these must match, one name per line.`, 'error');
+      return;
+    }
+
+    setVipBusy(true);
+    try {
+      const r = await adminApi.post('/admin/vip-passes', {
+        name: vipForm.name.trim(),
+        email: vipForm.email.trim(),
+        quantity,
+        guestNames,
+      });
+      setVipResult(r.data.ticket);
+      push(r.data.message);
+      load();
+    } catch (err) {
+      push(err.response?.data?.error || 'Could not create VIP passes', 'error');
+    } finally {
+      setVipBusy(false);
+    }
+  }
+
   return (
     <div>
       <ToastStack toasts={toasts} />
       <PageHeader
         title="Ticket Sales"
         description="Paid tickets booked through the public website's event page (niaonline.org/events)."
+        actions={<Button variant="primary" onClick={openVipModal}><Gift /> Send VIP Passes</Button>}
       />
 
       {data && (
@@ -180,7 +227,16 @@ export default function TicketSalesPage() {
                 <Table.Cell className="text-nia-text-muted">{t.eventLabel}</Table.Cell>
                 <Table.Cell className="text-nia-text-muted">{t.tickets.map((l) => `${l.quantity}× ${l.ticket_type}`).join(', ')}</Table.Cell>
                 <Table.Cell align="right" className="font-semibold text-nia-navy-dark tabular-nums">€{t.amount.toFixed(2)}</Table.Cell>
-                <Table.Cell><StatusBadge status={t.ticket_status} /></Table.Cell>
+                <Table.Cell>
+                  <div className="flex flex-col gap-1 items-start">
+                    <StatusBadge status={t.ticket_status} />
+                    {t.payment_provider !== 'mollie' && (
+                      <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold bg-nia-gold/15 text-nia-gold-dark uppercase tracking-wide">
+                        <Gift size={10} /> Complimentary
+                      </span>
+                    )}
+                  </div>
+                </Table.Cell>
                 <Table.Cell className="text-nia-text-faint">{new Date(t.createdAt).toLocaleDateString()}</Table.Cell>
               </Table.Row>
             ))}
@@ -202,6 +258,11 @@ export default function TicketSalesPage() {
             <div className="ml-auto text-right flex-shrink-0">
               <p className="text-lg font-extrabold text-nia-navy-dark">€{detail.amount.toFixed(2)}</p>
               <StatusBadge status={detail.ticket_status} />
+              {detail.payment_provider !== 'mollie' && (
+                <span className="mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold bg-nia-gold/15 text-nia-gold-dark uppercase tracking-wide">
+                  <Gift size={10} /> Complimentary
+                </span>
+              )}
             </div>
           </div>
           <div className="flex flex-col gap-2 text-sm">
@@ -247,6 +308,58 @@ export default function TicketSalesPage() {
               </div>
             )}
           </div>
+        </Modal>
+      )}
+
+      {vipOpen && (
+        <Modal title="Send VIP Passes" onClose={() => setVipOpen(false)}>
+          {!vipResult ? (
+            <div className="flex flex-col gap-3">
+              <p className="text-sm text-nia-text-faint">
+                Issues one complimentary VIP entry (no charge) for the whole party, with a single consolidated PDF —
+                one personalised page per guest, all sharing one QR code scannable at the door.
+              </p>
+
+              <div>
+                <label className="text-xs font-semibold text-nia-text-muted uppercase tracking-wide mb-1 block">Primary Contact Name</label>
+                <input className={`${inputCls} w-full`} value={vipForm.name} onChange={(e) => setVipForm((f) => ({ ...f, name: e.target.value }))} placeholder="e.g. Ambassador Sharma" />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-nia-text-muted uppercase tracking-wide mb-1 block">Email (PDF will be sent here)</label>
+                <input type="email" className={`${inputCls} w-full`} value={vipForm.email} onChange={(e) => setVipForm((f) => ({ ...f, email: e.target.value }))} placeholder="you@email.com" />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-nia-text-muted uppercase tracking-wide mb-1 block">Number of VIP Passes</label>
+                <input type="number" min="1" max="50" className={`${inputCls} w-28`} value={vipForm.quantity} onChange={(e) => setVipForm((f) => ({ ...f, quantity: e.target.value }))} />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-nia-text-muted uppercase tracking-wide mb-1 block">
+                  Guest Names — one per line, must match the quantity above
+                </label>
+                <textarea
+                  className={`${inputCls} w-full`}
+                  rows={Math.max(3, Number(vipForm.quantity) || 1)}
+                  value={vipForm.guestNamesText}
+                  onChange={(e) => setVipForm((f) => ({ ...f, guestNamesText: e.target.value }))}
+                  placeholder={'1. Full Name\n2. Full Name'}
+                />
+              </div>
+
+              <Button variant="primary" disabled={vipBusy} onClick={handleCreateVip}>
+                <Gift /> {vipBusy ? 'Generating…' : 'Generate & Send VIP Passes'}
+              </Button>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              <div className="rounded-nia-btn bg-nia-success/10 border-l-4 border-nia-success px-3 py-2.5 text-sm text-green-800">
+                VIP passes created and emailed to {vipResult.email}.
+              </div>
+              <div className="flex gap-2">
+                <Button variant="secondary" onClick={() => handleDownloadPdf(vipResult)}><FileText /> Download PDF</Button>
+                <Button variant="secondary" onClick={() => setVipOpen(false)}>Close</Button>
+              </div>
+            </div>
+          )}
         </Modal>
       )}
     </div>

@@ -15,6 +15,7 @@ const ticketTypeController = require('../controllers/admin/ticketTypeController'
 const bookingAdminController = require('../controllers/admin/bookingAdminController');
 const mollieImportController = require('../controllers/admin/mollieImportController');
 const legacyTicketController = require('../controllers/admin/legacyTicketController');
+const vipPassController = require('../controllers/admin/vipPassController');
 const discountCodeController = require('../controllers/admin/discountCodeController');
 const sponsorshipAdminController = require('../controllers/admin/sponsorshipAdminController');
 const sponsorshipTierController = require('../controllers/admin/sponsorshipTierController');
@@ -122,6 +123,7 @@ router.get( '/legacy-tickets/:id/pdf',         legacyTicketController.downloadPd
 router.get( '/legacy-tickets/:id/qr',          legacyTicketController.downloadQr);
 router.post('/legacy-tickets/:id/resend-email', legacyTicketController.resendEmail);
 router.post('/legacy-tickets/:id/refund',      requireRole(['super_admin']), legacyTicketController.refund);
+router.post('/vip-passes',                     requireRole(['super_admin']), vipPassController.create);
 
 // ── Sponsorships ──────────────────────────────────────────────────
 router.get(   '/sponsorships',            sponsorshipAdminController.list);

@@ -235,6 +235,63 @@ async function sendTicketConfirmation(ticket) {
   console.log(`[Email] Ticket confirmation + PDF sent to ${ticket.email}`);
 }
 
+// Warm, personally-invited-guest tone — deliberately distinct from the
+// transactional "your tickets are confirmed" copy sendTicketConfirmation
+// uses, since this isn't a purchase. Every guest in the party shares the
+// same ticket.ticketNumber/QR (one check-in for the whole group), so the
+// email lists all guest names but only shows one QR image.
+async function sendVipPassEmail(ticket, guestNames, pdfBuffer) {
+  const transporter = createTransporter();
+
+  const qrDataUrl = await generateQRDataURL(ticket.ticketNumber);
+  const qrBuffer  = Buffer.from(qrDataUrl.replace(/^data:image\/png;base64,/, ''), 'base64');
+  const qrCid     = `qr-${ticket.ticketNumber}@nia`;
+
+  const firstName = ticket.name.trim().split(/\s+/)[0];
+
+  const guestListHtml = guestNames.map((n) => `<div class="detail-row"><span class="label">Guest</span><span class="value">${n}</span></div>`).join('');
+
+  const qrBlock = `
+    <div class="qr-block">
+      <p style="margin-bottom:8px;"><strong>Entry QR Code</strong></p>
+      <img src="cid:${qrCid}" alt="QR Code" width="160" height="160" style="display:block;margin:0 auto;" />
+      <p>${ticket.ticketNumber}</p>
+    </div>`;
+
+  const body = `
+    <p>Dear ${firstName} Ji,</p>
+    <p>It gives us great pleasure to welcome all of you as our Honoured VIP Guests at the celebration of India's 80th Independence Day and NIA's 75th Anniversary.</p>
+    <p>Attached are the VIP Passes for all of you. No ticket purchase is required.</p>
+    <p>Simply present the attached PDF, either printed or on your phone, at the entrance, and our team will be delighted to welcome you.</p>
+    <p><strong>Invited Guests</strong></p>
+    ${guestListHtml}
+    ${qrBlock}
+    <p style="margin-top:20px;">We look forward to celebrating this historic occasion together and sharing an evening filled with culture, music, friendship, and community spirit.</p>
+    <p>Thank you for being an important part of the NIA community. 🇮🇳🇳🇱</p>
+    <p>Warm regards,<br>The Netherlands India Association</p>`;
+
+  await transporter.sendMail({
+    from: FROM,
+    to: ticket.email,
+    subject: `Your VIP Passes for NIA's Historic Celebration`,
+    html: htmlWrap('Your VIP Pass', body),
+    attachments: [
+      {
+        filename: `NIA-VIP-Pass-${ticket.ticketNumber}.pdf`,
+        content: pdfBuffer,
+        contentType: 'application/pdf',
+      },
+      {
+        filename: 'vip-pass-qr.png',
+        content: qrBuffer,
+        contentType: 'image/png',
+        cid: qrCid,
+      },
+    ],
+  });
+  console.log(`[Email] VIP pass PDF sent to ${ticket.email} (${guestNames.length} guest${guestNames.length === 1 ? '' : 's'})`);
+}
+
 async function sendTicketReceipt(ticket) {
   const transporter = createTransporter();
   const body = `
@@ -870,6 +927,7 @@ module.exports = {
   sendExpiryNotice,
   sendEventReminder,
   sendTicketConfirmation,
+  sendVipPassEmail,
   sendTicketRefundConfirmation,
   sendMembershipPaymentConfirmation,
   sendSponsorshipConfirmation,

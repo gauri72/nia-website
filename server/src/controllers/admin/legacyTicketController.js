@@ -1,8 +1,9 @@
 const Ticket = require('../../models/Ticket');
 const { refundPayment } = require('../../services/mollieService');
 const {
-  generateTicketPDF, generateQRDataURL, sendTicketConfirmation, sendTicketRefundConfirmation,
+  generateTicketPDF, generateQRDataURL, sendTicketConfirmation, sendTicketRefundConfirmation, sendVipPassEmail,
 } = require('../../services/emailService');
+const { generateVipPassBatchPDF } = require('../../services/vipPassService');
 
 // Read-only admin view onto the original public-site ticket flow (client/src/components/events/*,
 // /api/tickets/create) — the single hardcoded "15 August" event that predates the Event/Booking
@@ -68,6 +69,17 @@ async function downloadPdf(req, res, next) {
     if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
     if (ticket.ticket_status !== 'paid') return res.status(400).json({ error: 'Only paid tickets have a PDF' });
 
+    // VIP batches are one Ticket doc covering a whole party — reuse the
+    // multi-page pass PDF (one page per guest, from attendee_names) instead
+    // of the standard single-page ticket layout.
+    if (ticket.payment_provider === 'vip_complimentary') {
+      const guestNames = (ticket.attendee_names || ticket.name).split('\n').filter(Boolean);
+      const pdfBuffer = await generateVipPassBatchPDF(ticket, guestNames);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="NIA-VIP-Pass-${ticket.ticketNumber}.pdf"`);
+      return res.send(pdfBuffer);
+    }
+
     const pdfBuffer = await generateTicketPDF(ticket);
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="NIA-Ticket-${ticket.ticketNumber}.pdf"`);
@@ -99,6 +111,13 @@ async function resendEmail(req, res, next) {
     const ticket = await Ticket.findById(req.params.id);
     if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
     if (ticket.ticket_status !== 'paid') return res.status(400).json({ error: 'Only paid tickets can be re-sent' });
+
+    if (ticket.payment_provider === 'vip_complimentary') {
+      const guestNames = (ticket.attendee_names || ticket.name).split('\n').filter(Boolean);
+      const pdfBuffer = await generateVipPassBatchPDF(ticket, guestNames);
+      await sendVipPassEmail(ticket, guestNames, pdfBuffer);
+      return res.json({ message: `VIP Pass email re-sent to ${ticket.email}` });
+    }
 
     await sendTicketConfirmation(ticket);
     return res.json({ message: `Ticket email re-sent to ${ticket.email}` });
