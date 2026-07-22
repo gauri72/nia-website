@@ -48,6 +48,7 @@ async function downloadBlob(path, filename) {
 export default function TicketSalesPage() {
   const [data, setData] = useState(null);
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
   const [detail, setDetail] = useState(null);
   const [refundAmount, setRefundAmount] = useState('');
   const [busy, setBusy] = useState(false);
@@ -58,13 +59,15 @@ export default function TicketSalesPage() {
   const [vipBusy, setVipBusy] = useState(false);
   const [vipResult, setVipResult] = useState(null);
 
-  function load() {
+  // Backend paginates (25/page) — an explicit targetPage lets Search reset
+  // to page 1 while a bare load() (after void/refund/resend) stays put.
+  function load(targetPage = page) {
     setData(null);
-    adminApi.get('/admin/legacy-tickets', { params: { search: search || undefined } })
-      .then((r) => setData(r.data));
+    adminApi.get('/admin/legacy-tickets', { params: { search: search || undefined, page: targetPage, limit: 25 } })
+      .then((r) => { setData(r.data); setPage(targetPage); });
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(1); }, []);
 
   async function openDetail(id) {
     const r = await adminApi.get(`/admin/legacy-tickets/${id}`);
@@ -219,10 +222,10 @@ export default function TicketSalesPage() {
             placeholder="Search name, email, ticket number…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && load()}
+            onKeyDown={(e) => e.key === 'Enter' && load(1)}
           />
         </div>
-        <Button variant="secondary" onClick={load}>Search</Button>
+        <Button variant="secondary" onClick={() => load(1)}>Search</Button>
       </div>
 
       {!data && (
@@ -272,6 +275,17 @@ export default function TicketSalesPage() {
             {data.items.length === 0 && <Table.Empty colSpan={8}>No ticket bookings found.</Table.Empty>}
           </Table.Body>
         </Table>
+      )}
+
+      {data && data.pages > 1 && (
+        <div className="flex items-center justify-between mt-4 text-sm text-nia-text-muted">
+          <span>{data.total} tickets total</span>
+          <div className="flex gap-2 items-center">
+            <Button variant="secondary" size="sm" disabled={page <= 1} onClick={() => load(page - 1)}>Prev</Button>
+            <span className="px-2">Page {page} of {data.pages}</span>
+            <Button variant="secondary" size="sm" disabled={page >= data.pages} onClick={() => load(page + 1)}>Next</Button>
+          </div>
+        </div>
       )}
 
       {detail && (
