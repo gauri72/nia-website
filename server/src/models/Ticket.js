@@ -33,7 +33,7 @@ const TicketSchema = new mongoose.Schema({
   membershipDiscountUnits: { type: Number, default: 0 }, // how many ticket units in this order got the discount — the actual cap-consumption unit
   ticket_status: {
     type: String,
-    enum: ['pending_payment', 'paid', 'failed', 'expired', 'canceled', 'refunded'],
+    enum: ['pending_payment', 'paid', 'failed', 'expired', 'canceled', 'refunded', 'voided'],
     default: 'pending_payment',
   },
   payment_provider: { type: String, default: 'mollie' },
@@ -43,6 +43,9 @@ const TicketSchema = new mongoose.Schema({
   member: { type: mongoose.Schema.Types.ObjectId, ref: 'Member' },
   refunded_at: { type: Date },
   refund_amount: { type: Number },
+  voided_at: { type: Date },
+  void_reason: { type: String, trim: true },
+  voidedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'AdminUser' },
   // Event-door check-in, additive to the existing payment flow — same pattern as Booking.checkedInAt.
   checkedInAt: { type: Date },
   checkedInBy: { type: mongoose.Schema.Types.ObjectId, ref: 'AdminUser' },

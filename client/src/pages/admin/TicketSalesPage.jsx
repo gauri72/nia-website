@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Ticket, Euro, Users, FileText, QrCode, Send, Undo2, Search, Gift, Eye } from 'lucide-react';
+import { Ticket, Euro, Users, FileText, QrCode, Send, Undo2, Search, Gift, Eye, Ban } from 'lucide-react';
 import adminApi from '../../services/adminApi';
 import StatusBadge from '../../components/admin/StatusBadge';
 import StatCard from '../../components/admin/StatCard';
@@ -96,6 +96,23 @@ export default function TicketSalesPage() {
       push(r.data.message);
     } catch (err) {
       push(err.response?.data?.error || 'Could not resend email', 'error');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleVoid(ticket) {
+    const reason = window.prompt(`Void ticket ${ticket.ticketNumber}? It will be permanently invalidated at the door (no refund is issued). Optionally enter a reason:`);
+    if (reason === null) return; // cancelled the prompt
+
+    setBusy(true);
+    try {
+      const r = await adminApi.post(`/admin/legacy-tickets/${ticket._id}/void`, { reason });
+      push(`Ticket ${ticket.ticketNumber} voided`);
+      setDetail(r.data);
+      load();
+    } catch (err) {
+      push(err.response?.data?.error || 'Could not void ticket', 'error');
     } finally {
       setBusy(false);
     }
@@ -295,6 +312,12 @@ export default function TicketSalesPage() {
             {detail.refund_amount > 0 && (
               <div className="flex justify-between text-nia-error"><span>Refunded</span><span>€{detail.refund_amount.toFixed(2)}</span></div>
             )}
+            {detail.ticket_status === 'voided' && (
+              <div className="rounded-nia-btn bg-nia-error/10 border-l-4 border-nia-error px-3 py-2.5 text-sm text-red-800">
+                <p className="font-semibold">Voided {new Date(detail.voided_at).toLocaleString()}</p>
+                {detail.void_reason && <p className="mt-0.5">Reason: {detail.void_reason}</p>}
+              </div>
+            )}
 
             <hr className="border-nia-border my-1" />
             <div className="flex flex-wrap gap-2">
@@ -302,9 +325,12 @@ export default function TicketSalesPage() {
               <Button variant="secondary" size="sm" onClick={() => handleDownloadQr(detail)}><QrCode /> Download QR</Button>
               <Button variant="secondary" size="sm" disabled={busy} onClick={() => handleResendEmail(detail)}><Send /> Resend Email</Button>
               <Button variant="secondary" size="sm" onClick={() => handlePreviewEmail(detail)}><Eye /> Preview Email</Button>
+              {detail.ticket_status === 'paid' && (
+                <Button variant="danger" size="sm" disabled={busy} onClick={() => handleVoid(detail)}><Ban /> Void Ticket</Button>
+              )}
             </div>
 
-            {detail.ticket_status !== 'refunded' && (
+            {detail.ticket_status === 'paid' && (
               <div className="mt-2 rounded-nia-btn border border-nia-border bg-nia-panel p-3">
                 <p className="text-xs font-semibold text-nia-text-muted uppercase mb-2">Issue Refund</p>
                 <div className="flex items-center gap-2">

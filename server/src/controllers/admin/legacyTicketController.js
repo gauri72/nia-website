@@ -189,4 +189,29 @@ async function refund(req, res, next) {
   }
 }
 
-module.exports = { list, getById, downloadPdf, downloadQr, resendEmail, emailPreview, refund };
+// ── POST /api/admin/legacy-tickets/:id/void ────────────────────────
+// Invalidates a ticket without a Mollie refund — for issuing errors,
+// duplicates, or fraud, where no money needs to move. A voided ticket
+// immediately fails scanController's status==='paid' gate at the door,
+// same as a refunded one, with no scan-side changes needed.
+async function voidTicket(req, res, next) {
+  try {
+    const ticket = await Ticket.findById(req.params.id);
+    if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
+    if (ticket.ticket_status !== 'paid') {
+      return res.status(400).json({ error: `Ticket is already "${ticket.ticket_status}" — only paid tickets can be voided` });
+    }
+
+    ticket.ticket_status = 'voided';
+    ticket.voided_at = new Date();
+    ticket.void_reason = req.body?.reason?.trim() || undefined;
+    ticket.voidedBy = req.admin.id;
+    await ticket.save();
+
+    return res.json({ ...ticket.toObject(), eventLabel: friendlyEvent(ticket.event_id) });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { list, getById, downloadPdf, downloadQr, resendEmail, emailPreview, refund, voidTicket };

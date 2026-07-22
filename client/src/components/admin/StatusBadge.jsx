@@ -13,6 +13,7 @@ const STYLES = {
   confirmed: { bg: 'bg-nia-success/10', text: 'text-nia-success', dot: 'bg-nia-success' },
   cancelled: { bg: 'bg-nia-error/10', text: 'text-nia-error', dot: 'bg-nia-error' },
   refunded:  { bg: 'bg-nia-error/10', text: 'text-nia-error', dot: 'bg-nia-error' },
+  voided:    { bg: 'bg-nia-error/10', text: 'text-nia-error', dot: 'bg-nia-error' },
   paid:      { bg: 'bg-nia-success/10', text: 'text-nia-success', dot: 'bg-nia-success' },
   pending_payment: { bg: 'bg-nia-warning/10', text: 'text-nia-warning', dot: 'bg-nia-warning' },
   failed:    { bg: 'bg-nia-error/10', text: 'text-nia-error', dot: 'bg-nia-error' },
