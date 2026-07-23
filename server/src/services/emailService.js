@@ -17,6 +17,20 @@ function createTransporter() {
 const FROM = `"NIA Netherlands" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`;
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 
+// HTML-escape any user-supplied free text before interpolating it into an
+// email template — ticket/member/donor/sponsor names all originate from
+// public form input, and every email body here is built by raw string
+// interpolation with no templating-engine auto-escaping.
+function escapeHtml(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // ── Shared HTML wrapper ───────────────────────────────────────
 function htmlWrap(title, body) {
   return `<!DOCTYPE html><html><head><meta charset="UTF-8">
@@ -135,15 +149,15 @@ async function sendMembershipConfirmation(membership) {
   const planLabel = membership.plan === 'patron' ? 'PATRON (€150/year)' : 'FRIEND (€60/year)';
 
   const body = `
-    <p>Dear <strong>${membership.name}</strong>,</p>
+    <p>Dear <strong>${escapeHtml(membership.name)}</strong>,</p>
     <p>🎉 Welcome to the Netherlands India Association! Your membership has been successfully activated.</p>
     <div class="highlight">
       <strong>Membership ID:</strong> ${membership.membershipId}<br>
       <strong>Plan:</strong> ${planLabel}
     </div>
     <p><strong>Your Membership Details:</strong></p>
-    <div class="detail-row"><span class="label">Name</span><span class="value">${membership.name}</span></div>
-    <div class="detail-row"><span class="label">Email</span><span class="value">${membership.email}</span></div>
+    <div class="detail-row"><span class="label">Name</span><span class="value">${escapeHtml(membership.name)}</span></div>
+    <div class="detail-row"><span class="label">Email</span><span class="value">${escapeHtml(membership.email)}</span></div>
     <div class="detail-row"><span class="label">Plan</span><span class="value">${planLabel}</span></div>
     <div class="detail-row"><span class="label">Amount Paid</span><span class="value amount">€${membership.amount.toFixed(2)}</span></div>
     <div class="detail-row"><span class="label">Payment ID</span><span class="value">${membership.mollie_payment_id}</span></div>
@@ -162,7 +176,7 @@ async function sendMembershipConfirmation(membership) {
 async function sendMembershipReceipt(membership) {
   const transporter = createTransporter();
   const body = `
-    <p>Dear <strong>${membership.name}</strong>,</p>
+    <p>Dear <strong>${escapeHtml(membership.name)}</strong>,</p>
     <p>This is your official payment receipt for your NIA membership.</p>
     <div class="detail-row"><span class="label">Receipt For</span><span class="value">NIA Membership — ${membership.plan.toUpperCase()}</span></div>
     <div class="detail-row"><span class="label">Membership ID</span><span class="value">${membership.membershipId}</span></div>
@@ -199,7 +213,7 @@ function buildTicketConfirmationBody(ticket, qrSrc) {
     </div>`;
 
   return `
-    <p>Dear <strong>${ticket.name}</strong>,</p>
+    <p>Dear <strong>${escapeHtml(ticket.name)}</strong>,</p>
     <p>🎟️ Your tickets for the NIA event have been confirmed! Your PDF ticket with QR code is attached.</p>
     <div class="highlight"><strong>Ticket Number:</strong> ${ticket.ticketNumber}</div>
     <p><strong>Ticket Summary:</strong></p>
@@ -263,9 +277,9 @@ const VIP_PASS_SUBJECT = `Your VIP Passes for NIA's Historic Celebration`;
 // buildTicketConfirmationBody's cid:/data: split for send vs. preview.
 function buildVipPassBody(ticket, guestNames, qrSrc) {
   const nameWithoutTitle = ticket.name.trim().replace(/^(mr|mrs|ms|miss|dr|prof|shri|smt|shrimati)\.?\s+/i, '');
-  const firstName = nameWithoutTitle.split(/\s+/)[0] || ticket.name.trim();
+  const firstName = escapeHtml(nameWithoutTitle.split(/\s+/)[0] || ticket.name.trim());
 
-  const guestListHtml = guestNames.map((n) => `<div class="detail-row"><span class="label">Guest</span><span class="value">${n}</span></div>`).join('');
+  const guestListHtml = guestNames.map((n) => `<div class="detail-row"><span class="label">Guest</span><span class="value">${escapeHtml(n)}</span></div>`).join('');
 
   const qrBlock = `
     <div class="qr-block">
@@ -328,7 +342,7 @@ async function renderVipPassPreview(ticket, guestNames) {
 async function sendTicketReceipt(ticket) {
   const transporter = createTransporter();
   const body = `
-    <p>Dear <strong>${ticket.name}</strong>,</p>
+    <p>Dear <strong>${escapeHtml(ticket.name)}</strong>,</p>
     <p>This is your official payment receipt for your NIA event tickets.</p>
     <div class="detail-row"><span class="label">Ticket Number</span><span class="value">${ticket.ticketNumber}</span></div>
     <div class="detail-row"><span class="label">Amount Paid</span><span class="value amount">€${ticket.amount.toFixed(2)}</span></div>
@@ -347,7 +361,7 @@ async function sendTicketReceipt(ticket) {
 async function sendTicketRefundConfirmation(ticket) {
   const transporter = createTransporter();
   const body = `
-    <p>Dear <strong>${ticket.name}</strong>,</p>
+    <p>Dear <strong>${escapeHtml(ticket.name)}</strong>,</p>
     <p>Your refund for NIA event tickets <strong>${ticket.ticketNumber}</strong> has been processed.</p>
     <div class="detail-row"><span class="label">Ticket Number</span><span class="value">${ticket.ticketNumber}</span></div>
     <div class="detail-row"><span class="label">Refund Amount</span><span class="value amount">€${Number(ticket.refund_amount ?? ticket.amount).toFixed(2)}</span></div>
@@ -374,7 +388,7 @@ async function sendDonationThankYou(donation) {
   }[donation.cause] || donation.cause;
 
   const body = `
-    <p>Dear <strong>${donation.name}</strong>,</p>
+    <p>Dear <strong>${escapeHtml(donation.name)}</strong>,</p>
     <p>💛 Thank you for your generous donation to the Netherlands India Association! Your contribution makes a real difference to our community.</p>
     <div class="highlight">
       <strong>Donation Reference:</strong> ${donation.referenceNumber}<br>
@@ -397,7 +411,7 @@ async function sendDonationThankYou(donation) {
 async function sendDonationReceipt(donation) {
   const transporter = createTransporter();
   const body = `
-    <p>Dear <strong>${donation.name}</strong>,</p>
+    <p>Dear <strong>${escapeHtml(donation.name)}</strong>,</p>
     <p>This is your official donation receipt from the Netherlands India Association.</p>
     <div class="detail-row"><span class="label">Reference Number</span><span class="value">${donation.referenceNumber}</span></div>
     <div class="detail-row"><span class="label">Donation Amount</span><span class="value amount">€${donation.amount.toFixed(2)}</span></div>
@@ -418,14 +432,14 @@ async function sendDonationReceipt(donation) {
 async function sendSponsorshipConfirmation(sponsorship) {
   const transporter = createTransporter();
   const body = `
-    <p>Dear <strong>${sponsorship.contactPerson}</strong>,</p>
-    <p>🌟 Thank you for sponsoring the Netherlands India Association! We are thrilled to have <strong>${sponsorship.companyName || sponsorship.sponsorName}</strong> as our ${sponsorship.packageName.toUpperCase()} sponsor.</p>
+    <p>Dear <strong>${escapeHtml(sponsorship.contactPerson)}</strong>,</p>
+    <p>🌟 Thank you for sponsoring the Netherlands India Association! We are thrilled to have <strong>${escapeHtml(sponsorship.companyName || sponsorship.sponsorName)}</strong> as our ${sponsorship.packageName.toUpperCase()} sponsor.</p>
     <div class="highlight">
       <strong>Sponsorship Reference:</strong> ${sponsorship.referenceNumber}<br>
       <strong>Package:</strong> ${sponsorship.packageName.toUpperCase()} — <span class="amount">€${sponsorship.amount.toFixed(2)}</span>
     </div>
-    <div class="detail-row"><span class="label">Contact Person</span><span class="value">${sponsorship.contactPerson}</span></div>
-    <div class="detail-row"><span class="label">Company</span><span class="value">${sponsorship.companyName || '—'}</span></div>
+    <div class="detail-row"><span class="label">Contact Person</span><span class="value">${escapeHtml(sponsorship.contactPerson)}</span></div>
+    <div class="detail-row"><span class="label">Company</span><span class="value">${escapeHtml(sponsorship.companyName) || '—'}</span></div>
     <div class="detail-row"><span class="label">Package</span><span class="value">${sponsorship.packageName.toUpperCase()}</span></div>
     <div class="detail-row"><span class="label">Amount Paid</span><span class="value amount">€${sponsorship.amount.toFixed(2)}</span></div>
     <div class="detail-row"><span class="label">Payment Date</span><span class="value">${new Date(sponsorship.paid_at).toLocaleDateString('nl-NL')}</span></div>
@@ -443,7 +457,7 @@ async function sendSponsorshipConfirmation(sponsorship) {
 async function sendSponsorshipReceipt(sponsorship) {
   const transporter = createTransporter();
   const body = `
-    <p>Dear <strong>${sponsorship.contactPerson}</strong>,</p>
+    <p>Dear <strong>${escapeHtml(sponsorship.contactPerson)}</strong>,</p>
     <p>This is your official payment receipt for your NIA sponsorship.</p>
     <div class="detail-row"><span class="label">Reference Number</span><span class="value">${sponsorship.referenceNumber}</span></div>
     <div class="detail-row"><span class="label">Package</span><span class="value">${sponsorship.packageName.toUpperCase()}</span></div>
@@ -467,8 +481,8 @@ async function notifyAdminMembership(membership) {
   const body = `
     <p>A new membership payment has been received.</p>
     <div class="detail-row"><span class="label">Membership ID</span><span class="value">${membership.membershipId}</span></div>
-    <div class="detail-row"><span class="label">Name</span><span class="value">${membership.name}</span></div>
-    <div class="detail-row"><span class="label">Email</span><span class="value">${membership.email}</span></div>
+    <div class="detail-row"><span class="label">Name</span><span class="value">${escapeHtml(membership.name)}</span></div>
+    <div class="detail-row"><span class="label">Email</span><span class="value">${escapeHtml(membership.email)}</span></div>
     <div class="detail-row"><span class="label">Plan</span><span class="value">${planLabel}</span></div>
     <div class="detail-row"><span class="label">Amount</span><span class="value amount">€${membership.amount.toFixed(2)}</span></div>
     <div class="detail-row"><span class="label">Mollie ID</span><span class="value">${membership.mollie_payment_id}</span></div>
@@ -492,8 +506,8 @@ async function notifyAdminTicket(ticket) {
   const body = `
     <p>A new event ticket purchase has been received.</p>
     <div class="detail-row"><span class="label">Ticket Number</span><span class="value">${ticket.ticketNumber}</span></div>
-    <div class="detail-row"><span class="label">Name</span><span class="value">${ticket.name}</span></div>
-    <div class="detail-row"><span class="label">Email</span><span class="value">${ticket.email}</span></div>
+    <div class="detail-row"><span class="label">Name</span><span class="value">${escapeHtml(ticket.name)}</span></div>
+    <div class="detail-row"><span class="label">Email</span><span class="value">${escapeHtml(ticket.email)}</span></div>
     ${ticketLines}
     ${ticket.discount_amount > 0 ? `<div class="detail-row"><span class="label">Discount</span><span class="value" style="color:green;">−€${ticket.discount_amount.toFixed(2)}</span></div>` : ''}
     <div class="detail-row"><span class="label">Total Paid</span><span class="value amount">€${ticket.amount.toFixed(2)}</span></div>
@@ -521,8 +535,8 @@ async function notifyAdminDonation(donation) {
   const body = `
     <p>A new donation has been received.</p>
     <div class="detail-row"><span class="label">Reference</span><span class="value">${donation.referenceNumber}</span></div>
-    <div class="detail-row"><span class="label">Name</span><span class="value">${donation.name}</span></div>
-    <div class="detail-row"><span class="label">Email</span><span class="value">${donation.email}</span></div>
+    <div class="detail-row"><span class="label">Name</span><span class="value">${escapeHtml(donation.name)}</span></div>
+    <div class="detail-row"><span class="label">Email</span><span class="value">${escapeHtml(donation.email)}</span></div>
     <div class="detail-row"><span class="label">Cause</span><span class="value">${causeLabel}</span></div>
     <div class="detail-row"><span class="label">Amount</span><span class="value amount">€${donation.amount.toFixed(2)}</span></div>
     <div class="detail-row"><span class="label">Mollie ID</span><span class="value">${donation.mollie_payment_id}</span></div>
@@ -543,10 +557,10 @@ async function notifyAdminSponsorship(sponsorship) {
   const body = `
     <p>A new sponsorship payment has been received.</p>
     <div class="detail-row"><span class="label">Reference</span><span class="value">${sponsorship.referenceNumber}</span></div>
-    <div class="detail-row"><span class="label">Sponsor</span><span class="value">${sponsorship.sponsorName}</span></div>
-    <div class="detail-row"><span class="label">Company</span><span class="value">${sponsorship.companyName || '—'}</span></div>
-    <div class="detail-row"><span class="label">Contact</span><span class="value">${sponsorship.contactPerson}</span></div>
-    <div class="detail-row"><span class="label">Email</span><span class="value">${sponsorship.email}</span></div>
+    <div class="detail-row"><span class="label">Sponsor</span><span class="value">${escapeHtml(sponsorship.sponsorName)}</span></div>
+    <div class="detail-row"><span class="label">Company</span><span class="value">${escapeHtml(sponsorship.companyName) || '—'}</span></div>
+    <div class="detail-row"><span class="label">Contact</span><span class="value">${escapeHtml(sponsorship.contactPerson)}</span></div>
+    <div class="detail-row"><span class="label">Email</span><span class="value">${escapeHtml(sponsorship.email)}</span></div>
     <div class="detail-row"><span class="label">Package</span><span class="value">${sponsorship.packageName.toUpperCase()}</span></div>
     <div class="detail-row"><span class="label">Amount</span><span class="value amount">€${sponsorship.amount.toFixed(2)}</span></div>
     <div class="detail-row"><span class="label">Mollie ID</span><span class="value">${sponsorship.mollie_payment_id}</span></div>`;
@@ -650,12 +664,12 @@ async function sendBookingConfirmation(booking) {
   const pdfBuffer = await generateBookingPDF(booking);
 
   const body = `
-    <p>Dear <strong>${booking.member?.firstName || 'Member'}</strong>,</p>
-    <p>🎟️ Your booking for <strong>${eventTitle}</strong> has been confirmed! Your PDF ticket with QR code is attached.</p>
+    <p>Dear <strong>${escapeHtml(booking.member?.firstName) || 'Member'}</strong>,</p>
+    <p>🎟️ Your booking for <strong>${escapeHtml(eventTitle)}</strong> has been confirmed! Your PDF ticket with QR code is attached.</p>
     <div class="highlight">
       <strong>Booking Reference:</strong> ${booking.bookingNumber}<br>
       ${eventDate ? `<strong>When:</strong> ${eventDate}<br>` : ''}
-      ${venue ? `<strong>Where:</strong> ${venue}` : ''}
+      ${venue ? `<strong>Where:</strong> ${escapeHtml(venue)}` : ''}
     </div>
     <p><strong>Booking Summary:</strong></p>
     ${ticketLines}
@@ -681,8 +695,8 @@ async function sendRefundConfirmation(booking) {
   const transporter = createTransporter();
   const eventTitle = booking.event?.title || 'NIA Event';
   const body = `
-    <p>Dear <strong>${booking.member?.firstName || 'Member'}</strong>,</p>
-    <p>Your refund for <strong>${eventTitle}</strong> has been processed.</p>
+    <p>Dear <strong>${escapeHtml(booking.member?.firstName) || 'Member'}</strong>,</p>
+    <p>Your refund for <strong>${escapeHtml(eventTitle)}</strong> has been processed.</p>
     <div class="detail-row"><span class="label">Booking Reference</span><span class="value">${booking.bookingNumber}</span></div>
     <div class="detail-row"><span class="label">Refund Amount</span><span class="value amount">€${Number(booking.refund_amount || booking.amount).toFixed(2)}</span></div>
     <div class="detail-row"><span class="label">Date</span><span class="value">${new Date(booking.refunded_at || Date.now()).toLocaleDateString('nl-NL')}</span></div>
@@ -749,17 +763,17 @@ async function sendMembershipPaymentConfirmation(payment) {
     <div class="detail-row"><span class="label">Payment ID</span><span class="value">${payment.mollie_payment_id}</span></div>` : '';
 
   const benefitsBlock = tier?.benefits?.length ? `
-    <p style="margin-top:20px;"><strong>Your ${tier.name} Membership Benefits:</strong></p>
+    <p style="margin-top:20px;"><strong>Your ${escapeHtml(tier.name)} Membership Benefits:</strong></p>
     <ul style="padding-left:20px; margin:8px 0;">
-      ${tier.benefits.map((b) => `<li style="margin-bottom:4px;">${b}</li>`).join('')}
+      ${tier.benefits.map((b) => `<li style="margin-bottom:4px;">${escapeHtml(b)}</li>`).join('')}
     </ul>` : '';
 
   const body = `
-    <p>Dear <strong>${member.firstName}</strong>,</p>
+    <p>Dear <strong>${escapeHtml(member.firstName)}</strong>,</p>
     <p>🎉 Your NIA membership has been ${actionLabel}! Your digital membership card (with QR code and Membership ID) is attached.</p>
     <div class="highlight">
       <strong>Membership ID:</strong> ${member.memberId}<br>
-      <strong>Tier:</strong> ${tier?.name}<br>
+      <strong>Tier:</strong> ${escapeHtml(tier?.name)}<br>
       <strong>Valid Until:</strong> ${member.membershipExpiresAt ? new Date(member.membershipExpiresAt).toLocaleDateString('nl-NL') : ''}
     </div>
     ${paymentRows}
@@ -780,7 +794,7 @@ async function sendMembershipPaymentConfirmation(payment) {
 async function sendWelcomeEmail(member) {
   const transporter = createTransporter();
   const body = `
-    <p>Dear <strong>${member.firstName}</strong>,</p>
+    <p>Dear <strong>${escapeHtml(member.firstName)}</strong>,</p>
     <p>🎉 Welcome to the Netherlands India Association! We're delighted to have you as part of our community.</p>
     <div class="highlight">Explore upcoming events, manage your membership and book tickets any time from your <a href="${process.env.FRONTEND_URL}/dashboard">Member Dashboard</a>.</div>
     <p style="margin-top:20px;">Netherlands & India — Together Since 1950. We look forward to seeing you at our next event!</p>`;
@@ -797,8 +811,8 @@ async function sendWelcomeEmail(member) {
 async function sendRenewalReminder(member, tier, daysRemaining) {
   const transporter = createTransporter();
   const body = `
-    <p>Dear <strong>${member.firstName}</strong>,</p>
-    <p>Your <strong>${tier?.name || 'NIA'}</strong> membership expires in <strong>${daysRemaining} day${daysRemaining === 1 ? '' : 's'}</strong>, on ${new Date(member.membershipExpiresAt).toLocaleDateString('nl-NL')}.</p>
+    <p>Dear <strong>${escapeHtml(member.firstName)}</strong>,</p>
+    <p>Your <strong>${escapeHtml(tier?.name) || 'NIA'}</strong> membership expires in <strong>${daysRemaining} day${daysRemaining === 1 ? '' : 's'}</strong>, on ${new Date(member.membershipExpiresAt).toLocaleDateString('nl-NL')}.</p>
     <p style="text-align:center;"><a class="btn" href="${process.env.FRONTEND_URL}/dashboard/membership">Renew Now</a></p>
     <p style="margin-top:20px; font-size:13px; color:#999;">Renew before your expiry date to keep your membership benefits without interruption.</p>`;
 
@@ -814,7 +828,7 @@ async function sendRenewalReminder(member, tier, daysRemaining) {
 async function sendExpiryNotice(member) {
   const transporter = createTransporter();
   const body = `
-    <p>Dear <strong>${member.firstName}</strong>,</p>
+    <p>Dear <strong>${escapeHtml(member.firstName)}</strong>,</p>
     <p>Your NIA membership expired on ${new Date(member.membershipExpiresAt).toLocaleDateString('nl-NL')}. We'd love to have you back!</p>
     <p style="text-align:center;"><a class="btn" href="${process.env.FRONTEND_URL}/dashboard/membership">Renew Your Membership</a></p>`;
 
@@ -834,11 +848,11 @@ async function sendEventReminder(booking) {
   const venue = [event?.venueName, event?.venueCity].filter(Boolean).join(', ');
 
   const body = `
-    <p>Dear <strong>${member?.firstName || 'Member'}</strong>,</p>
-    <p>This is a friendly reminder that <strong>${event?.title}</strong> is happening in less than 24 hours!</p>
+    <p>Dear <strong>${escapeHtml(member?.firstName) || 'Member'}</strong>,</p>
+    <p>This is a friendly reminder that <strong>${escapeHtml(event?.title)}</strong> is happening in less than 24 hours!</p>
     <div class="highlight">
       <strong>When:</strong> ${event?.startDate ? new Date(event.startDate).toLocaleString('nl-NL') : ''}<br>
-      ${venue ? `<strong>Where:</strong> ${venue}<br>` : ''}
+      ${venue ? `<strong>Where:</strong> ${escapeHtml(venue)}<br>` : ''}
       <strong>Booking Reference:</strong> ${booking.bookingNumber}
     </div>
     <p style="margin-top:20px;">Don't forget to bring your ticket (PDF or QR code from your Member Dashboard). We look forward to seeing you there!</p>`;
@@ -856,7 +870,7 @@ async function sendEventReminder(booking) {
 async function sendMemberVerificationEmail(member, verifyUrl) {
   const transporter = createTransporter();
   const body = `
-    <p>Dear <strong>${member.firstName}</strong>,</p>
+    <p>Dear <strong>${escapeHtml(member.firstName)}</strong>,</p>
     <p>Welcome to the Netherlands India Association! Please verify your email address to activate your member account.</p>
     <p style="text-align:center;">
       <a class="btn" href="${verifyUrl}">Verify My Email</a>
@@ -875,7 +889,7 @@ async function sendMemberVerificationEmail(member, verifyUrl) {
 async function sendMemberPasswordResetEmail(member, resetUrl) {
   const transporter = createTransporter();
   const body = `
-    <p>Dear <strong>${member.firstName}</strong>,</p>
+    <p>Dear <strong>${escapeHtml(member.firstName)}</strong>,</p>
     <p>We received a request to reset your NIA member account password. Click below to choose a new password. This link expires in 1 hour.</p>
     <p style="text-align:center;">
       <a class="btn" href="${resetUrl}">Reset My Password</a>
@@ -894,7 +908,7 @@ async function sendMemberPasswordResetEmail(member, resetUrl) {
 async function sendAdminPasswordResetEmail(admin, resetUrl) {
   const transporter = createTransporter();
   const body = `
-    <p>Dear <strong>${admin.firstName}</strong>,</p>
+    <p>Dear <strong>${escapeHtml(admin.firstName)}</strong>,</p>
     <p>We received a request to reset your NIA admin account password. Click below to choose a new password. This link expires in 1 hour.</p>
     <p style="text-align:center;">
       <a class="btn" href="${resetUrl}">Reset My Password</a>

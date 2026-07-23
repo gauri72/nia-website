@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import memberApi from '../../services/memberApi';
+import memberApi, { MEMBER_TOKEN_KEY } from '../../services/memberApi';
 import { useMemberAuth } from '../../context/MemberAuthContext';
 
 const inputCls = 'w-full rounded-nia-btn border border-nia-border px-3 py-2 text-sm focus:border-nia-orange focus:outline-none focus:ring-2 focus:ring-nia-orange/20';
@@ -52,7 +52,10 @@ export default function DashboardProfilePage() {
   async function handleChangePassword(e) {
     e.preventDefault(); setBusy('password', true);
     try {
-      await memberApi.post('/member/profile/change-password', pwForm);
+      const { data } = await memberApi.post('/member/profile/change-password', pwForm);
+      // Changing the password invalidates every previously-issued token (including
+      // the one that just made this request) — store the fresh one so this session stays logged in.
+      if (data.token) localStorage.setItem(MEMBER_TOKEN_KEY, data.token);
       setMessage('password', 'Password changed successfully');
       setPwForm({ currentPassword: '', newPassword: '' });
     } catch (error) {

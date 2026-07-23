@@ -86,9 +86,13 @@ async function create(req, res, next) {
 }
 
 // ── GET /api/membership/:id ───────────────────────────────────
+// Public, unauthenticated, and the ID is a guessable/enumerable Mongo
+// ObjectId — only ever return an order-status-check-safe projection, never
+// name/email/phone/mollie_payment_id.
 async function getById(req, res, next) {
   try {
-    const membership = await Membership.findById(req.params.id).select('-__v');
+    const membership = await Membership.findById(req.params.id)
+      .select('membershipId plan status payment_status amount discount_amount paid_at activated_at createdAt');
     if (!membership) return res.status(404).json({ error: 'Membership not found' });
     return res.json(membership);
   } catch (err) {

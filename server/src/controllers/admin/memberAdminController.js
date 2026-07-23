@@ -300,7 +300,7 @@ async function voidMembership(req, res, next) {
       req.params.id,
       { $set: { membershipStatus: 'canceled', autoRenew: false }, $unset: { membershipTier: '', membershipExpiresAt: '' } },
       { new: true },
-    ).populate('membershipTier');
+    ).select(SENSITIVE_FIELDS).populate('membershipTier');
     if (!member) return res.status(404).json({ error: 'Member not found' });
     return res.json(member);
   } catch (err) {

@@ -11,6 +11,9 @@ const MemberSchema = new mongoose.Schema({
   lastName: { type: String, required: true, trim: true },
   email: { type: String, required: true, unique: true, trim: true, lowercase: true },
   passwordHash: { type: String, required: true },
+  // Bumped on password change/reset so any JWT issued before that point is
+  // rejected on its next request, regardless of its natural expiry.
+  tokenVersion: { type: Number, default: 0 },
   phone: { type: String, trim: true },
   address: { type: String, trim: true },
   profilePhotoUrl: { type: String },

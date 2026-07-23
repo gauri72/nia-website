@@ -43,7 +43,7 @@ router.post(  '/contacts',                       contactAdminController.create);
 router.put(   '/contacts/:id',                   contactAdminController.update);
 router.delete('/contacts/:id',                   requireRole(['super_admin']), contactAdminController.remove);
 router.post(  '/contacts/:id/convert-to-member', contactAdminController.convertToMember);
-router.post(  '/contacts/:id/reset-member-account', contactAdminController.resetMemberAccount);
+router.post(  '/contacts/:id/reset-member-account', requireRole(['super_admin']), contactAdminController.resetMemberAccount);
 
 // ── Members ───────────────────────────────────────────────────
 router.get(   '/members/export',    memberAdminController.exportCsv); // before /:id
@@ -84,16 +84,16 @@ router.get(   '/events/:id/attendees/export',  eventAdminController.attendeesExp
 
 // ── Ticket Types (nested under events) ───────────────────────────
 router.get(   '/events/:eventId/ticket-types', ticketTypeController.list);
-router.post(  '/events/:eventId/ticket-types', ticketTypeController.create);
-router.put(   '/ticket-types/:id',             ticketTypeController.update);
-router.delete('/ticket-types/:id',             ticketTypeController.remove);
+router.post(  '/events/:eventId/ticket-types', requireRole(['super_admin']), ticketTypeController.create);
+router.put(   '/ticket-types/:id',             requireRole(['super_admin']), ticketTypeController.update);
+router.delete('/ticket-types/:id',             requireRole(['super_admin']), ticketTypeController.remove);
 
 // ── Bookings ──────────────────────────────────────────────────
 router.get(   '/bookings',                     bookingAdminController.list);
 router.post(  '/bookings/manual',              bookingAdminController.manualBooking);
 router.get(   '/bookings/:id',                 bookingAdminController.getById);
 router.get(   '/bookings/:id/ticket.pdf',      bookingAdminController.downloadTicketPdf);
-router.post(  '/bookings/:id/refund',          bookingAdminController.refund);
+router.post(  '/bookings/:id/refund',          requireRole(['super_admin']), bookingAdminController.refund);
 
 // ── Reports ──────────────────────────────────────────────────────
 router.get('/reports/:type/export', reportController.exportReport); // before /:type
@@ -137,9 +137,9 @@ router.post(  '/sponsorship-tiers',       requireRole(['super_admin']), sponsors
 router.put(   '/sponsorship-tiers/:id',   requireRole(['super_admin']), sponsorshipTierController.update);
 router.delete('/sponsorship-tiers/:id',   requireRole(['super_admin']), sponsorshipTierController.remove);
 router.get(   '/sponsor-logos',           sponsorLogoController.list);
-router.post(  '/sponsor-logos',           upload.uploadToMemory.single('logo'), sponsorLogoController.create);
-router.put(   '/sponsor-logos/:id',       upload.uploadToMemory.single('logo'), sponsorLogoController.update);
-router.delete('/sponsor-logos/:id',       sponsorLogoController.remove);
+router.post(  '/sponsor-logos',           requireRole(['super_admin']), upload.uploadToMemory.single('logo'), sponsorLogoController.create);
+router.put(   '/sponsor-logos/:id',       requireRole(['super_admin']), upload.uploadToMemory.single('logo'), sponsorLogoController.update);
+router.delete('/sponsor-logos/:id',       requireRole(['super_admin']), sponsorLogoController.remove);
 
 // ── Donations ───────────────────────────────────────────────────
 router.get('/donations',     donationAdminController.list);
@@ -160,7 +160,7 @@ router.get( '/mollie/transactions/years',                     mollieImportContro
 router.post('/mollie/transactions/refresh-settlements', mollieSyncLimiter, mollieImportController.refreshSettlements);
 router.get( '/mollie/transactions',                            mollieImportController.transactions);
 router.get( '/mollie/tier-mapping',                            mollieImportController.listTierMapping);
-router.post('/mollie/tier-mapping',                            mollieImportController.createTierMapping);
-router.delete('/mollie/tier-mapping/:id',                      mollieImportController.deleteTierMapping);
+router.post('/mollie/tier-mapping',                            requireRole(['super_admin']), mollieImportController.createTierMapping);
+router.delete('/mollie/tier-mapping/:id',                      requireRole(['super_admin']), mollieImportController.deleteTierMapping);
 
 module.exports = router;

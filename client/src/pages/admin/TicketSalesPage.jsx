@@ -52,6 +52,7 @@ export default function TicketSalesPage() {
   const [detail, setDetail] = useState(null);
   const [refundAmount, setRefundAmount] = useState('');
   const [busy, setBusy] = useState(false);
+  const [emailPreview, setEmailPreview] = useState(null);
   const { toasts, push } = useToasts();
 
   const [vipOpen, setVipOpen] = useState(false);
@@ -124,10 +125,7 @@ export default function TicketSalesPage() {
   async function handlePreviewEmail(ticket) {
     try {
       const r = await adminApi.get(`/admin/legacy-tickets/${ticket._id}/email-preview`);
-      const blob = new Blob([r.data.html], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
-      window.open(url, '_blank');
-      setTimeout(() => URL.revokeObjectURL(url), 30000);
+      setEmailPreview(r.data);
     } catch (err) {
       push(err.response?.data?.error || 'Could not load email preview', 'error');
     }
@@ -414,6 +412,24 @@ export default function TicketSalesPage() {
               </div>
             </div>
           )}
+        </Modal>
+      )}
+
+      {emailPreview && (
+        <Modal title="Email Preview" onClose={() => setEmailPreview(null)} width="max-w-2xl">
+          <div className="flex flex-col gap-2">
+            <p className="text-xs text-nia-text-faint">
+              Subject: <span className="font-semibold text-nia-navy-dark">{emailPreview.subject}</span>
+            </p>
+            {/* Renders raw, guest-supplied HTML — sandbox has no `allow-scripts`/`allow-same-origin`
+                tokens, so nothing in this content can execute regardless of what it contains. */}
+            <iframe
+              title="Email preview"
+              srcDoc={emailPreview.html}
+              sandbox=""
+              className="w-full h-[70vh] rounded-nia-btn border border-nia-border bg-white"
+            />
+          </div>
         </Modal>
       )}
     </div>

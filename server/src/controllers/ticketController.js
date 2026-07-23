@@ -258,9 +258,13 @@ async function previewDiscount(req, res, next) {
 }
 
 // ── GET /api/tickets/:id ──────────────────────────────────────
+// Public, unauthenticated, and the ID is a guessable/enumerable Mongo
+// ObjectId — only ever return an order-status-check-safe projection, never
+// name/email/phone/mollie_payment_id.
 async function getById(req, res, next) {
   try {
-    const ticket = await Ticket.findById(req.params.id).select('-__v');
+    const ticket = await Ticket.findById(req.params.id)
+      .select('ticketNumber event_id tickets ticket_status amount subtotal discount_amount paid_at createdAt');
     if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
     return res.json(ticket);
   } catch (err) {

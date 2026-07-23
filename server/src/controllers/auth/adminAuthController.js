@@ -33,7 +33,7 @@ async function login(req, res, next) {
     admin.lastLoginAt = new Date();
     await admin.save();
 
-    const token = signToken({ id: admin._id.toString(), kind: 'admin', role: admin.role });
+    const token = signToken({ id: admin._id.toString(), kind: 'admin', role: admin.role, tokenVersion: admin.tokenVersion });
     return res.json({ token, admin: publicAdmin(admin) });
   } catch (err) {
     next(err);
@@ -69,7 +69,9 @@ async function forgotPassword(req, res, next) {
 async function resetPassword(req, res, next) {
   try {
     const { token, password } = req.body;
-    if (!token || !password) return res.status(400).json({ error: 'token and password are required' });
+    if (typeof token !== 'string' || !token || typeof password !== 'string' || !password) {
+      return res.status(400).json({ error: 'token and password are required' });
+    }
     if (password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });
 
     const admin = await AdminUser.findOne({
@@ -81,6 +83,7 @@ async function resetPassword(req, res, next) {
     admin.passwordHash = await hashPassword(password);
     admin.passwordResetToken = undefined;
     admin.passwordResetExpires = undefined;
+    admin.tokenVersion = (admin.tokenVersion || 0) + 1;
     await admin.save();
 
     return res.json({ message: 'Password reset successfully. You can now log in.' });

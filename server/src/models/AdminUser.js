@@ -11,6 +11,9 @@ const AdminUserSchema = new mongoose.Schema({
     default: 'content_manager',
   },
   isActive: { type: Boolean, default: true },
+  // Bumped on password change/reset so any JWT issued before that point is
+  // rejected on its next request, regardless of its natural expiry.
+  tokenVersion: { type: Number, default: 0 },
   passwordResetToken: { type: String },
   passwordResetExpires: { type: Date },
   lastLoginAt: { type: Date },

@@ -1,5 +1,5 @@
 const AdminUser = require('../../models/AdminUser');
-const { hashPassword, comparePassword } = require('../../services/authService');
+const { hashPassword, comparePassword, signToken } = require('../../services/authService');
 
 // ── PATCH /api/admin/profile ─────────────────────────────────────
 async function updateProfile(req, res, next) {
@@ -35,9 +35,13 @@ async function changePassword(req, res, next) {
     }
 
     admin.passwordHash = await hashPassword(newPassword);
+    admin.tokenVersion = (admin.tokenVersion || 0) + 1;
     await admin.save();
 
-    return res.json({ message: 'Password changed successfully' });
+    // Bumping tokenVersion invalidates the token that made this very request —
+    // issue a fresh one so the current session keeps working without a forced re-login.
+    const token = signToken({ id: admin._id.toString(), kind: 'admin', role: admin.role, tokenVersion: admin.tokenVersion });
+    return res.json({ message: 'Password changed successfully', token });
   } catch (err) {
     next(err);
   }

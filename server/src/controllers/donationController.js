@@ -59,9 +59,13 @@ async function create(req, res, next) {
 }
 
 // ── GET /api/donations/:id ────────────────────────────────────
+// Public, unauthenticated, and the ID is a guessable/enumerable Mongo
+// ObjectId — only ever return an order-status-check-safe projection, never
+// name/email/phone/mollie_payment_id.
 async function getById(req, res, next) {
   try {
-    const donation = await Donation.findById(req.params.id).select('-__v');
+    const donation = await Donation.findById(req.params.id)
+      .select('referenceNumber amount cause tier donation_status paid_at createdAt');
     if (!donation) return res.status(404).json({ error: 'Donation not found' });
     return res.json(donation);
   } catch (err) {

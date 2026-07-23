@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import adminApi from '../../services/adminApi';
+import adminApi, { ADMIN_TOKEN_KEY } from '../../services/adminApi';
 import { useAdminAuth } from '../../context/AdminAuthContext';
 
 const inputCls = 'w-full rounded-nia-btn border border-nia-border px-3 py-2 text-sm focus:border-nia-orange focus:outline-none focus:ring-2 focus:ring-nia-orange/20';
@@ -35,7 +35,10 @@ export default function AdminProfilePage() {
     e.preventDefault();
     setPwErr(''); setPwMsg(''); setChangingPw(true);
     try {
-      await adminApi.post('/admin/profile/change-password', pwForm);
+      const { data } = await adminApi.post('/admin/profile/change-password', pwForm);
+      // Changing the password invalidates every previously-issued token (including
+      // the one that just made this request) — store the fresh one so this session stays logged in.
+      if (data.token) localStorage.setItem(ADMIN_TOKEN_KEY, data.token);
       setPwMsg('Password changed successfully');
       setPwForm({ currentPassword: '', newPassword: '' });
     } catch (error) {

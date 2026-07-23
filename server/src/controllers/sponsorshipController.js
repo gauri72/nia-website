@@ -86,9 +86,13 @@ async function create(req, res, next) {
 }
 
 // ── GET /api/sponsorships/:id ─────────────────────────────────
+// Public, unauthenticated, and the ID is a guessable/enumerable Mongo
+// ObjectId — only ever return an order-status-check-safe projection, never
+// contact name/email/phone/mollie_payment_id.
 async function getById(req, res, next) {
   try {
-    const sponsorship = await Sponsorship.findById(req.params.id).select('-__v');
+    const sponsorship = await Sponsorship.findById(req.params.id)
+      .select('referenceNumber packageName amount discount_amount status payment_status paid_at createdAt');
     if (!sponsorship) return res.status(404).json({ error: 'Sponsorship not found' });
     return res.json(sponsorship);
   } catch (err) {

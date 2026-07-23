@@ -59,7 +59,15 @@ async function refund(req, res, next) {
     if (!booking) return res.status(404).json({ error: 'Booking not found' });
     if (booking.status !== 'paid') return res.status(400).json({ error: 'Only paid bookings can be refunded' });
 
-    const refundAmount = req.body.amount ? Number(req.body.amount) : booking.amount;
+    const remaining = Math.round((booking.amount - (booking.refund_amount || 0)) * 100) / 100;
+    const refundAmount = req.body.amount !== undefined ? Number(req.body.amount) : remaining;
+
+    if (!refundAmount || isNaN(refundAmount) || refundAmount <= 0) {
+      return res.status(400).json({ error: 'Refund amount must be a positive number' });
+    }
+    if (refundAmount > remaining) {
+      return res.status(400).json({ error: `Refund amount cannot exceed the remaining refundable balance (€${remaining.toFixed(2)})` });
+    }
 
     if (booking.payment_provider === 'mollie' && booking.mollie_payment_id) {
       try {

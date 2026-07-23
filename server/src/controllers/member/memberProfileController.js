@@ -1,6 +1,6 @@
 const Member = require('../../models/Member');
 const SuppressionList = require('../../models/SuppressionList');
-const { hashPassword, comparePassword } = require('../../services/authService');
+const { hashPassword, comparePassword, signToken } = require('../../services/authService');
 
 const SAFE_FIELDS = '-passwordHash -emailVerificationToken -emailVerificationExpires -passwordResetToken -passwordResetExpires';
 
@@ -36,8 +36,13 @@ async function changePassword(req, res, next) {
     }
 
     member.passwordHash = await hashPassword(newPassword);
+    member.tokenVersion = (member.tokenVersion || 0) + 1;
     await member.save();
-    return res.json({ message: 'Password changed successfully' });
+
+    // Bumping tokenVersion invalidates the token that made this very request —
+    // issue a fresh one so the current session keeps working without a forced re-login.
+    const token = signToken({ id: member._id.toString(), kind: 'member', tokenVersion: member.tokenVersion });
+    return res.json({ message: 'Password changed successfully', token });
   } catch (err) {
     next(err);
   }

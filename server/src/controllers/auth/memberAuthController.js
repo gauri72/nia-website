@@ -70,7 +70,7 @@ async function register(req, res, next) {
 async function verifyEmail(req, res, next) {
   try {
     const { token } = req.query;
-    if (!token) return res.status(400).json({ error: 'Token is required' });
+    if (typeof token !== 'string' || !token) return res.status(400).json({ error: 'Token is required' });
 
     const member = await Member.findOne({
       emailVerificationToken: token,
@@ -113,7 +113,7 @@ async function login(req, res, next) {
     member.lastLoginAt = new Date();
     await member.save();
 
-    const token = signToken({ id: member._id.toString(), kind: 'member' });
+    const token = signToken({ id: member._id.toString(), kind: 'member', tokenVersion: member.tokenVersion });
     return res.json({ token, member: publicMember(member) });
   } catch (err) {
     next(err);
@@ -150,7 +150,9 @@ async function forgotPassword(req, res, next) {
 async function resetPassword(req, res, next) {
   try {
     const { token, password } = req.body;
-    if (!token || !password) return res.status(400).json({ error: 'token and password are required' });
+    if (typeof token !== 'string' || !token || typeof password !== 'string' || !password) {
+      return res.status(400).json({ error: 'token and password are required' });
+    }
     if (password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });
 
     const member = await Member.findOne({
@@ -162,6 +164,7 @@ async function resetPassword(req, res, next) {
     member.passwordHash = await hashPassword(password);
     member.passwordResetToken = undefined;
     member.passwordResetExpires = undefined;
+    member.tokenVersion = (member.tokenVersion || 0) + 1;
     await member.save();
 
     return res.json({ message: 'Password reset successfully. You can now log in.' });

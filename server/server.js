@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express      = require('express');
 const cors         = require('cors');
+const helmet       = require('helmet');
 const connectDB    = require('./src/config/db');
 const routes       = require('./src/routes/index');
 const errorHandler = require('./src/middleware/errorHandler');
@@ -18,6 +19,14 @@ connectDB();
 
 // ── Broadcast scheduler ───────────────────────────────────────
 schedulerService.start();
+
+// ── Security headers ─────────────────────────────────────────
+// crossOriginResourcePolicy is relaxed to 'cross-origin' because /uploads
+// (sponsor logos, media manager images) is embedded directly by the
+// separately-hosted client SPA — helmet's 'same-origin' default would
+// otherwise block those <img> loads. Everything else (frame-ancestors,
+// X-Content-Type-Options, the default script-src 'self' CSP, etc.) stays on.
+app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 
 // ── CORS ──────────────────────────────────────────────────────
 const allowedOrigins = [

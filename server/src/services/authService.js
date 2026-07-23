@@ -13,15 +13,18 @@ async function comparePassword(plain, hash) {
   return bcrypt.compare(plain, hash);
 }
 
-// kind distinguishes member vs admin tokens so one can never satisfy the other's routes
-function signToken({ id, kind, role }) {
-  const payload = { id, kind };
+// kind distinguishes member vs admin tokens so one can never satisfy the other's routes.
+// tokenVersion is echoed back by requireAdminAuth/requireMemberAuth against the current
+// DB value on every request — bumping it (on password change/reset) invalidates every
+// token issued before that point, independent of the token's own expiry.
+function signToken({ id, kind, role, tokenVersion = 0 }) {
+  const payload = { id, kind, tokenVersion };
   if (role) payload.role = role;
-  return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: TOKEN_EXPIRY });
+  return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: TOKEN_EXPIRY, algorithm: 'HS256' });
 }
 
 function verifyToken(token) {
-  return jwt.verify(token, process.env.JWT_SECRET);
+  return jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
 }
 
 function generateRawToken() {
