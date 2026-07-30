@@ -197,7 +197,9 @@ export default function DashboardEventsPage() {
       {!isActiveMember && tiers.length > 0 && (
         <Card className="mb-6">
           <label className="text-xs font-semibold text-nia-text-muted uppercase tracking-wide mb-1.5 block">Price Comparison — Without vs. With Membership</label>
-          <div className="overflow-hidden rounded-nia-btn border border-nia-border overflow-x-auto">
+
+          {/* Tablet/desktop — full comparison table, one column per tier */}
+          <div className="hidden sm:block overflow-hidden rounded-nia-btn border border-nia-border overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-nia-panel">
@@ -236,6 +238,42 @@ export default function DashboardEventsPage() {
               </tfoot>
             </table>
           </div>
+
+          {/* Mobile — stacked per-ticket cards instead of a wide table, so nothing needs horizontal scrolling */}
+          <div className="sm:hidden flex flex-col gap-2">
+            {TICKETS.map((tk) => (
+              <div key={tk.id} className="rounded-nia-btn border border-nia-border px-3 py-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-sm text-nia-navy-dark">{tk.label}</span>
+                  <span className="text-xs text-nia-text-faint">€{tk.price.toFixed(2)}</span>
+                </div>
+                <div className="flex flex-col gap-0.5 mt-1.5">
+                  {tiers.map((tier) => {
+                    const memberPrice = computeMemberPrice(tk, tier);
+                    const savesAmount = tk.price - memberPrice;
+                    return (
+                      <div key={tier._id} className="flex items-center justify-between text-xs">
+                        <span className="text-nia-success">With {tier.name}</span>
+                        <span className="font-semibold text-nia-success">
+                          €{memberPrice.toFixed(2)}{savesAmount > 0 && <span className="font-normal text-nia-text-faint"> (save €{savesAmount.toFixed(2)})</span>}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+            <div className="rounded-nia-btn bg-nia-panel border border-nia-border px-3 py-2">
+              <p className="text-xs font-semibold text-nia-navy-dark mb-1">Membership price</p>
+              {tiers.map((tier) => (
+                <div key={tier._id} className="flex items-center justify-between text-xs">
+                  <span className="text-nia-text-muted">{tier.name}</span>
+                  <span className="font-semibold text-nia-navy-dark">€{tier.price.toFixed(2)}/yr</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
           <p className="text-[11px] text-nia-text-faint mt-1.5">
             Member ticket pricing is capped at a limited number of discounted tickets per member for this event — additional tickets are full price. Choose a tier below to join &amp; book.
           </p>
