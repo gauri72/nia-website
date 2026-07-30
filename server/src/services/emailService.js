@@ -790,6 +790,64 @@ async function sendMembershipPaymentConfirmation(payment) {
   console.log(`[Email] Membership payment confirmation sent to ${member.email}`);
 }
 
+// ── Membership + Ticket Bundle ──────────────────────────────────
+// One email, two PDF attachments — a member joining/renewing and booking
+// event tickets in the same checkout gets a single combined confirmation,
+// not the separate membership-confirmation and ticket-confirmation emails
+// those two flows send independently when purchased on their own.
+async function sendBundleConfirmation(bundle) {
+  const transporter = createTransporter();
+  const member = bundle.member;
+  const tier = bundle.membershipTier;
+  const ticket = bundle.ticket;
+
+  const cardBuffer = await generateMembershipCardPDF(member, tier);
+  const ticketPdfBuffer = await generateTicketPDF(ticket);
+
+  const qrDataUrl = await generateQRDataURL(ticket.ticketNumber);
+  const qrBuffer  = Buffer.from(qrDataUrl.replace(/^data:image\/png;base64,/, ''), 'base64');
+  const qrCid     = `qr-${ticket.ticketNumber}@nia`;
+
+  const ticketLines = ticket.tickets.map((t) =>
+    `<div class="detail-row"><span class="label">${escapeHtml(t.ticket_type)} × ${t.quantity}</span><span class="value">€${t.line_total.toFixed(2)}</span></div>`
+  ).join('');
+
+  const qrBlock = `
+    <div class="qr-block">
+      <img src="cid:${qrCid}" alt="QR Code" width="160" height="160" style="display:block;margin:0 auto;" />
+      <p>Scan at event entry — ${ticket.ticketNumber}</p>
+    </div>`;
+
+  const body = `
+    <p>Dear <strong>${escapeHtml(member.firstName)}</strong>,</p>
+    <p>🎉 Welcome to the Netherlands India Association! Your <strong>${escapeHtml(tier.name)}</strong> membership is now active, and your event tickets are confirmed — both attached below as PDFs.</p>
+    <div class="highlight">
+      <strong>Membership ID:</strong> ${member.memberId}<br>
+      <strong>Tier:</strong> ${escapeHtml(tier.name)}<br>
+      <strong>Valid Until:</strong> ${member.membershipExpiresAt ? new Date(member.membershipExpiresAt).toLocaleDateString('nl-NL') : ''}
+    </div>
+    <p><strong>Ticket Summary:</strong></p>
+    ${ticketLines}
+    ${bundle.ticketDiscountAmount > 0 ? `<div class="detail-row"><span class="label">Membership Discount on Tickets</span><span class="value" style="color:green;">−€${bundle.ticketDiscountAmount.toFixed(2)}</span></div>` : ''}
+    <div class="detail-row"><span class="label">Membership (${escapeHtml(tier.name)})</span><span class="value">€${bundle.membershipAmount.toFixed(2)}</span></div>
+    <div class="detail-row"><span class="label">Total Paid</span><span class="value amount">€${bundle.amount.toFixed(2)}</span></div>
+    ${qrBlock}
+    <p style="margin-top:20px;">Your digital membership card and your event ticket are both attached as PDFs — each with its own QR code. Please present your ticket QR at the event entrance. We look forward to seeing you! 🇮🇳🇳🇱</p>`;
+
+  await transporter.sendMail({
+    from: FROM,
+    to: member.email,
+    subject: `✅ Welcome to NIA — Membership & Event Tickets Confirmed`,
+    html: htmlWrap('Membership & Ticket Confirmation', body),
+    attachments: [
+      { filename: `NIA-Membership-Card-${member.memberId}.pdf`, content: cardBuffer, contentType: 'application/pdf' },
+      { filename: `NIA-Ticket-${ticket.ticketNumber}.pdf`, content: ticketPdfBuffer, contentType: 'application/pdf' },
+      { filename: 'ticket-qr.png', content: qrBuffer, contentType: 'image/png', cid: qrCid },
+    ],
+  });
+  console.log(`[Email] Bundle confirmation (membership + ticket) sent to ${member.email}`);
+}
+
 // ── Member lifecycle emails ─────────────────────────────────────
 async function sendWelcomeEmail(member) {
   const transporter = createTransporter();
@@ -954,6 +1012,9 @@ async function sendPostPaymentEmails(type, record) {
       case 'membership_payment':
         await sendMembershipPaymentConfirmation(record);
         break;
+      case 'bundle':
+        await sendBundleConfirmation(record);
+        break;
     }
   } catch (err) {
     console.error(`[Email] Failed to send post-payment emails for ${type}:`, err.message);
@@ -979,6 +1040,7 @@ module.exports = {
   renderVipPassPreview,
   sendTicketRefundConfirmation,
   sendMembershipPaymentConfirmation,
+  sendBundleConfirmation,
   sendSponsorshipConfirmation,
   generateTicketPDF,
   generateQRDataURL,

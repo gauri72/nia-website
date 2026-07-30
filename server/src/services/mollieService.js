@@ -1,6 +1,6 @@
 const mollieClient = require('../config/mollie');
 
-const VALID_TYPES = ['membership', 'event_ticket', 'donation', 'sponsorship', 'booking', 'membership_payment'];
+const VALID_TYPES = ['membership', 'event_ticket', 'donation', 'sponsorship', 'booking', 'membership_payment', 'bundle'];
 
 const TYPE_DESCRIPTIONS = {
   membership: 'NIA Membership',
@@ -9,6 +9,7 @@ const TYPE_DESCRIPTIONS = {
   sponsorship: 'NIA Sponsorship',
   booking: 'NIA Event Booking',
   membership_payment: 'NIA Membership',
+  bundle: 'NIA Membership + Event Tickets',
 };
 
 /**

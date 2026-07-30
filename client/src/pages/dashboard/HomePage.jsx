@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, Ticket, IdCard } from 'lucide-react';
+import { Calendar, Ticket, IdCard, MapPin, ArrowRight } from 'lucide-react';
 import memberApi from '../../services/memberApi';
 import { useMemberAuth } from '../../context/MemberAuthContext';
 import StatusBadge from '../../components/admin/StatusBadge';
@@ -67,9 +67,20 @@ export default function DashboardHomePage() {
         </div>
       </Card>
 
-      <Card>
-        <h2 className="font-bold text-nia-navy-dark mb-2">Latest Announcements</h2>
-        <p className="text-sm text-nia-text-faint">Announcements are coming in a later milestone.</p>
+      <Card className="!p-0 overflow-hidden !bg-gradient-to-br !from-nia-navy !to-nia-navy-dark text-white">
+        <div className="p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="flex-1">
+            <span className="inline-block text-[10px] font-bold uppercase tracking-wide bg-nia-orange text-white rounded-full px-2.5 py-1 mb-2">Upcoming Event</span>
+            <h2 className="text-lg font-extrabold">80th India Independence Day Celebration &amp; NIA 75th Anniversary</h2>
+            <div className="flex flex-wrap gap-4 text-sm text-white/80 mt-2">
+              <span className="flex items-center gap-1.5"><Calendar size={14} />15 August 2026</span>
+              <span className="flex items-center gap-1.5"><MapPin size={14} />De Duinpan, Noordwijk</span>
+            </div>
+          </div>
+          <Button as={Link} to="/dashboard/events" variant="primary" className="flex-shrink-0">
+            Book Now <ArrowRight size={16} />
+          </Button>
+        </div>
       </Card>
     </div>
   );

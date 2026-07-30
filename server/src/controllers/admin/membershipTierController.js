@@ -109,8 +109,12 @@ async function remove(req, res, next) {
 // ── GET /api/membership-tiers (public) ────────────────────────────
 async function publicList(req, res, next) {
   try {
+    // ticketDiscountType/Value/MaxPerEvent are already effectively public — every
+    // tier's `benefits` text spells out the discount (e.g. "20% discount on all
+    // event tickets") — exposing the actual fields lets the dashboard render an
+    // exact price-comparison table instead of parsing that sentence.
     const tiers = await MembershipTier.find({ isActive: true }).sort('sortOrder')
-      .select('name slug description price billingPeriod benefits color');
+      .select('name slug description price billingPeriod benefits color ticketDiscountType ticketDiscountValue ticketDiscountMaxPerEvent');
     return res.json(tiers);
   } catch (err) {
     next(err);

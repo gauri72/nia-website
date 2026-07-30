@@ -6,7 +6,6 @@ const { finalizeFreeOrder } = require('../services/databaseService');
 
 const TICKET_PRICES = { regular: 20, vip: 45, child: 5 };
 const EVENT_ID = 'NIA-EVENT-20260815'; // matches Ticket.event_id's schema default — the one legacy event this flow serves
-const DISCOUNT_INELIGIBLE_TYPES = ['child']; // child tickets are already discounted — never eligible for the membership discount too
 
 // Deliberately simple (not full RFC 5322) — just enough to catch the actual
 // garbage this flow has let through with no format check at all: stray
@@ -38,8 +37,7 @@ function validateTicketLines(tickets) {
 // (tier.ticketDiscountMaxPerEvent), not a number of orders — a single order
 // requesting more units than the remaining allowance discounts the
 // highest-priced eligible units first, up to that allowance; the rest are
-// charged full price. Child tickets are never eligible (already a reduced
-// price). ──
+// charged full price. Every ticket type is eligible, including child tickets. ──
 async function resolveAutomaticDiscount(normalizedEmail, ticketLines) {
   const member = await Member.findOne({ email: normalizedEmail, membershipStatus: 'active' }).populate('membershipTier');
   const tier = member?.membershipTier;
@@ -53,8 +51,7 @@ async function resolveAutomaticDiscount(normalizedEmail, ticketLines) {
   const usedUnits = usedAgg[0]?.total || 0;
   const remaining = Math.max(0, maxUnits - usedUnits);
 
-  const eligibleLines = ticketLines.filter((l) => !DISCOUNT_INELIGIBLE_TYPES.includes(l.ticket_type));
-  const eligibleRequestedQty = eligibleLines.reduce((s, l) => s + l.quantity, 0);
+  const requestedQty = ticketLines.reduce((s, l) => s + l.quantity, 0);
 
   if (remaining <= 0) {
     return {
@@ -62,13 +59,12 @@ async function resolveAutomaticDiscount(normalizedEmail, ticketLines) {
       message: `Maximum per-event membership discount usage (${maxUnits} ticket${maxUnits === 1 ? '' : 's'}) for this email has been reached — this order is charged at full price.`,
     };
   }
-  if (eligibleRequestedQty === 0) return { eligible: false }; // e.g. child-only order — nothing to discount, not an "already used" case
 
-  // Allocate to the highest-priced eligible units first.
+  // Allocate to the highest-priced units first.
   let allowanceLeft = remaining;
   let totalDiscountAmount = 0;
   let unitsDiscounted = 0;
-  for (const line of [...eligibleLines].sort((a, b) => b.unit_price - a.unit_price)) {
+  for (const line of [...ticketLines].sort((a, b) => b.unit_price - a.unit_price)) {
     if (allowanceLeft <= 0) break;
     const qtyToDiscount = Math.min(allowanceLeft, line.quantity);
     const perUnitDiscount = applyDiscount({ type: tier.ticketDiscountType, value: tier.ticketDiscountValue }, line.unit_price).discount_amount;
@@ -81,8 +77,8 @@ async function resolveAutomaticDiscount(normalizedEmail, ticketLines) {
   if (unitsDiscounted === 0) return { eligible: false };
 
   let message;
-  if (unitsDiscounted < eligibleRequestedQty) {
-    message = `Your membership discount was applied to ${unitsDiscounted} of your ${eligibleRequestedQty} eligible ticket${eligibleRequestedQty === 1 ? '' : 's'} (your allowance for this event is ${maxUnits}) — the rest are charged full price. Child tickets are never eligible for the membership discount.`;
+  if (unitsDiscounted < requestedQty) {
+    message = `Your membership discount was applied to ${unitsDiscounted} of your ${requestedQty} ticket${requestedQty === 1 ? '' : 's'} (your allowance for this event is ${maxUnits}) — the rest are charged full price.`;
   }
 
   return { eligible: true, tier, totalDiscountAmount, unitsDiscounted, message };

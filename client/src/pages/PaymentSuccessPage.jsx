@@ -10,6 +10,7 @@ const TYPE_LABELS = {
   sponsorship:  { label: 'Sponsorship',   icon: '🌟', next: '/sponsorship' },
   booking:            { label: 'Event Booking',  icon: '🎟️', next: '/dashboard/tickets' },
   membership_payment: { label: 'Membership',      icon: '🎖️', next: '/dashboard/membership' },
+  bundle:             { label: 'Membership & Tickets', icon: '🎉', next: '/dashboard/events' },
 };
 
 // Fast path: 10 tries every 2s (20s) for the common case of a quick payment

@@ -7,6 +7,7 @@ const Donation = require('../models/Donation');
 const Sponsorship = require('../models/Sponsorship');
 const Booking = require('../models/Booking');
 const MembershipPayment = require('../models/MembershipPayment');
+const MembershipTicketBundle = require('../models/MembershipTicketBundle');
 
 // Tracks payment IDs currently being processed to prevent concurrent duplicate webhook runs
 const processingSet = new Set();
@@ -18,6 +19,7 @@ const MODEL_BY_TYPE = {
   sponsorship: Sponsorship,
   booking: Booking,
   membership_payment: MembershipPayment,
+  bundle: MembershipTicketBundle,
 };
 
 // ── POST /api/payments/create ─────────────────────────────────

@@ -5,6 +5,7 @@ const Sponsorship  = require('../models/Sponsorship');
 const Booking      = require('../models/Booking');
 const TicketType   = require('../models/TicketType');
 const MembershipPayment = require('../models/MembershipPayment');
+const MembershipTicketBundle = require('../models/MembershipTicketBundle');
 const Member       = require('../models/Member');
 const MembershipTier = require('../models/MembershipTier');
 const EmailTemplate = require('../models/EmailTemplate');
@@ -332,6 +333,69 @@ async function updateMembershipPayment(referenceId, molliePaymentId, status, pai
   return updated;
 }
 
+// ── Membership + Ticket Bundle ──────────────────────────────────
+// Deliberately not tied to Ticket.event_id via import — every other file that
+// needs this legacy event's ID (vipPassService.js, legacyTicketController.js)
+// hardcodes its own copy rather than importing from ticketController.js, to
+// avoid a circular require (ticketController already requires this file for
+// finalizeFreeOrder). Matches Ticket.event_id's own schema default.
+const BUNDLE_EVENT_ID = 'NIA-EVENT-20260815';
+
+async function updateBundle(referenceId, molliePaymentId, status, paidAt) {
+  const record = await MembershipTicketBundle.findById(referenceId).populate('member').populate('membershipTier');
+  if (!record) throw new Error(`MembershipTicketBundle not found: ${referenceId}`);
+
+  const update = { mollie_payment_id: molliePaymentId, payment_provider: 'mollie', status };
+
+  if (status === 'paid') {
+    update.paid_at = paidAt ? new Date(paidAt) : new Date();
+
+    const tier = record.membershipTier;
+    const durationMs = tier?.billingPeriod === 'monthly' ? 30 * 24 * 60 * 60 * 1000 : 365 * 24 * 60 * 60 * 1000;
+    const updatedMember = await Member.findByIdAndUpdate(record.member._id, {
+      membershipTier: tier._id,
+      membershipStatus: 'active',
+      membershipExpiresAt: new Date(Date.now() + durationMs),
+      renewalReminderSentAt: null,
+    }, { new: true });
+
+    if (updatedMember) await maybeSendPatronWelcomeEmail(updatedMember, tier);
+
+    const ticket = await Ticket.create({
+      name: `${record.member.firstName} ${record.member.lastName}`.trim(),
+      email: record.member.email,
+      tickets: record.tickets,
+      attendee_names: record.attendee_names,
+      event_id: BUNDLE_EVENT_ID,
+      subtotal: record.ticketSubtotal,
+      amount: Math.round((record.ticketSubtotal - record.ticketDiscountAmount) * 100) / 100,
+      ticket_status: 'paid',
+      payment_provider: 'mollie',
+      mollie_payment_id: molliePaymentId,
+      paid_at: update.paid_at,
+      member: record.member._id,
+      membershipDiscountApplied: record.ticketDiscountAmount > 0,
+      membershipDiscountTier: record.ticketDiscountAmount > 0 ? tier._id : undefined,
+      membershipDiscountAmount: record.ticketDiscountAmount || undefined,
+      membershipDiscountUnits: record.ticketDiscountAmount > 0 ? record.ticketDiscountUnits : undefined,
+    });
+    update.ticket = ticket._id;
+  }
+
+  const updated = await MembershipTicketBundle.findOneAndUpdate(
+    { _id: referenceId, status: { $nin: TERMINAL_STATUSES } },
+    update,
+    { new: true },
+  ).populate('member').populate('membershipTier').populate('ticket');
+  if (!updated) {
+    console.log(`[DB] MembershipTicketBundle ${referenceId} already processed — skipping`);
+    return null;
+  }
+  console.log(`[DB] MembershipTicketBundle ${referenceId} updated → status=${status}`);
+
+  return updated;
+}
+
 // ── Dispatcher ────────────────────────────────────────────────
 async function updateRecordByType(type, referenceId, molliePaymentId, mollieStatus, paidAt) {
   // Map Mollie statuses to our internal statuses
@@ -353,6 +417,7 @@ async function updateRecordByType(type, referenceId, molliePaymentId, mollieStat
     case 'sponsorship':  return updateSponsorship(referenceId, molliePaymentId, status, paidAt);
     case 'booking':      return updateBooking(referenceId, molliePaymentId, status, paidAt);
     case 'membership_payment': return updateMembershipPayment(referenceId, molliePaymentId, status, paidAt);
+    case 'bundle':        return updateBundle(referenceId, molliePaymentId, status, paidAt);
     default:             throw new Error(`Unknown payment type: ${type}`);
   }
 }

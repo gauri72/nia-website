@@ -4,6 +4,7 @@ const router = express.Router();
 const memberDashboardController = require('../controllers/member/memberDashboardController');
 const memberMembershipController = require('../controllers/member/memberMembershipController');
 const memberProfileController = require('../controllers/member/memberProfileController');
+const memberBundleController = require('../controllers/member/memberBundleController');
 const notificationController = require('../controllers/member/notificationController');
 const requireMemberAuth = require('../middleware/auth');
 const { paymentLimiter } = require('../middleware/rateLimiter');
@@ -28,5 +29,9 @@ router.post( '/profile/change-password',     memberProfileController.changePassw
 router.patch('/profile/communication-prefs', memberProfileController.updateCommunicationPrefs);
 router.post( '/profile/unsubscribe',         memberProfileController.unsubscribe);
 router.delete('/profile',                    memberProfileController.deleteAccount);
+
+// ── Membership + Ticket Bundle (non-active members joining/renewing while booking) ──
+router.post('/bundle/preview', memberBundleController.preview);
+router.post('/bundle/create',  paymentLimiter, memberBundleController.create);
 
 module.exports = router;
