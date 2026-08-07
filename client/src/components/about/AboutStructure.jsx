@@ -11,10 +11,8 @@ import imgAdvisorBadriMadan   from '../../assets/about-us/advisor-badri-madan.jp
 import imgAdvisorVinodSehdev  from '../../assets/about-us/advisor-vinod-sehdev.jpeg';
 import imgAdvisorDevPalSingh  from '../../assets/about-us/advisor-dev-pal-singh.jpeg';
 import imgAdvisorDirkKolff    from '../../assets/about-us/advisor-dirk-kolff.jpeg';
+import imgAdvisorRamLakhina   from '../../assets/about-us/advisor-ram-lakhina.jpeg';
 import './AboutStructure.css';
-
-const BACKEND_ORIGIN = (import.meta.env.VITE_API_URL || 'http://localhost:5050/api').replace(/\/api\/?$/, '');
-const imgAdvisorRamLakhina = `${BACKEND_ORIGIN}/uploads/media/1786081327634-d2044ad9.jpeg`;
 
 const BOARD = [
   { roleKey: 'president',               name: 'Shivam Joshi',          photo: imgPresident,           color: '#e8641a', linkedin: 'https://www.linkedin.com/in/shivam-joshi-2a22659b/' },
