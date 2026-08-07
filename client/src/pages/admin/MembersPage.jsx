@@ -12,11 +12,21 @@ import StatCard from '../../components/admin/StatCard';
 const inputCls = 'w-full rounded-nia-btn border border-nia-border px-3 py-2 text-sm focus:border-nia-orange focus:outline-none focus:ring-2 focus:ring-nia-orange/20';
 const selectFilterCls = 'rounded-nia-btn border border-nia-border px-3 py-2 text-sm focus:border-nia-orange focus:outline-none focus:ring-2 focus:ring-nia-orange/20 w-auto';
 
+const MEMBERSHIP_STATUS_OPTIONS = [
+  { value: 'active', label: 'Active' },
+  { value: 'expired', label: 'Expired' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'suspended', label: 'Suspended' },
+  { value: 'canceled', label: 'Canceled' },
+  { value: 'all', label: 'All statuses' },
+];
+
 export default function MembersPage() {
   const [members, setMembers] = useState([]);
   const [tiers, setTiers] = useState([]);
   const [search, setSearch] = useState('');
   const [tier, setTier] = useState('');
+  const [membershipStatus, setMembershipStatus] = useState('active');
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(1);
   const [total, setTotal] = useState(0);
@@ -28,7 +38,7 @@ export default function MembersPage() {
   const fetchMembers = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await adminApi.get('/admin/members', { params: { search, tier, page, limit: 20 } });
+      const { data } = await adminApi.get('/admin/members', { params: { search, tier, membershipStatus, page, limit: 20 } });
       setMembers(data.members);
       setPages(data.pages);
       setTotal(data.total);
@@ -37,13 +47,13 @@ export default function MembersPage() {
     } finally {
       setLoading(false);
     }
-  }, [search, tier, page]);
+  }, [search, tier, membershipStatus, page]);
 
   useEffect(() => { fetchMembers(); }, [fetchMembers]);
   useEffect(() => { adminApi.get('/admin/membership-tiers').then((r) => setTiers(r.data)); }, []);
 
   function exportCsv() {
-    const params = new URLSearchParams({ search, tier });
+    const params = new URLSearchParams({ search, tier, membershipStatus });
     const token = localStorage.getItem('nia_admin_token');
     fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5050/api'}/admin/members/export?${params}`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -92,6 +102,9 @@ export default function MembersPage() {
           <option value="">All tiers</option>
           {tiers.map((t) => <option key={t._id} value={t._id}>{t.name}</option>)}
         </select>
+        <select className={selectFilterCls} value={membershipStatus} onChange={(e) => { setMembershipStatus(e.target.value); setPage(1); }}>
+          {MEMBERSHIP_STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
       </div>
 
       <Table>
@@ -102,27 +115,38 @@ export default function MembersPage() {
             <Table.Th>Tier</Table.Th>
             <Table.Th>Status</Table.Th>
             <Table.Th>Joined</Table.Th>
+            <Table.Th>Expires</Table.Th>
+            <Table.Th>Renewed</Table.Th>
             <Table.Th></Table.Th>
           </Table.HeaderRow>
         </Table.Head>
         <Table.Body>
-          {loading && <Table.Skeleton colSpan={6} />}
-          {!loading && members.length === 0 && <Table.Empty colSpan={6}>No members found.</Table.Empty>}
-          {!loading && members.map((m) => (
-            <Table.Row key={m._id}>
-              <Table.Cell className="font-medium text-nia-navy-dark">{m.firstName} {m.lastName}</Table.Cell>
-              <Table.Cell className="text-nia-text-faint">{m.email}</Table.Cell>
-              <Table.Cell className="text-nia-text-muted">{m.membershipTier?.name || '—'}</Table.Cell>
-              <Table.Cell><StatusBadge status={m.membershipStatus} /></Table.Cell>
-              <Table.Cell className="text-nia-text-faint">
-                {new Date(m.transactionDate || m.createdAt).toLocaleDateString()}
-                {m.transactionDate && <span className="block text-[10px] text-nia-text-faint">via Mollie</span>}
-              </Table.Cell>
-              <Table.Cell align="right">
-                <Button as={Link} to={`/admin/members/${m._id}`} variant="ghost" size="sm">View</Button>
-              </Table.Cell>
-            </Table.Row>
-          ))}
+          {loading && <Table.Skeleton colSpan={8} />}
+          {!loading && members.length === 0 && <Table.Empty colSpan={8}>No members found.</Table.Empty>}
+          {!loading && members.map((m) => {
+            const isPastDue = m.membershipExpiresAt && new Date(m.membershipExpiresAt) < new Date();
+            return (
+              <Table.Row key={m._id}>
+                <Table.Cell className="font-medium text-nia-navy-dark">{m.firstName} {m.lastName}</Table.Cell>
+                <Table.Cell className="text-nia-text-faint">{m.email}</Table.Cell>
+                <Table.Cell className="text-nia-text-muted">{m.membershipTier?.name || '—'}</Table.Cell>
+                <Table.Cell><StatusBadge status={m.membershipStatus} /></Table.Cell>
+                <Table.Cell className="text-nia-text-faint">
+                  {new Date(m.transactionDate || m.createdAt).toLocaleDateString()}
+                  {m.transactionDate && <span className="block text-[10px] text-nia-text-faint">via Mollie</span>}
+                </Table.Cell>
+                <Table.Cell className={isPastDue ? 'text-nia-error font-medium' : 'text-nia-text-faint'}>
+                  {m.membershipExpiresAt ? new Date(m.membershipExpiresAt).toLocaleDateString() : '—'}
+                </Table.Cell>
+                <Table.Cell className="text-nia-text-faint">
+                  {m.lastRenewedAt ? new Date(m.lastRenewedAt).toLocaleDateString() : '—'}
+                </Table.Cell>
+                <Table.Cell align="right">
+                  <Button as={Link} to={`/admin/members/${m._id}`} variant="ghost" size="sm">View</Button>
+                </Table.Cell>
+              </Table.Row>
+            );
+          })}
         </Table.Body>
       </Table>
 

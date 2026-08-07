@@ -13,6 +13,9 @@ import imgAdvisorDevPalSingh  from '../../assets/about-us/advisor-dev-pal-singh.
 import imgAdvisorDirkKolff    from '../../assets/about-us/advisor-dirk-kolff.jpeg';
 import './AboutStructure.css';
 
+const BACKEND_ORIGIN = (import.meta.env.VITE_API_URL || 'http://localhost:5050/api').replace(/\/api\/?$/, '');
+const imgAdvisorRamLakhina = `${BACKEND_ORIGIN}/uploads/media/1786081327634-d2044ad9.jpeg`;
+
 const BOARD = [
   { roleKey: 'president',               name: 'Shivam Joshi',          photo: imgPresident,           color: '#e8641a', linkedin: 'https://www.linkedin.com/in/shivam-joshi-2a22659b/' },
   { roleKey: 'vicePresidentTreasurer',  name: 'Shanti Pahladsingh',   photo: imgVicePresident,       color: '#5b8dd9', linkedin: 'https://www.linkedin.com/in/shanti-pahladsingh-942b9830/' },
@@ -20,9 +23,8 @@ const BOARD = [
   { roleKey: 'directorMarketing',       name: 'Remy van Nieuwenhoven', photo: imgDirectorMarketing,   color: '#7B2D8B', linkedin: 'https://www.linkedin.com/in/remy-van-nieuwenhoven/' },
   { roleKey: 'directorSponsorships',    name: 'Jayadev Sukumaran',     photo: imgDirectorSponsorship, color: '#c89a2e', linkedin: 'https://www.linkedin.com/in/jayadev-sukumaran-38801b138/' },
   { roleKey: 'directorPR',              name: 'Radha Nikhade',         photo: imgDirectorPR,          color: '#1a7fa8', linkedin: 'https://www.linkedin.com/in/radha-nikhade-2a2548a/' },
-  // Photo pending for this one — falls back to initials in the avatar circle until supplied.
   { roleKey: 'advisor', name: 'Prof. dr. Dirk Kolff', photo: imgAdvisorDirkKolff, color: '#b0463c' },
-  { roleKey: 'advisor', name: 'Mr. Ram Lakhina',      photo: null, color: '#3c8fb0' },
+  { roleKey: 'advisor', name: 'Mr. Ram Lakhina',      photo: imgAdvisorRamLakhina,  color: '#3c8fb0' },
   { roleKey: 'advisor', name: 'Drs. B N Madan',       photo: imgAdvisorBadriMadan,  color: '#8a6d3b' },
   { roleKey: 'advisor', name: 'Mr. Vinod Sehdev',     photo: imgAdvisorVinodSehdev, color: '#4a7d4f' },
   { roleKey: 'advisor', name: 'Mr. Dev Pal Singh',    photo: imgAdvisorDevPalSingh, color: '#6b5b9e' },

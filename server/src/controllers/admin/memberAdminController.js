@@ -34,11 +34,27 @@ async function attachTransactionDates(members) {
   return members.map((m) => ({ ...m, transactionDate: dateMap.get(String(m._id)) || null }));
 }
 
-// The Members admin list only ever shows active members — non-active records
-// (placeholder imports, expired, etc.) are intentionally excluded, not just
-// filtered by default.
-function buildFilter({ search, tier }) {
-  const filter = { status: { $ne: 'deleted' }, membershipStatus: 'active' };
+// Most recent *paid* renewal payment per member, so the admin can see whether
+// (and when) someone has actually renewed at least once, vs. still being on
+// their original term. `null` means never renewed.
+async function attachRenewalDates(members) {
+  const memberIds = members.map((m) => m._id);
+  const latest = await MembershipPayment.aggregate([
+    { $match: { member: { $in: memberIds }, type: 'renewal', status: 'paid' } },
+    { $group: { _id: '$member', lastRenewedAt: { $max: '$paid_at' } } },
+  ]);
+  const dateMap = new Map(latest.map((e) => [String(e._id), e.lastRenewedAt]));
+  return members.map((m) => ({ ...m, lastRenewedAt: dateMap.get(String(m._id)) || null }));
+}
+
+// membershipStatus defaults to 'active' (the historical default view); pass
+// 'all' to drop the membership-status restriction entirely, or any other
+// enum value (expired, pending, suspended, canceled) to filter to just that.
+function buildFilter({ search, tier, membershipStatus }) {
+  const filter = { status: { $ne: 'deleted' } };
+  const ms = membershipStatus?.trim();
+  if (!ms || ms === 'active') filter.membershipStatus = 'active';
+  else if (ms !== 'all') filter.membershipStatus = ms;
   if (search?.trim()) {
     const re = new RegExp(search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
     filter.$or = [{ firstName: re }, { lastName: re }, { email: re }, { memberId: re }];
@@ -50,8 +66,8 @@ function buildFilter({ search, tier }) {
 // ── GET /api/admin/members ──────────────────────────────────────
 async function list(req, res, next) {
   try {
-    const { search, tier, sort = '-createdAt', page = 1, limit = 25 } = req.query;
-    const filter = buildFilter({ search, tier });
+    const { search, tier, membershipStatus, sort = '-createdAt', page = 1, limit = 25 } = req.query;
+    const filter = buildFilter({ search, tier, membershipStatus });
 
     const pageNum = Math.max(1, parseInt(page, 10) || 1);
     const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 25));
@@ -75,7 +91,8 @@ async function list(req, res, next) {
     ]);
     const byTier = tierCounts.reduce((acc, t) => ({ ...acc, [t._id ? String(t._id) : 'none']: t.count }), {});
 
-    const membersWithDates = await attachTransactionDates(members);
+    let membersWithDates = await attachTransactionDates(members);
+    membersWithDates = await attachRenewalDates(membersWithDates);
     return res.json({ members: membersWithDates, total, page: pageNum, pages: Math.ceil(total / limitNum), activeTotal, byTier });
   } catch (err) {
     next(err);
@@ -85,18 +102,20 @@ async function list(req, res, next) {
 // ── GET /api/admin/members/export ───────────────────────────────
 async function exportCsv(req, res, next) {
   try {
-    const { search, tier } = req.query;
-    const filter = buildFilter({ search, tier });
+    const { search, tier, membershipStatus } = req.query;
+    const filter = buildFilter({ search, tier, membershipStatus });
     const members = await Member.find(filter).populate('membershipTier', 'name').sort('-createdAt').lean();
-    const membersWithDates = await attachTransactionDates(members);
+    let membersWithDates = await attachTransactionDates(members);
+    membersWithDates = await attachRenewalDates(membersWithDates);
 
-    const header = ['Member ID', 'First Name', 'Last Name', 'Email', 'Phone', 'Membership Tier', 'Membership Status', 'Expiry Date', 'Joined Date', 'Mollie Transaction Date'];
+    const header = ['Member ID', 'First Name', 'Last Name', 'Email', 'Phone', 'Membership Tier', 'Membership Status', 'Expiry Date', 'Joined Date', 'Mollie Transaction Date', 'Last Renewed'];
     const rows = membersWithDates.map((m) => [
       m.memberId, m.firstName, m.lastName, m.email, m.phone || '',
       m.membershipTier?.name || '', m.membershipStatus,
       m.membershipExpiresAt ? new Date(m.membershipExpiresAt).toISOString().slice(0, 10) : '',
       new Date(m.createdAt).toISOString().slice(0, 10),
       m.transactionDate ? new Date(m.transactionDate).toISOString().slice(0, 10) : '',
+      m.lastRenewedAt ? new Date(m.lastRenewedAt).toISOString().slice(0, 10) : '',
     ]);
     const csv = [header, ...rows].map((row) => row.map(csvEscape).join(',')).join('\n');
 
