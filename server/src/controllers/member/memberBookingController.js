@@ -287,8 +287,20 @@ async function legacyGetQrCode(req, res, next) {
     const member = await Member.findById(req.member.id);
     const ticket = await Ticket.findOne({ _id: req.params.id, email: member.email });
     if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
-    const dataUrl = await QRCode.toDataURL(ticket.ticketNumber, { width: 200, margin: 1, color: { dark: '#0F1F4B', light: '#ffffff' } });
-    return res.json({ dataUrl });
+    const qrOpts = { width: 200, margin: 1, color: { dark: '#0F1F4B', light: '#ffffff' } };
+    // dataUrl stays the order-level code — still valid, kept for backward
+    // compatibility with clients that only render one image. `units` is
+    // additive: one code per attendee, for a client that wants to show them
+    // all (e.g. a multi-quantity order where each guest checks in separately).
+    const dataUrl = await QRCode.toDataURL(ticket.ticketNumber, qrOpts);
+    const units = await Promise.all((ticket.units || []).map(async (u) => ({
+      unitNumber: u.unitNumber,
+      ticketType: u.ticketType,
+      attendeeName: u.attendeeName,
+      checkedInAt: u.checkedInAt,
+      dataUrl: await QRCode.toDataURL(u.unitNumber, qrOpts),
+    })));
+    return res.json({ dataUrl, units });
   } catch (err) {
     next(err);
   }

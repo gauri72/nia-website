@@ -3,6 +3,7 @@ const Member = require('../models/Member');
 const { createPayment } = require('../services/mollieService');
 const { validateDiscountCode, applyDiscount } = require('../services/discountService');
 const { finalizeFreeOrder } = require('../services/databaseService');
+const { buildTicketUnits, parseAttendeeNamePool } = require('../services/ticketUnitService');
 
 const TICKET_PRICES = { regular: 20, vip: 45, child: 5 };
 const EVENT_ID = 'NIA-EVENT-20260815'; // matches Ticket.event_id's schema default — the one legacy event this flow serves
@@ -144,12 +145,17 @@ async function create(req, res, next) {
       }
     }
 
+    const ticketNumber = Ticket.generateTicketNumber();
+    const namePool = parseAttendeeNamePool(name.trim(), totalQty > 1 ? attendeeNames.trim() : undefined);
+
     const ticket = await Ticket.create({
+      ticketNumber,
       name: name.trim(),
       email: normalizedEmail,
       phone: phone?.trim(),
       attendee_names: totalQty > 1 ? attendeeNames.trim() : undefined,
       tickets: ticketLines,
+      units: buildTicketUnits({ ticketNumber, tickets: ticketLines, names: namePool }),
       event_id: EVENT_ID,
       discountCode: codeDiscount?.discountCodeId,
       discount_code: codeDiscount?.discount_code,

@@ -69,6 +69,12 @@ async function generateQRDataURL(text) {
 }
 
 // ── PDF ticket generator ──────────────────────────────────────
+// One page per unit in ticket.units — each with its own QR encoding that
+// unit's unitNumber, so every attendee in a multi-quantity order can be
+// checked in independently. Falls back to a single order-level page (the
+// pre-redesign layout, QR on ticket.ticketNumber) for the rare doc that
+// somehow still has no units — shouldn't happen once every paid Ticket has
+// been through creation-time unit-building or the one-time backfill.
 async function generateTicketPDF(ticket) {
   return new Promise(async (resolve, reject) => {
     try {
@@ -78,69 +84,92 @@ async function generateTicketPDF(ticket) {
       doc.on('end', () => resolve(Buffer.concat(chunks)));
       doc.on('error', reject);
 
-      const qrDataUrl = await generateQRDataURL(ticket.ticketNumber);
-      const qrBuffer  = Buffer.from(qrDataUrl.replace(/^data:image\/png;base64,/, ''), 'base64');
+      const units = ticket.units?.length
+        ? ticket.units
+        : [{ unitNumber: ticket.ticketNumber, ticketType: null, attendeeName: null }];
 
-      const W = doc.page.width;
-
-      // Header bar
-      doc.rect(0, 0, W, 70).fill('#0F1F4B');
-      doc.fillColor('#ffffff').fontSize(16).font('Helvetica-Bold')
-        .text('Netherlands India Association', 40, 18);
-      doc.fontSize(10).font('Helvetica')
-        .text('India Independence Day — 15 August 2026', 40, 40);
-
-      // Orange accent bar
-      doc.rect(0, 70, W, 5).fill('#E8641A');
-
-      // Ticket number block
-      doc.fillColor('#0F1F4B').fontSize(13).font('Helvetica-Bold')
-        .text('EVENT TICKET', 40, 95);
-      doc.fontSize(20).text(ticket.ticketNumber, 40, 114);
-
-      // Divider
-      doc.moveTo(40, 150).lineTo(W - 40, 150).strokeColor('#e0e0e0').stroke();
-
-      // Ticket details — full width, no QR alongside
-      const details = [
-        ['Name',       ticket.name],
-        ['Email',      ticket.email],
-        ['Tickets',    ticket.tickets.map(t => `${t.quantity}× ${t.ticket_type}`).join(', ')],
-        ['Total Paid', `€${Number(ticket.amount).toFixed(2)}`],
-        ['Payment ID', ticket.mollie_payment_id],
-        ['Date',       new Date(ticket.paid_at).toLocaleDateString('nl-NL')],
-      ];
-
-      let y = 166;
-      doc.fontSize(10);
-      for (const [label, value] of details) {
-        doc.font('Helvetica').fillColor('#888888').text(label, 40, y);
-        doc.font('Helvetica-Bold').fillColor('#0F1F4B').text(value, 160, y);
-        y += 24;
+      for (let i = 0; i < units.length; i++) {
+        if (i > 0) doc.addPage();
+        await drawTicketPage(doc, ticket, units[i], i, units.length);
       }
-
-      // Divider before QR
-      y += 8;
-      doc.moveTo(40, y).lineTo(W - 40, y).strokeColor('#e0e0e0').stroke();
-      y += 16;
-
-      // QR code — centred below details
-      const qrSize = 130;
-      const qrX = (W - qrSize) / 2;
-      doc.image(qrBuffer, qrX, y, { width: qrSize, height: qrSize });
-      doc.font('Helvetica').fillColor('#888888').fontSize(8)
-        .text('Scan at event entry', 0, y + qrSize + 6, { width: W, align: 'center' });
-
-      // Footer bar
-      doc.rect(0, doc.page.height - 40, W, 40).fill('#f5f5f5');
-      doc.fillColor('#999999').fontSize(8)
-        .text('Please present this ticket (print or digital) at the event entrance.', 40, doc.page.height - 28);
 
       doc.end();
     } catch (err) {
       reject(err);
     }
   });
+}
+
+async function drawTicketPage(doc, ticket, unit, index, total) {
+  const qrDataUrl = await generateQRDataURL(unit.unitNumber);
+  const qrBuffer  = Buffer.from(qrDataUrl.replace(/^data:image\/png;base64,/, ''), 'base64');
+
+  const W = doc.page.width;
+
+  // Header bar
+  doc.rect(0, 0, W, 70).fill('#0F1F4B');
+  doc.fillColor('#ffffff').fontSize(16).font('Helvetica-Bold')
+    .text('Netherlands India Association', 40, 18);
+  doc.fontSize(10).font('Helvetica')
+    .text('India Independence Day — 15 August 2026', 40, 40);
+
+  // Orange accent bar
+  doc.rect(0, 70, W, 5).fill('#E8641A');
+
+  // Ticket number block — the order number stays visible for reference,
+  // this page's own scannable unit number is what's under EVENT TICKET.
+  doc.fillColor('#0F1F4B').fontSize(13).font('Helvetica-Bold')
+    .text('EVENT TICKET', 40, 95);
+  doc.fontSize(20).text(unit.unitNumber, 40, 114);
+  if (total > 1) {
+    doc.fontSize(9).font('Helvetica').fillColor('#888888')
+      .text(`Ticket ${index + 1} of ${total} — Order ${ticket.ticketNumber}`, 40, 138);
+  }
+
+  // Divider
+  const dividerY = total > 1 ? 158 : 150;
+  doc.moveTo(40, dividerY).lineTo(W - 40, dividerY).strokeColor('#e0e0e0').stroke();
+
+  // Ticket details — full width, no QR alongside
+  const details = [
+    ['Name',       unit.attendeeName || ticket.name],
+    ['Email',      ticket.email],
+    ['Ticket Type', unit.ticketType || ticket.tickets.map(t => `${t.quantity}× ${t.ticket_type}`).join(', ')],
+    ['Total Paid', `€${Number(ticket.amount).toFixed(2)}`],
+    ['Payment ID', ticket.mollie_payment_id],
+    ['Date',       new Date(ticket.paid_at).toLocaleDateString('nl-NL')],
+  ];
+
+  let y = dividerY + 16;
+  doc.fontSize(10);
+  for (const [label, value] of details) {
+    doc.font('Helvetica').fillColor('#888888').text(label, 40, y);
+    doc.font('Helvetica-Bold').fillColor('#0F1F4B').text(value, 160, y);
+    y += 24;
+  }
+
+  // Divider before QR
+  y += 8;
+  doc.moveTo(40, y).lineTo(W - 40, y).strokeColor('#e0e0e0').stroke();
+  y += 16;
+
+  // QR code — centred below details
+  const qrSize = 130;
+  const qrX = (W - qrSize) / 2;
+  doc.image(qrBuffer, qrX, y, { width: qrSize, height: qrSize });
+  doc.font('Helvetica').fillColor('#888888').fontSize(8)
+    .text('Scan at event entry', 0, y + qrSize + 6, { width: W, align: 'center' });
+
+  // Footer bar — drawn inside the page's own bottom margin, which pdfkit's
+  // .text() (unlike .rect()/.image()) auto-paginates past by default. Zero
+  // the margin just for this call so it doesn't silently push out a second,
+  // near-blank page per ticket.
+  doc.rect(0, doc.page.height - 40, W, 40).fill('#f5f5f5');
+  const bottomMargin = doc.page.margins.bottom;
+  doc.page.margins.bottom = 0;
+  doc.fillColor('#999999').fontSize(8)
+    .text('Please present this ticket (print or digital) at the event entrance.', 40, doc.page.height - 28);
+  doc.page.margins.bottom = bottomMargin;
 }
 
 // ── Membership ────────────────────────────────────────────────

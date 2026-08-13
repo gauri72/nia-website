@@ -1,6 +1,7 @@
 const path = require('path');
 const PDFDocument = require('pdfkit');
 const { generateQRDataURL } = require('./emailService');
+const { buildTicketUnits } = require('./ticketUnitService');
 
 const NAVY = '#0b2245';
 const NAVY_LIGHT = '#16316e';
@@ -14,12 +15,10 @@ const EVENT_NAME = "India's 80th Independence Day & NIA's 75th Anniversary";
 const EVENT_DATE = '15 August 2026';
 
 // One shared PDFDocument, one page per guest — same visual language as
-// patronPassService's Patron Pass card, but every page encodes the SAME
-// ticket.ticketNumber (the whole batch shares one check-in, per the sponsor
-// complimentary-ticket precedent in sponsorshipAdminController), so any
-// guest in the party can be scanned at the door with the existing,
-// unmodified scanController — only the printed name differs per page.
-async function generateVipPassBatchPDF(ticket, guestNames) {
+// patronPassService's Patron Pass card. Each page encodes that guest's own
+// ticket.units[i].unitNumber, so any one guest's page can be scanned and
+// checked in independently of the rest of the party.
+async function generateVipPassBatchPDF(ticket) {
   return new Promise(async (resolve, reject) => {
     try {
       const doc = new PDFDocument({ size: [620, 300], margin: 0 });
@@ -28,13 +27,26 @@ async function generateVipPassBatchPDF(ticket, guestNames) {
       doc.on('end', () => resolve(Buffer.concat(chunks)));
       doc.on('error', reject);
 
-      const qrDataUrl = await generateQRDataURL(ticket.ticketNumber);
-      const qrBuffer = Buffer.from(qrDataUrl.replace(/^data:image\/png;base64,/, ''), 'base64');
+      // Defensive fallback for a batch that predates the backfill (units
+      // empty) — derives the same per-guest breakdown on the fly purely for
+      // rendering, without persisting it, so this never silently emits a
+      // blank/incomplete PDF. VIP batches store every guest name in
+      // attendee_names (no separate "buyer" slot, unlike guest checkout).
+      const units = ticket.units?.length
+        ? ticket.units
+        : buildTicketUnits({
+            ticketNumber: ticket.ticketNumber,
+            tickets: ticket.tickets,
+            names: (ticket.attendee_names || ticket.name).split('\n').filter(Boolean),
+          });
 
-      guestNames.forEach((guestName, i) => {
+      for (let i = 0; i < units.length; i++) {
+        const unit = units[i];
         if (i > 0) doc.addPage();
-        drawPassPage(doc, guestName, qrBuffer);
-      });
+        const qrDataUrl = await generateQRDataURL(unit.unitNumber);
+        const qrBuffer = Buffer.from(qrDataUrl.replace(/^data:image\/png;base64,/, ''), 'base64');
+        drawPassPage(doc, unit.attendeeName || ticket.name, qrBuffer);
+      }
 
       doc.end();
     } catch (err) {

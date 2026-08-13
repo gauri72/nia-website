@@ -19,6 +19,7 @@ export default function MyTicketsPage() {
   const [loading, setLoading] = useState(true);
   const [qrBooking, setQrBooking] = useState(null);
   const [qrDataUrl, setQrDataUrl] = useState('');
+  const [qrUnits, setQrUnits] = useState([]);
 
   function load() {
     setLoading(true);
@@ -41,9 +42,12 @@ export default function MyTicketsPage() {
 
   async function showQr(booking) {
     setQrBooking(booking);
+    setQrDataUrl('');
+    setQrUnits([]);
     const path = booking.source === 'legacy_ticket' ? `legacy/${booking._id}/qrcode` : `${booking._id}/qrcode`;
     const { data } = await memberApi.get(`/bookings/${path}`);
     setQrDataUrl(data.dataUrl);
+    setQrUnits(data.units || []);
   }
 
   async function handleCancel(booking) {
@@ -88,10 +92,25 @@ export default function MyTicketsPage() {
 
       {qrBooking && (
         <Modal title={`Ticket QR — ${qrBooking.bookingNumber}`} onClose={() => setQrBooking(null)} width="max-w-sm">
-          <div className="flex flex-col items-center gap-3">
-            {qrDataUrl ? <img src={qrDataUrl} alt="QR code" className="w-48 h-48" /> : <p className="text-nia-text-faint">Loading…</p>}
-            <p className="text-sm text-nia-text-faint">Scan at event entry</p>
-          </div>
+          {qrUnits.length > 1 ? (
+            <div className="flex flex-col gap-4">
+              <p className="text-sm text-nia-text-faint text-center">
+                This order has {qrUnits.length} tickets — each attendee has their own code and checks in separately.
+              </p>
+              {qrUnits.map((u, i) => (
+                <div key={u.unitNumber} className="flex flex-col items-center gap-1 border-t border-nia-border pt-4 first:border-0 first:pt-0">
+                  <img src={u.dataUrl} alt={`QR code ${i + 1}`} className="w-40 h-40" />
+                  <p className="text-sm font-semibold text-nia-navy-dark">{i + 1}. {u.attendeeName || u.ticketType} <span className="text-nia-text-faint font-normal capitalize">({u.ticketType})</span></p>
+                  {u.checkedInAt && <p className="text-xs text-nia-success font-semibold">Already checked in</p>}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-3">
+              {qrDataUrl ? <img src={qrDataUrl} alt="QR code" className="w-48 h-48" /> : <p className="text-nia-text-faint">Loading…</p>}
+              <p className="text-sm text-nia-text-faint">Scan at event entry</p>
+            </div>
+          )}
         </Modal>
       )}
     </div>

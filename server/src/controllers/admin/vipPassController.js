@@ -2,14 +2,14 @@ const Ticket = require('../../models/Ticket');
 const { EVENT_ID } = require('../ticketController');
 const { sendVipPassEmail } = require('../../services/emailService');
 const { generateVipPassBatchPDF } = require('../../services/vipPassService');
+const { buildTicketUnits } = require('../../services/ticketUnitService');
 
 const MAX_QUANTITY = 50;
 
 // ── POST /api/admin/vip-passes ─────────────────────────────────────
 // Issues a batch of complimentary VIP passes as one real Ticket document
-// (zero-priced, payment_provider: 'vip_complimentary') — the whole party
-// shares one QR/check-in, matching sponsorshipAdminController's existing
-// complimentary-ticket precedent. guestNames go on individual pages of one
+// (zero-priced, payment_provider: 'vip_complimentary'). Each guest gets
+// their own unit (own scannable QR, own name) on its own page of one
 // consolidated PDF, which is emailed immediately and also returned so the
 // admin panel can offer an instant download without waiting on email.
 async function create(req, res, next) {
@@ -27,11 +27,15 @@ async function create(req, res, next) {
       return res.status(400).json({ error: `guestNames must list exactly ${qty} non-empty name${qty === 1 ? '' : 's'}` });
     }
     const trimmedNames = guestNames.map((n) => n.trim());
+    const vipTicketNumber = Ticket.generateTicketNumber();
+    const vipLines = [{ ticket_type: 'vip', quantity: qty, unit_price: 0, line_total: 0 }];
 
     const ticket = await Ticket.create({
+      ticketNumber: vipTicketNumber,
       name: name.trim(),
       email: email.trim().toLowerCase(),
-      tickets: [{ ticket_type: 'vip', quantity: qty, unit_price: 0, line_total: 0 }],
+      tickets: vipLines,
+      units: buildTicketUnits({ ticketNumber: vipTicketNumber, tickets: vipLines, names: trimmedNames }),
       attendee_names: trimmedNames.join('\n'),
       event_id: EVENT_ID,
       subtotal: 0,
@@ -42,7 +46,7 @@ async function create(req, res, next) {
       paid_at: new Date(),
     });
 
-    const pdfBuffer = await generateVipPassBatchPDF(ticket, trimmedNames);
+    const pdfBuffer = await generateVipPassBatchPDF(ticket);
     await sendVipPassEmail(ticket, trimmedNames, pdfBuffer);
 
     return res.status(201).json({

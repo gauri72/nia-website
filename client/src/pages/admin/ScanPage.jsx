@@ -94,8 +94,8 @@ export default function ScanPage() {
 
       {stats && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-          <StatTile icon={Ticket} label="Tickets Checked In" value={`${stats.checkedInOrders} / ${stats.totalOrders}`} />
-          <StatTile icon={CheckCircle2} label="Seats Sold" value={stats.totalTickets} />
+          <StatTile icon={Ticket} label="Attendees Checked In" value={`${stats.checkedInTickets} / ${stats.totalTickets}`} />
+          <StatTile icon={CheckCircle2} label="Orders Fully Redeemed" value={`${stats.checkedInOrders} / ${stats.totalOrders}`} />
           <StatTile icon={IdCard} label="Member Scans" value={stats.memberScans} />
           <StatTile icon={Clock} label="Last Scan" value={recentLog[0] ? new Date(recentLog[0].scannedAt).toLocaleTimeString() : '—'} />
         </div>
@@ -251,6 +251,30 @@ function AttendeeDetails({ type, data }) {
             ))}
           </ul>
           {data.attendeeNames && <p className="text-xs text-nia-text-faint mt-1">Attendees: {data.attendeeNames}</p>}
+
+          {data.scannedUnit && (
+            <p className="text-xs font-semibold text-nia-navy-dark mt-2 bg-nia-panel rounded px-2 py-1">
+              This code: {data.scannedUnit.attendeeName || data.scannedUnit.ticketType} ({data.scannedUnit.ticketType})
+            </p>
+          )}
+
+          {data.unitsTotal != null && (
+            <div className="mt-2">
+              <p className="text-xs font-semibold text-nia-navy-dark">
+                {data.unitsCheckedIn} of {data.unitsTotal} attendees checked in
+              </p>
+              <ul className="mt-1 text-xs text-nia-text-muted">
+                {data.units.map((u) => (
+                  <li key={u.unitNumber} className="flex items-center justify-between">
+                    <span>{u.attendeeName || u.ticketType} &middot; {u.ticketType}</span>
+                    <span className={u.checkedInAt ? 'text-nia-success font-semibold' : 'text-nia-text-faint'}>
+                      {u.checkedInAt ? 'In' : 'Not yet'}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </>
       )}
       {type === 'member' && (

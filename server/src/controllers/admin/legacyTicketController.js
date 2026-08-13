@@ -71,11 +71,10 @@ async function downloadPdf(req, res, next) {
     if (ticket.ticket_status !== 'paid') return res.status(400).json({ error: 'Only paid tickets have a PDF' });
 
     // VIP batches are one Ticket doc covering a whole party — reuse the
-    // multi-page pass PDF (one page per guest, from attendee_names) instead
-    // of the standard single-page ticket layout.
+    // multi-page pass PDF (one page per guest, own QR per guest via
+    // ticket.units) instead of the standard single-page ticket layout.
     if (ticket.payment_provider === 'vip_complimentary') {
-      const guestNames = (ticket.attendee_names || ticket.name).split('\n').filter(Boolean);
-      const pdfBuffer = await generateVipPassBatchPDF(ticket, guestNames);
+      const pdfBuffer = await generateVipPassBatchPDF(ticket);
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="NIA-VIP-Pass-${ticket.ticketNumber}.pdf"`);
       return res.send(pdfBuffer);
@@ -115,7 +114,7 @@ async function resendEmail(req, res, next) {
 
     if (ticket.payment_provider === 'vip_complimentary') {
       const guestNames = (ticket.attendee_names || ticket.name).split('\n').filter(Boolean);
-      const pdfBuffer = await generateVipPassBatchPDF(ticket, guestNames);
+      const pdfBuffer = await generateVipPassBatchPDF(ticket);
       await sendVipPassEmail(ticket, guestNames, pdfBuffer);
       return res.json({ message: `VIP Pass email re-sent to ${ticket.email}` });
     }

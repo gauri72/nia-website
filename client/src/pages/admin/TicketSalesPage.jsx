@@ -311,6 +311,24 @@ export default function TicketSalesPage() {
             {detail.attendee_names && <div className="flex justify-between"><span className="text-nia-text-faint">Attendees</span><span className="text-nia-navy-dark">{detail.attendee_names}</span></div>}
             <div className="flex justify-between"><span className="text-nia-text-faint">Event</span><span className="text-nia-navy-dark">{detail.eventLabel}</span></div>
             <hr className="border-nia-border my-1" />
+
+            {detail.units?.length > 0 && (
+              <div className="rounded-nia-btn border border-nia-border bg-nia-panel p-3">
+                <p className="text-xs font-semibold text-nia-text-muted uppercase mb-2">
+                  Individual Tickets ({detail.units.filter((u) => u.checkedInAt).length} / {detail.units.length} checked in)
+                </p>
+                <ul className="flex flex-col gap-1">
+                  {detail.units.map((u) => (
+                    <li key={u.unitNumber} className="flex items-center justify-between text-xs">
+                      <span className="text-nia-navy-dark">{u.unitNumber.split('-').pop()}. {u.attendeeName || u.ticketType} <span className="text-nia-text-faint capitalize">({u.ticketType})</span></span>
+                      <span className={u.checkedInAt ? 'text-nia-success font-semibold' : 'text-nia-text-faint'}>
+                        {u.checkedInAt ? `In · ${new Date(u.checkedInAt).toLocaleTimeString()}` : 'Not checked in'}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             {detail.tickets.map((l, i) => (
               <div key={i} className="flex justify-between"><span className="text-nia-text-faint capitalize">{l.quantity}× {l.ticket_type}</span><span className="text-nia-navy-dark">€{l.line_total.toFixed(2)}</span></div>
             ))}
@@ -334,7 +352,9 @@ export default function TicketSalesPage() {
             <hr className="border-nia-border my-1" />
             <div className="flex flex-wrap gap-2">
               <Button variant="secondary" size="sm" onClick={() => handleDownloadPdf(detail)}><FileText /> Download PDF</Button>
-              <Button variant="secondary" size="sm" onClick={() => handleDownloadQr(detail)}><QrCode /> Download QR</Button>
+              {!detail.units?.length && (
+                <Button variant="secondary" size="sm" onClick={() => handleDownloadQr(detail)}><QrCode /> Download QR</Button>
+              )}
               <Button variant="secondary" size="sm" disabled={busy} onClick={() => handleResendEmail(detail)}><Send /> Resend Email</Button>
               <Button variant="secondary" size="sm" onClick={() => handlePreviewEmail(detail)}><Eye /> Preview Email</Button>
               {detail.ticket_status === 'paid' && (

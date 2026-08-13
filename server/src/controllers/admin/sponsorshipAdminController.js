@@ -2,6 +2,7 @@ const Sponsorship = require('../../models/Sponsorship');
 const Ticket = require('../../models/Ticket');
 const { sendSponsorshipConfirmation, sendTicketConfirmation } = require('../../services/emailService');
 const { TICKET_PRICES, EVENT_ID } = require('../ticketController');
+const { buildTicketUnits } = require('../../services/ticketUnitService');
 
 // ── GET /api/admin/sponsorships — paid sponsorships only ──────────
 async function list(req, res, next) {
@@ -83,11 +84,16 @@ async function sendComplimentaryTickets(req, res, next) {
       return res.status(400).json({ error: 'Complimentary tickets are only available for paid sponsorships' });
     }
 
+    const sponsorTicketNumber = Ticket.generateTicketNumber();
+    const sponsorLines = [{ ticket_type: ticketType, quantity: qty, unit_price: 0, line_total: 0 }];
+
     const ticket = await Ticket.create({
+      ticketNumber: sponsorTicketNumber,
       name: sponsorship.contactPerson || sponsorship.sponsorName,
       email: sponsorship.email,
       phone: sponsorship.phone,
-      tickets: [{ ticket_type: ticketType, quantity: qty, unit_price: 0, line_total: 0 }],
+      tickets: sponsorLines,
+      units: buildTicketUnits({ ticketNumber: sponsorTicketNumber, tickets: sponsorLines }),
       event_id: EVENT_ID,
       subtotal: 0,
       amount: 0,

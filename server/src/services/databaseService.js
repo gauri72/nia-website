@@ -14,6 +14,7 @@ const { recordRedemption } = require('./discountService');
 const { sendPostPaymentEmails, sendMemberPasswordResetEmail } = require('./emailService');
 const { hashPassword, generateRawToken } = require('./authService');
 const { sendTemplateToMember } = require('./broadcastService');
+const { buildTicketUnits, parseAttendeeNamePool } = require('./ticketUnitService');
 
 const TERMINAL_STATUSES = ['paid', 'failed', 'expired', 'canceled'];
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
@@ -361,10 +362,16 @@ async function updateBundle(referenceId, molliePaymentId, status, paidAt) {
 
     if (updatedMember) await maybeSendPatronWelcomeEmail(updatedMember, tier);
 
+    const buyerName = `${record.member.firstName} ${record.member.lastName}`.trim();
+    const bundleTicketNumber = Ticket.generateTicketNumber();
+    const bundleNamePool = parseAttendeeNamePool(buyerName, record.attendee_names);
+
     const ticket = await Ticket.create({
-      name: `${record.member.firstName} ${record.member.lastName}`.trim(),
+      ticketNumber: bundleTicketNumber,
+      name: buyerName,
       email: record.member.email,
       tickets: record.tickets,
+      units: buildTicketUnits({ ticketNumber: bundleTicketNumber, tickets: record.tickets, names: bundleNamePool }),
       attendee_names: record.attendee_names,
       event_id: BUNDLE_EVENT_ID,
       subtotal: record.ticketSubtotal,
