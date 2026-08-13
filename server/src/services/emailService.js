@@ -1,6 +1,7 @@
 const nodemailer = require('nodemailer');
 const QRCode     = require('qrcode');
 const PDFDocument = require('pdfkit');
+const { getEventByEventId } = require('../config/events');
 
 function createTransporter() {
   return nodemailer.createTransport({
@@ -158,13 +159,14 @@ async function drawTicketPage(doc, ticket, unit, index, total) {
   const qrBuffer  = Buffer.from(qrDataUrl.replace(/^data:image\/png;base64,/, ''), 'base64');
 
   const W = doc.page.width;
+  const eventInfo = getEventByEventId(ticket.event_id);
 
   // Header bar
   doc.rect(0, 0, W, 70).fill('#0F1F4B');
   doc.fillColor('#ffffff').fontSize(16).font('Helvetica-Bold')
     .text('Netherlands India Association', 40, 18);
   doc.fontSize(10).font('Helvetica')
-    .text('India Independence Day — 15 August 2026', 40, 40);
+    .text(eventInfo ? `${eventInfo.name} — ${eventInfo.dateLabel}` : 'Event Ticket', 40, 40);
 
   // Orange accent bar
   doc.rect(0, 70, W, 5).fill('#E8641A');
@@ -343,25 +345,25 @@ const VIP_PASS_SUBJECT = `Your VIP Passes for NIA's Historic Celebration`;
 
 // Warm, personally-invited-guest tone — deliberately distinct from the
 // transactional "your tickets are confirmed" copy sendTicketConfirmation
-// uses, since this isn't a purchase. Every guest in the party shares the
-// same ticket.ticketNumber/QR (one check-in for the whole group), so the
-// email lists all guest names but only shows one QR image. qrSrc mirrors
-// buildTicketConfirmationBody's cid:/data: split for send vs. preview.
+// uses, since this isn't a purchase. Each guest gets their own QR (qrBlockHtml,
+// built by the caller via buildQrSection/buildQrSectionPreview) alongside the
+// guest list, so everyone can be welcomed independently at the door.
 function buildVipPassBody(ticket, guestNames, qrBlockHtml) {
   const nameWithoutTitle = ticket.name.trim().replace(/^(mr|mrs|ms|miss|dr|prof|shri|smt|shrimati)\.?\s+/i, '');
   const firstName = escapeHtml(nameWithoutTitle.split(/\s+/)[0] || ticket.name.trim());
+  const eventInfo = getEventByEventId(ticket.event_id);
 
   const guestListHtml = guestNames.map((n) => `<div class="detail-row"><span class="label">Guest</span><span class="value">${escapeHtml(n)}</span></div>`).join('');
 
   return `
     <p>Dear ${firstName} Ji,</p>
-    <p>It gives us great pleasure to welcome all of you as our Honoured VIP Guests at the celebration of India's 80th Independence Day and NIA's 75th Anniversary.</p>
+    <p>It gives us great pleasure to welcome all of you as our Honoured VIP Guests at ${escapeHtml(eventInfo?.name || 'the event')}.</p>
     <p>Attached are the VIP Passes for all of you. No ticket purchase is required.</p>
     <p>Each guest below has their own QR code — everyone can be welcomed independently, so your party doesn't need to arrive together.</p>
     <p><strong>Invited Guests</strong></p>
     ${guestListHtml}
     ${qrBlockHtml}
-    <p style="margin-top:20px;">We look forward to celebrating this historic occasion together and sharing an evening filled with culture, music, friendship, and community spirit.</p>
+    <p style="margin-top:20px;">We look forward to celebrating this special occasion together and sharing an evening filled with culture, music, friendship, and community spirit.</p>
     <p>Thank you for being an important part of the NIA community. 🇮🇳🇳🇱</p>
     <p>Warm regards,<br>The Netherlands India Association</p>`;
 }

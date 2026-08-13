@@ -5,14 +5,14 @@ const {
   renderTicketConfirmationPreview, renderVipPassPreview,
 } = require('../../services/emailService');
 const { generateVipPassBatchPDF } = require('../../services/vipPassService');
+const { EVENTS } = require('../../config/events');
 
 // Read-only admin view onto the original public-site ticket flow (client/src/components/events/*,
-// /api/tickets/create) — the single hardcoded "15 August" event that predates the Event/Booking
-// system built for the admin panel. Left as a separate collection/flow per the project's rule of
-// never touching the 4 legacy payment models; this just gives the admin visibility into it.
-const EVENT_LABELS = {
-  'NIA-EVENT-20260815': 'NIA Cultural Celebration — 15 August 2026',
-};
+// /api/tickets/create) — the legacy Ticket-based flow that predates the Event/Booking system built
+// for the admin panel. Left as a separate collection/flow per the project's rule of never touching
+// the 4 legacy payment models; this just gives the admin visibility into it. Label map derived from
+// the shared event registry, so a new event added there shows up here automatically.
+const EVENT_LABELS = Object.values(EVENTS).reduce((acc, e) => ({ ...acc, [e.eventId]: e.name }), {});
 
 function friendlyEvent(eventId) {
   return EVENT_LABELS[eventId] || eventId;
@@ -21,8 +21,9 @@ function friendlyEvent(eventId) {
 // ── GET /api/admin/legacy-tickets — paid bookings only ────────────
 async function list(req, res, next) {
   try {
-    const { search, page = 1, limit = 25 } = req.query;
+    const { search, page = 1, limit = 25, eventId } = req.query;
     const filter = { ticket_status: 'paid' };
+    if (eventId) filter.event_id = eventId;
     if (search) {
       filter.$or = [
         { name: new RegExp(search, 'i') },
@@ -35,7 +36,7 @@ async function list(req, res, next) {
       Ticket.find(filter).sort('-createdAt').skip((page - 1) * limit).limit(Number(limit)),
       Ticket.countDocuments(filter),
       Ticket.aggregate([
-        { $match: { ticket_status: 'paid' } },
+        { $match: eventId ? { ticket_status: 'paid', event_id: eventId } : { ticket_status: 'paid' } },
         { $group: { _id: null, count: { $sum: 1 }, revenue: { $sum: '$amount' }, seats: { $sum: { $sum: '$tickets.quantity' } } } },
       ]),
     ]);
@@ -46,6 +47,7 @@ async function list(req, res, next) {
     return res.json({
       items, total, page: Number(page), pages: Math.ceil(total / limit),
       summary: { paidCount: summary.count, revenue: summary.revenue, seats: summary.seats },
+      events: EVENT_LABELS,
     });
   } catch (err) {
     next(err);

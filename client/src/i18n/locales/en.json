@@ -596,6 +596,113 @@
       "freeSuccessDefault": "Your tickets are fully covered by the discount — no payment required."
     }
   },
+  "galaEvent": {
+    "hero": {
+      "dateLabel": "12 DECEMBER 2026",
+      "title": "NIA Christmas Gala Dinner 2026",
+      "tagline": "A December to Remember. Dine, Dance, Celebrate, The NIA Way!"
+    },
+    "info": {
+      "date": { "label": "DATE", "primary": "12TH DECEMBER 2026", "secondary": "SATURDAY" },
+      "time": { "label": "TIME", "primary": "18:00", "secondary": "ONWARDS" },
+      "venue": { "label": "VENUE", "primary": "DE DUINPAN", "secondary": "Sportlaan 34, 2191 XH De Zilk\nGemeente Noordwijk" },
+      "theme": { "label": "EVENT THEME", "primary": "An Evening of", "secondary": "Elegance & Celebration" },
+      "viewOnMap": "View on Map"
+    },
+    "about": {
+      "heading": "About The Gala",
+      "body1": "A December to Remember — join us for NIA's first Christmas Gala Dinner, an elegant evening to close out the year together.",
+      "body2": "Dine, dance and celebrate the NIA way, with a festive three-course dinner, live music and an evening of togetherness with the community.",
+      "highlightsBtn": "EVENT HIGHLIGHTS",
+      "highlights": {
+        "performances": "Live Music &\nEntertainment",
+        "cuisine": "Festive\nThree-Course Dinner",
+        "togetherness": "Community\nCelebration",
+        "surprises": "Dancing &\nMemorable Moments"
+      }
+    },
+    "cta": {
+      "title": "Join Us This December!",
+      "sub": "Dine, dance and celebrate\nthe NIA way.",
+      "becomeMemberBtn": "BECOME A MEMBER"
+    },
+    "booking": {
+      "heading": "Book Your Gala Experience",
+      "sub": "Secure your seat at this December's celebration in just a few steps.",
+      "steps": {
+        "selectTickets": "Select Tickets",
+        "yourDetails": "Your Details",
+        "reviewOrder": "Review Order",
+        "payment": "Payment"
+      },
+      "membershipCodeLabel": "Membership Code",
+      "discountCodeLabel": "Discount Code",
+      "discountCodePlaceholder": "e.g. NIA10",
+      "discountValidateHint": "We'll validate this once you enter your email on the next step.",
+      "tickets": {
+        "gala": {
+          "type": "Gala Experience",
+          "perks": [
+            "Three-course dinner",
+            "Live music & dancing"
+          ]
+        }
+      },
+      "perPerson": "/ person",
+      "qtyLabel": "Qty",
+      "decreaseAria": "Decrease",
+      "increaseAria": "Increase",
+      "secureBookingNote": "Secure Booking",
+      "limitedSeatsNote": "Limited Seats — Book Early!",
+      "continue": "Continue",
+      "back": "Back",
+      "aiHints": {
+        "discountSaved": "Discount applied — you save €{{amount}}!"
+      },
+      "details": {
+        "heading": "Your Details",
+        "sub": "We'll send your tickets to the email address below.",
+        "fullName": "Full Name",
+        "emailAddress": "Email Address",
+        "phoneNumber": "Phone Number",
+        "optional": "(optional)",
+        "emailInvalidHint": "Please enter a valid email address (e.g. you@email.com) — this is where your tickets will be sent.",
+        "otherAttendeesLabel_one": "Names of Other Attendees ({{count}} person)",
+        "otherAttendeesLabel_other": "Names of Other Attendees ({{count}} people)",
+        "otherAttendeesHint_one": "Please list the other {{count}} attendee, one name per line.",
+        "otherAttendeesHint_other": "Please list the other {{count}} attendees, one name per line.",
+        "checking": "Checking…"
+      },
+      "review": {
+        "heading": "Review Your Order",
+        "sub": "Check your tickets before proceeding to payment.",
+        "colTicket": "Ticket",
+        "colPrice": "Price",
+        "colQty": "Qty",
+        "colTotal": "Total",
+        "membershipDiscount": "Membership Discount",
+        "discountWithCode": "Discount ({{code}})",
+        "totalPayable": "Total Payable",
+        "ticketsFor": "Tickets for",
+        "allAttendees": "All Attendees ({{count}})",
+        "youSuffix": "(you)",
+        "pay": "Pay €{{amount}}"
+      },
+      "payment": {
+        "allSet": "You're all set!",
+        "ticketsEmailed": "Your tickets have been emailed to {{email}}.",
+        "confirmPay": "Confirm & Pay",
+        "redirectNotice": "You will be redirected to Mollie's secure checkout to complete payment of €{{amount}}. All major payment methods are accepted (iDEAL, card, PayPal and more).",
+        "secureNotice": "Your payment is encrypted and secure. Tickets will be emailed instantly after payment.",
+        "processing": "Processing…",
+        "paySecurely": "Pay €{{amount}} securely"
+      },
+      "errors": {
+        "paymentFailed": "Payment failed. Please try again."
+      },
+      "freeSuccessDefault": "Your tickets are fully covered by the discount — no payment required."
+    }
+  },
   "dashboardAuth": {
     "memberPortal": "Member Portal",
     "login": {

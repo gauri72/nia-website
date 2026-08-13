@@ -1,7 +1,7 @@
 const Sponsorship = require('../../models/Sponsorship');
 const Ticket = require('../../models/Ticket');
 const { sendSponsorshipConfirmation, sendTicketConfirmation } = require('../../services/emailService');
-const { TICKET_PRICES, EVENT_ID } = require('../ticketController');
+const { getEvent, DEFAULT_EVENT_SLUG } = require('../../config/events');
 const { buildTicketUnits } = require('../../services/ticketUnitService');
 
 // ── GET /api/admin/sponsorships — paid sponsorships only ──────────
@@ -66,14 +66,15 @@ async function resendEmail(req, res, next) {
 
 // ── POST /api/admin/sponsorships/:id/complimentary-tickets ─────────
 // Creates a paid legacy Ticket (no Mollie charge) for the sponsor and emails
-// it exactly like a normal ticket purchase confirmation — this is the same
-// hardcoded single event the public guest-checkout flow (ticketController.js)
-// serves, since that's the one real event ticket sales run against today.
+// it exactly like a normal ticket purchase confirmation.
 async function sendComplimentaryTickets(req, res, next) {
   try {
-    const { ticketType = 'vip', quantity } = req.body;
-    if (!TICKET_PRICES[ticketType]) {
-      return res.status(400).json({ error: `Invalid ticket type: ${ticketType}` });
+    const { ticketType = 'vip', quantity, eventSlug } = req.body;
+
+    const event = getEvent(eventSlug?.trim() || DEFAULT_EVENT_SLUG);
+    if (!event) return res.status(400).json({ error: `Unknown event: "${eventSlug}"` });
+    if (!event.ticketPrices[ticketType]) {
+      return res.status(400).json({ error: `Invalid ticket type "${ticketType}" for ${event.name}` });
     }
     const qty = parseInt(quantity, 10);
     if (!qty || qty < 1) return res.status(400).json({ error: 'quantity must be a positive number' });
@@ -94,7 +95,7 @@ async function sendComplimentaryTickets(req, res, next) {
       phone: sponsorship.phone,
       tickets: sponsorLines,
       units: buildTicketUnits({ ticketNumber: sponsorTicketNumber, tickets: sponsorLines }),
-      event_id: EVENT_ID,
+      event_id: event.eventId,
       subtotal: 0,
       amount: 0,
       ticket_status: 'paid',

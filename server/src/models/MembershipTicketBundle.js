@@ -20,6 +20,11 @@ const MembershipTicketBundleSchema = new mongoose.Schema({
   membershipTier: { type: mongoose.Schema.Types.ObjectId, ref: 'MembershipTier', required: true },
   membershipAmount: { type: Number, required: true }, // tier price charged (no membership discount code support yet)
   tickets: [BundleTicketLineSchema],
+  // Which event (server/src/config/events.js slug) these tickets are for —
+  // read by databaseService.js's updateBundle() to tag the finalized Ticket
+  // with the right event_id. Defaults to the original single-event slug so
+  // any bundle already mid-flight when this field was added still resolves.
+  eventSlug: { type: String, default: 'independence-day-2026' },
   attendee_names: { type: String, trim: true },
   ticketSubtotal: { type: Number, required: true }, // ticket lines at full (non-member) price
   ticketDiscountAmount: { type: Number, default: 0 }, // savings from the newly-joined tier's automatic ticket discount

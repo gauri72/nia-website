@@ -15,6 +15,7 @@ const { sendPostPaymentEmails, sendMemberPasswordResetEmail } = require('./email
 const { hashPassword, generateRawToken } = require('./authService');
 const { sendTemplateToMember } = require('./broadcastService');
 const { buildTicketUnits, parseAttendeeNamePool } = require('./ticketUnitService');
+const { getEvent, DEFAULT_EVENT_SLUG } = require('../config/events');
 
 const TERMINAL_STATUSES = ['paid', 'failed', 'expired', 'canceled'];
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
@@ -335,13 +336,6 @@ async function updateMembershipPayment(referenceId, molliePaymentId, status, pai
 }
 
 // ── Membership + Ticket Bundle ──────────────────────────────────
-// Deliberately not tied to Ticket.event_id via import — every other file that
-// needs this legacy event's ID (vipPassService.js, legacyTicketController.js)
-// hardcodes its own copy rather than importing from ticketController.js, to
-// avoid a circular require (ticketController already requires this file for
-// finalizeFreeOrder). Matches Ticket.event_id's own schema default.
-const BUNDLE_EVENT_ID = 'NIA-EVENT-20260815';
-
 async function updateBundle(referenceId, molliePaymentId, status, paidAt) {
   const record = await MembershipTicketBundle.findById(referenceId).populate('member').populate('membershipTier');
   if (!record) throw new Error(`MembershipTicketBundle not found: ${referenceId}`);
@@ -362,6 +356,7 @@ async function updateBundle(referenceId, molliePaymentId, status, paidAt) {
 
     if (updatedMember) await maybeSendPatronWelcomeEmail(updatedMember, tier);
 
+    const bundleEvent = getEvent(record.eventSlug || DEFAULT_EVENT_SLUG);
     const buyerName = `${record.member.firstName} ${record.member.lastName}`.trim();
     const bundleTicketNumber = Ticket.generateTicketNumber();
     const bundleNamePool = parseAttendeeNamePool(buyerName, record.attendee_names);
@@ -373,7 +368,7 @@ async function updateBundle(referenceId, molliePaymentId, status, paidAt) {
       tickets: record.tickets,
       units: buildTicketUnits({ ticketNumber: bundleTicketNumber, tickets: record.tickets, names: bundleNamePool }),
       attendee_names: record.attendee_names,
-      event_id: BUNDLE_EVENT_ID,
+      event_id: bundleEvent.eventId,
       subtotal: record.ticketSubtotal,
       amount: Math.round((record.ticketSubtotal - record.ticketDiscountAmount) * 100) / 100,
       ticket_status: 'paid',

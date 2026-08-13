@@ -4,6 +4,7 @@ import CookieConsentBanner from './components/home/CookieConsentBanner';
 import HomePage           from './pages/HomePage';
 import AboutPage          from './pages/AboutPage';
 import EventsPage         from './pages/EventsPage';
+import GalaEventPage      from './pages/GalaEventPage';
 import MembershipPage     from './pages/MembershipPage';
 import SponsorshipPage    from './pages/SponsorshipPage';
 import DonationPage       from './pages/DonationPage';
@@ -57,6 +58,8 @@ import DashboardResetPasswordPage  from './pages/dashboard/ResetPasswordPage';
 import DashboardHomePage           from './pages/dashboard/HomePage';
 import MyMembershipPage            from './pages/dashboard/MyMembershipPage';
 import DashboardEventsPage         from './pages/dashboard/EventsPage';
+import EventBookingPage            from './pages/dashboard/EventBookingPage';
+import { EVENTS } from './config/events';
 import DashboardEventDetailPage    from './pages/dashboard/EventDetailPage';
 import MyTicketsPage               from './pages/dashboard/MyTicketsPage';
 import DashboardProfilePage        from './pages/dashboard/ProfilePage';
@@ -74,6 +77,7 @@ export default function App() {
             <Route path="/"                 element={<HomePage />} />
             <Route path="/about"            element={<AboutPage />} />
             <Route path="/events"           element={<EventsPage />} />
+            <Route path="/events/christmas-gala-2026" element={<GalaEventPage />} />
             <Route path="/membership"       element={<MembershipPage />} />
             <Route path="/sponsorship"      element={<SponsorshipPage />} />
             <Route path="/donation"         element={<DonationPage />} />
@@ -131,6 +135,30 @@ export default function App() {
               <Route index element={<DashboardHomePage />} />
               <Route path="membership" element={<MyMembershipPage />} />
               <Route path="events" element={<DashboardEventsPage />} />
+              <Route path="events/independence-day" element={<EventBookingPage
+                event={EVENTS['independence-day-2026']}
+                content={{
+                  category: 'Festival',
+                  title: "80th India Independence Day Celebration & NIA 75th Anniversary",
+                  description: "Join us for a historic celebration as we mark India's 80th Independence Day and the 75th Anniversary of NIA — an evening of cultural performances, great food and togetherness. Theme: India, Netherlands and Water.",
+                  date: '15 August 2026', day: 'Saturday',
+                  time: '18:00', timeSub: 'Onwards',
+                  venueName: 'De Duinpan', venueAddress: 'Sportlaan 34, 2191 XH De Zilk, Noordwijk',
+                  mapUrl: 'https://maps.app.goo.gl/qSfRXG5iMBcR6exs8',
+                }}
+              />} />
+              <Route path="events/christmas-gala" element={<EventBookingPage
+                event={EVENTS['christmas-gala-2026']}
+                content={{
+                  category: 'Gala',
+                  title: 'NIA Christmas Gala Dinner 2026',
+                  description: 'A December to Remember. Dine, Dance, Celebrate, The NIA Way! Join us for an elegant evening with a festive three-course dinner, live music and dancing.',
+                  date: '12 December 2026', day: 'Saturday',
+                  time: '18:00', timeSub: 'Onwards',
+                  venueName: 'De Duinpan', venueAddress: 'Sportlaan 34, 2191 XH De Zilk, Noordwijk',
+                  mapUrl: 'https://maps.app.goo.gl/qSfRXG5iMBcR6exs8',
+                }}
+              />} />
               <Route path="events/:slug" element={<DashboardEventDetailPage />} />
               <Route path="tickets" element={<MyTicketsPage />} />
               <Route path="profile" element={<DashboardProfilePage />} />

@@ -1,5 +1,5 @@
 const Ticket = require('../../models/Ticket');
-const { EVENT_ID } = require('../ticketController');
+const { getEvent, DEFAULT_EVENT_SLUG } = require('../../config/events');
 const { sendVipPassEmail } = require('../../services/emailService');
 const { generateVipPassBatchPDF } = require('../../services/vipPassService');
 const { buildTicketUnits } = require('../../services/ticketUnitService');
@@ -14,7 +14,18 @@ const MAX_QUANTITY = 50;
 // admin panel can offer an instant download without waiting on email.
 async function create(req, res, next) {
   try {
-    const { name, email, quantity, guestNames } = req.body;
+    const { name, email, quantity, guestNames, eventSlug, ticketType } = req.body;
+
+    const event = getEvent(eventSlug?.trim() || DEFAULT_EVENT_SLUG);
+    if (!event) return res.status(400).json({ error: `Unknown event: "${eventSlug}"` });
+
+    // Defaults to 'vip' when the event has that type (matches every batch
+    // issued before events became selectable), else the event's own single
+    // type — e.g. the Gala's 'gala'.
+    const resolvedType = ticketType?.trim() || (event.ticketPrices.vip ? 'vip' : Object.keys(event.ticketPrices)[0]);
+    if (!event.ticketPrices[resolvedType]) {
+      return res.status(400).json({ error: `Invalid ticket type "${resolvedType}" for ${event.name}` });
+    }
 
     if (!name?.trim() || !email?.trim()) {
       return res.status(400).json({ error: 'name and email are required' });
@@ -28,7 +39,7 @@ async function create(req, res, next) {
     }
     const trimmedNames = guestNames.map((n) => n.trim());
     const vipTicketNumber = Ticket.generateTicketNumber();
-    const vipLines = [{ ticket_type: 'vip', quantity: qty, unit_price: 0, line_total: 0 }];
+    const vipLines = [{ ticket_type: resolvedType, quantity: qty, unit_price: 0, line_total: 0 }];
 
     const ticket = await Ticket.create({
       ticketNumber: vipTicketNumber,
@@ -37,7 +48,7 @@ async function create(req, res, next) {
       tickets: vipLines,
       units: buildTicketUnits({ ticketNumber: vipTicketNumber, tickets: vipLines, names: trimmedNames }),
       attendee_names: trimmedNames.join('\n'),
-      event_id: EVENT_ID,
+      event_id: event.eventId,
       subtotal: 0,
       amount: 0,
       ticket_status: 'paid',

@@ -7,11 +7,15 @@ import './Navbar.css';
 
 const NAV_LINK_HREFS = [
   { key: 'home',        href: '/' },
-  { key: 'events',      href: '/events' },
   { key: 'membership',  href: '/membership' },
   { key: 'sponsorship', href: '/sponsorship' },
   { key: 'donation',    href: '/donation' },
   { key: 'about',       href: '/about' },
+];
+
+const EVENT_LINKS = [
+  { key: 'independenceDay', href: '/events', label: 'Independence Day' },
+  { key: 'christmasGala',   href: '/events/christmas-gala-2026', label: 'Christmas Gala' },
 ];
 
 export default function Navbar() {
@@ -50,7 +54,37 @@ export default function Navbar() {
         </button>
 
         <nav className={`navbar__links${menuOpen ? ' open' : ''}`}>
-          {NAV_LINK_HREFS.map((link) => (
+          <a
+            href="/"
+            className={`nav-link${pathname === '/' ? ' active' : ''}`}
+            onClick={() => setMenuOpen(false)}
+          >
+            {t('navbar.links.home')}
+          </a>
+
+          <div className="nav-dropdown">
+            <a
+              href="/events"
+              className={`nav-link${EVENT_LINKS.some((l) => pathname === l.href) ? ' active' : ''}`}
+              onClick={() => setMenuOpen(false)}
+            >
+              {t('navbar.links.events')}
+            </a>
+            <div className="nav-dropdown__menu">
+              {EVENT_LINKS.map((link) => (
+                <a
+                  key={link.key}
+                  href={link.href}
+                  className={`nav-dropdown__item${pathname === link.href ? ' active' : ''}`}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {link.label}
+                </a>
+              ))}
+            </div>
+          </div>
+
+          {NAV_LINK_HREFS.filter((l) => l.key !== 'home').map((link) => (
             <a
               key={link.key}
               href={link.href}

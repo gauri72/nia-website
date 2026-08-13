@@ -6,17 +6,24 @@ import BookTickets    from '../components/events/BookTickets';
 import AboutEvent     from '../components/events/AboutEvent';
 import VenueOrganizer from '../components/events/VenueOrganizer';
 import EventCTA       from '../components/events/EventCTA';
+import galaHeroBG      from '../assets/events/GalaHeroBG.jpg';
 
-export default function EventsPage() {
+const EVENT_SLUG = 'christmas-gala-2026';
+const NS = 'galaEvent';
+
+export default function GalaEventPage() {
   return (
     <div className="events-page">
       <Navbar />
-      <EventHero />
-      <EventInfo i18nNamespace="events" />
-      <BookTickets eventSlug="independence-day-2026" i18nNamespace="events" />
-      <AboutEvent i18nNamespace="events" />
+      {/* Banner is a designed graphic with title/tagline/date/venue/pricing
+          already baked in — same image-only pattern as Independence Day's
+          hero, no separate text overlay needed. */}
+      <EventHero bgImage={galaHeroBG} />
+      <EventInfo i18nNamespace={NS} />
+      <BookTickets eventSlug={EVENT_SLUG} i18nNamespace={NS} />
+      <AboutEvent i18nNamespace={NS} />
       <VenueOrganizer />
-      <EventCTA i18nNamespace="events" />
+      <EventCTA i18nNamespace={NS} />
       <Footer />
     </div>
   );

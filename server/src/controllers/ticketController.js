@@ -4,9 +4,7 @@ const { createPayment } = require('../services/mollieService');
 const { validateDiscountCode, applyDiscount } = require('../services/discountService');
 const { finalizeFreeOrder } = require('../services/databaseService');
 const { buildTicketUnits, parseAttendeeNamePool } = require('../services/ticketUnitService');
-
-const TICKET_PRICES = { regular: 20, vip: 45, child: 5 };
-const EVENT_ID = 'NIA-EVENT-20260815'; // matches Ticket.event_id's schema default — the one legacy event this flow serves
+const { getEvent, DEFAULT_EVENT_SLUG } = require('../config/events');
 
 // Deliberately simple (not full RFC 5322) — just enough to catch the actual
 // garbage this flow has let through with no format check at all: stray
@@ -14,15 +12,21 @@ const EVENT_ID = 'NIA-EVENT-20260815'; // matches Ticket.event_id's schema defau
 // are worthless if this doesn't at least look like a real address.
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-function validateTicketLines(tickets) {
+// eventSlug defaults to Independence Day so any client not yet updated to
+// send it explicitly keeps working exactly as before.
+function resolveEvent(eventSlug) {
+  return getEvent(eventSlug?.trim() || DEFAULT_EVENT_SLUG);
+}
+
+function validateTicketLines(tickets, ticketPrices) {
   const ticketLines = [];
   let subtotal = 0;
   for (const t of tickets) {
     const type = t.ticket_type?.toLowerCase();
     const qty = parseInt(t.quantity, 10);
-    if (!TICKET_PRICES[type]) throw new Error(`Invalid ticket type: ${type}`);
+    if (!ticketPrices[type]) throw new Error(`Invalid ticket type: ${type}`);
     if (!qty || qty < 1) throw new Error(`Invalid quantity for ${type}`);
-    const unitPrice = TICKET_PRICES[type];
+    const unitPrice = ticketPrices[type];
     const lineTotal = unitPrice * qty;
     subtotal += lineTotal;
     ticketLines.push({ ticket_type: type, quantity: qty, unit_price: unitPrice, line_total: lineTotal });
@@ -39,14 +43,14 @@ function validateTicketLines(tickets) {
 // requesting more units than the remaining allowance discounts the
 // highest-priced eligible units first, up to that allowance; the rest are
 // charged full price. Every ticket type is eligible, including child tickets. ──
-async function resolveAutomaticDiscount(normalizedEmail, ticketLines) {
+async function resolveAutomaticDiscount(normalizedEmail, ticketLines, eventId) {
   const member = await Member.findOne({ email: normalizedEmail, membershipStatus: 'active' }).populate('membershipTier');
   const tier = member?.membershipTier;
   if (!tier?.ticketDiscountType) return { eligible: false };
 
   const maxUnits = tier.ticketDiscountMaxPerEvent || 1;
   const usedAgg = await Ticket.aggregate([
-    { $match: { email: normalizedEmail, event_id: EVENT_ID, ticket_status: 'paid', membershipDiscountApplied: true } },
+    { $match: { email: normalizedEmail, event_id: eventId, ticket_status: 'paid', membershipDiscountApplied: true } },
     { $group: { _id: null, total: { $sum: '$membershipDiscountUnits' } } },
   ]);
   const usedUnits = usedAgg[0]?.total || 0;
@@ -88,7 +92,10 @@ async function resolveAutomaticDiscount(normalizedEmail, ticketLines) {
 // ── POST /api/tickets/create ──────────────────────────────────
 async function create(req, res, next) {
   try {
-    const { name, email, phone, attendeeNames, tickets, discountCode } = req.body;
+    const { name, email, phone, attendeeNames, tickets, discountCode, eventSlug } = req.body;
+
+    const event = resolveEvent(eventSlug);
+    if (!event) return res.status(400).json({ error: `Unknown event: "${eventSlug}"` });
 
     if (!name?.trim() || !email?.trim()) {
       return res.status(400).json({ error: 'name and email are required' });
@@ -104,7 +111,7 @@ async function create(req, res, next) {
 
     let ticketLines, subtotal;
     try {
-      ({ ticketLines, subtotal } = validateTicketLines(tickets));
+      ({ ticketLines, subtotal } = validateTicketLines(tickets, event.ticketPrices));
     } catch (err) {
       return res.status(400).json({ error: err.message });
     }
@@ -135,7 +142,7 @@ async function create(req, res, next) {
         return res.status(400).json({ error: err.message });
       }
     } else {
-      const resolved = await resolveAutomaticDiscount(normalizedEmail, ticketLines);
+      const resolved = await resolveAutomaticDiscount(normalizedEmail, ticketLines, event.eventId);
       if (resolved.eligible) {
         total = Math.round((subtotal - resolved.totalDiscountAmount) * 100) / 100;
         membershipDiscount = { tier: resolved.tier._id, amount: resolved.totalDiscountAmount, units: resolved.unitsDiscounted };
@@ -156,7 +163,7 @@ async function create(req, res, next) {
       attendee_names: totalQty > 1 ? attendeeNames.trim() : undefined,
       tickets: ticketLines,
       units: buildTicketUnits({ ticketNumber, tickets: ticketLines, names: namePool }),
-      event_id: EVENT_ID,
+      event_id: event.eventId,
       discountCode: codeDiscount?.discountCodeId,
       discount_code: codeDiscount?.discount_code,
       discount_pct: codeDiscount?.discount_type === 'percentage' ? codeDiscount.discount_value : 0,
@@ -184,7 +191,7 @@ async function create(req, res, next) {
 
     const payment = await createPayment({
       amount: total,
-      description: `NIA Event Tickets — ${ticketLines.map(t => `${t.quantity}× ${t.ticket_type}`).join(', ')}`,
+      description: `${event.name} — ${ticketLines.map(t => `${t.quantity}× ${t.ticket_type}`).join(', ')}`,
       type: 'event_ticket',
       referenceId: ticket._id.toString(),
     });
@@ -217,7 +224,11 @@ async function create(req, res, next) {
 // finding out there — which is the confusing gap this endpoint fixes.
 async function previewDiscount(req, res, next) {
   try {
-    const { email, tickets, discountCode } = req.body;
+    const { email, tickets, discountCode, eventSlug } = req.body;
+
+    const event = resolveEvent(eventSlug);
+    if (!event) return res.status(400).json({ error: `Unknown event: "${eventSlug}"` });
+
     if (!email?.trim() || !tickets || !Array.isArray(tickets) || tickets.length === 0) {
       return res.status(400).json({ error: 'email and at least one ticket are required' });
     }
@@ -228,7 +239,7 @@ async function previewDiscount(req, res, next) {
 
     let ticketLines, subtotal;
     try {
-      ({ ticketLines, subtotal } = validateTicketLines(tickets));
+      ({ ticketLines, subtotal } = validateTicketLines(tickets, event.ticketPrices));
     } catch (err) {
       return res.status(400).json({ error: err.message });
     }
@@ -243,7 +254,7 @@ async function previewDiscount(req, res, next) {
       }
     }
 
-    const resolved = await resolveAutomaticDiscount(normalizedEmail, ticketLines);
+    const resolved = await resolveAutomaticDiscount(normalizedEmail, ticketLines, event.eventId);
     if (resolved.eligible) {
       return res.json({
         subtotal,
@@ -274,4 +285,4 @@ async function getById(req, res, next) {
   }
 }
 
-module.exports = { create, getById, previewDiscount, TICKET_PRICES, EVENT_ID };
+module.exports = { create, getById, previewDiscount };

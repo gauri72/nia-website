@@ -9,7 +9,7 @@ const HIGHLIGHTS = [
   { icon: <FaStar />,      key: 'surprises' },
 ];
 
-export default function AboutEvent() {
+export default function AboutEvent({ i18nNamespace = 'events' }) {
   const { t } = useTranslation();
 
   return (
@@ -18,11 +18,11 @@ export default function AboutEvent() {
 
         {/* Left — text */}
         <div className="about-event__left">
-          <h2 className="about-event__heading">{t('events.about.heading')}</h2>
-          <p className="about-event__body">{t('events.about.body1')}</p>
-          <p className="about-event__body">{t('events.about.body2')}</p>
+          <h2 className="about-event__heading">{t(`${i18nNamespace}.about.heading`)}</h2>
+          <p className="about-event__body">{t(`${i18nNamespace}.about.body1`)}</p>
+          <p className="about-event__body">{t(`${i18nNamespace}.about.body2`)}</p>
           <a href="#tickets" className="about-event__btn">
-            {t('events.about.highlightsBtn')} &nbsp;→
+            {t(`${i18nNamespace}.about.highlightsBtn`)} &nbsp;→
           </a>
         </div>
 
@@ -32,7 +32,7 @@ export default function AboutEvent() {
             <div key={i} className="about-event__highlight">
               <div className="about-event__highlight-icon">{h.icon}</div>
               <p className="about-event__highlight-label" style={{ whiteSpace: 'pre-line' }}>
-                {t(`events.about.highlights.${h.key}`)}
+                {t(`${i18nNamespace}.about.highlights.${h.key}`)}
               </p>
             </div>
           ))}

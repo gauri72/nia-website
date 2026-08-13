@@ -5,17 +5,21 @@ const MembershipTicketBundle = require('../../models/MembershipTicketBundle');
 const { createPayment } = require('../../services/mollieService');
 const { finalizeFreeOrder } = require('../../services/databaseService');
 const { applyDiscount } = require('../../services/discountService');
-const { TICKET_PRICES, EVENT_ID } = require('../../controllers/ticketController');
+const { getEvent, DEFAULT_EVENT_SLUG } = require('../../config/events');
 
-function validateTicketLines(tickets) {
+function resolveEvent(eventSlug) {
+  return getEvent(eventSlug?.trim() || DEFAULT_EVENT_SLUG);
+}
+
+function validateTicketLines(tickets, ticketPrices) {
   const ticketLines = [];
   let subtotal = 0;
   for (const t of tickets || []) {
     const type = t.ticket_type?.toLowerCase();
     const qty = parseInt(t.quantity, 10);
-    if (!TICKET_PRICES[type]) throw new Error(`Invalid ticket type: ${type}`);
+    if (!ticketPrices[type]) throw new Error(`Invalid ticket type: ${type}`);
     if (!qty || qty < 1) throw new Error(`Invalid quantity for ${type}`);
-    const unitPrice = TICKET_PRICES[type];
+    const unitPrice = ticketPrices[type];
     const lineTotal = unitPrice * qty;
     subtotal += lineTotal;
     ticketLines.push({ ticket_type: type, quantity: qty, unit_price: unitPrice, line_total: lineTotal });
@@ -31,12 +35,12 @@ function validateTicketLines(tickets) {
 // this same checkout (the member has no active tier yet). Still respects any
 // discount usage from a previous, separate purchase for this event (the
 // per-event unit cap is per email, not per order).
-async function computeTicketDiscountForTier(tier, email, ticketLines) {
+async function computeTicketDiscountForTier(tier, email, ticketLines, eventId) {
   if (!tier?.ticketDiscountType) return { discountAmount: 0, unitsDiscounted: 0 };
 
   const maxUnits = tier.ticketDiscountMaxPerEvent || 1;
   const usedAgg = await Ticket.aggregate([
-    { $match: { email, event_id: EVENT_ID, ticket_status: 'paid', membershipDiscountApplied: true } },
+    { $match: { email, event_id: eventId, ticket_status: 'paid', membershipDiscountApplied: true } },
     { $group: { _id: null, total: { $sum: '$membershipDiscountUnits' } } },
   ]);
   const usedUnits = usedAgg[0]?.total || 0;
@@ -59,20 +63,23 @@ async function computeTicketDiscountForTier(tier, email, ticketLines) {
 
 // Shared by preview() and create() — same computation so a preview can never
 // show something the real submission wouldn't also do.
-async function computeBreakdown(member, tierId, tickets) {
+async function computeBreakdown(member, tierId, tickets, eventSlug) {
+  const event = resolveEvent(eventSlug);
+  if (!event) throw new Error(`Unknown event: "${eventSlug}"`);
+
   const tier = await MembershipTier.findById(tierId);
   if (!tier || !tier.isActive) throw new Error('Invalid or inactive membership tier');
 
-  const { ticketLines, subtotal: ticketSubtotal } = validateTicketLines(tickets);
+  const { ticketLines, subtotal: ticketSubtotal } = validateTicketLines(tickets, event.ticketPrices);
   const { discountAmount: ticketDiscountAmount, unitsDiscounted: ticketDiscountUnits } =
-    await computeTicketDiscountForTier(tier, member.email, ticketLines);
+    await computeTicketDiscountForTier(tier, member.email, ticketLines, event.eventId);
 
   const membershipAmount = tier.price;
   const ticketTotal = Math.round((ticketSubtotal - ticketDiscountAmount) * 100) / 100;
   const amount = Math.round((membershipAmount + ticketTotal) * 100) / 100;
   const savings = ticketDiscountAmount; // the only discount this bundle applies today
 
-  return { tier, ticketLines, ticketSubtotal, ticketDiscountAmount, ticketDiscountUnits, membershipAmount, ticketTotal, amount, savings };
+  return { event, tier, ticketLines, ticketSubtotal, ticketDiscountAmount, ticketDiscountUnits, membershipAmount, ticketTotal, amount, savings };
 }
 
 // ── POST /api/member/bundle/preview ───────────────────────────────
@@ -80,11 +87,11 @@ async function computeBreakdown(member, tierId, tickets) {
 // ribbon) as the member picks a tier and adjusts ticket quantities.
 async function preview(req, res, next) {
   try {
-    const { tierId, tickets } = req.body;
+    const { tierId, tickets, eventSlug } = req.body;
     if (!tierId) return res.status(400).json({ error: 'tierId is required' });
 
     const member = await Member.findById(req.member.id);
-    const breakdown = await computeBreakdown(member, tierId, tickets);
+    const breakdown = await computeBreakdown(member, tierId, tickets, eventSlug);
 
     return res.json({
       membershipAmount: breakdown.membershipAmount,
@@ -96,7 +103,7 @@ async function preview(req, res, next) {
       tier: { id: breakdown.tier._id, name: breakdown.tier.name },
     });
   } catch (err) {
-    if (err.message.startsWith('Invalid') || err.message.includes('required')) {
+    if (err.message.startsWith('Invalid') || err.message.startsWith('Unknown') || err.message.includes('required')) {
       return res.status(400).json({ error: err.message });
     }
     next(err);
@@ -106,7 +113,7 @@ async function preview(req, res, next) {
 // ── POST /api/member/bundle/create ────────────────────────────────
 async function create(req, res, next) {
   try {
-    const { tierId, tickets, attendeeNames } = req.body;
+    const { tierId, tickets, attendeeNames, eventSlug } = req.body;
     if (!tierId) return res.status(400).json({ error: 'tierId is required' });
 
     const member = await Member.findById(req.member.id);
@@ -114,7 +121,7 @@ async function create(req, res, next) {
       return res.status(400).json({ error: 'You already have an active membership — book tickets directly instead.' });
     }
 
-    const breakdown = await computeBreakdown(member, tierId, tickets);
+    const breakdown = await computeBreakdown(member, tierId, tickets, eventSlug);
 
     const totalQty = breakdown.ticketLines.reduce((s, l) => s + l.quantity, 0);
     if (totalQty > 1 && !attendeeNames?.trim()) {
@@ -126,6 +133,7 @@ async function create(req, res, next) {
       membershipTier: breakdown.tier._id,
       membershipAmount: breakdown.membershipAmount,
       tickets: breakdown.ticketLines,
+      eventSlug: breakdown.event.slug,
       attendee_names: attendeeNames?.trim() || undefined,
       ticketSubtotal: breakdown.ticketSubtotal,
       ticketDiscountAmount: breakdown.ticketDiscountAmount,

@@ -2,6 +2,7 @@ const path = require('path');
 const PDFDocument = require('pdfkit');
 const { generateQRDataURL } = require('./emailService');
 const { buildTicketUnits } = require('./ticketUnitService');
+const { getEventByEventId } = require('../config/events');
 
 const NAVY = '#0b2245';
 const NAVY_LIGHT = '#16316e';
@@ -10,9 +11,6 @@ const GOLD_DARK = '#c96b00';
 const CREAM = '#fffdf7';
 const LOGO_PATH = path.join(__dirname, '..', 'assets', 'nia-logo.png');
 const LOGO_ASPECT = 85 / 500;
-
-const EVENT_NAME = "India's 80th Independence Day & NIA's 75th Anniversary";
-const EVENT_DATE = '15 August 2026';
 
 // One shared PDFDocument, one page per guest — same visual language as
 // patronPassService's Patron Pass card. Each page encodes that guest's own
@@ -26,6 +24,8 @@ async function generateVipPassBatchPDF(ticket) {
       doc.on('data', (c) => chunks.push(c));
       doc.on('end', () => resolve(Buffer.concat(chunks)));
       doc.on('error', reject);
+
+      const eventInfo = getEventByEventId(ticket.event_id);
 
       // Defensive fallback for a batch that predates the backfill (units
       // empty) — derives the same per-guest breakdown on the fly purely for
@@ -45,7 +45,7 @@ async function generateVipPassBatchPDF(ticket) {
         if (i > 0) doc.addPage();
         const qrDataUrl = await generateQRDataURL(unit.unitNumber);
         const qrBuffer = Buffer.from(qrDataUrl.replace(/^data:image\/png;base64,/, ''), 'base64');
-        drawPassPage(doc, unit.attendeeName || ticket.name, qrBuffer);
+        drawPassPage(doc, unit.attendeeName || ticket.name, qrBuffer, eventInfo);
       }
 
       doc.end();
@@ -55,7 +55,7 @@ async function generateVipPassBatchPDF(ticket) {
   });
 }
 
-function drawPassPage(doc, guestName, qrBuffer) {
+function drawPassPage(doc, guestName, qrBuffer, eventInfo) {
   const W = doc.page.width;
   const H = doc.page.height;
 
@@ -94,8 +94,8 @@ function drawPassPage(doc, guestName, qrBuffer) {
   doc
     .fillColor('rgba(255,255,255,0.85)').font('Helvetica').fontSize(11.5)
     .text('Grants complimentary entry, no ticket required, to', inset + 26, badgeY + 88, { width: 380, lineGap: 3 })
-    .text(EVENT_NAME, inset + 26, undefined, { width: 380, lineGap: 3 })
-    .text(EVENT_DATE, inset + 26, undefined, { width: 380 });
+    .text(eventInfo?.name || 'the event', inset + 26, undefined, { width: 380, lineGap: 3 })
+    .text(eventInfo?.dateLabel || '', inset + 26, undefined, { width: 380 });
 
   // Divider before footer.
   doc

@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { Handshake, Euro, Search, Plus, Pencil, Trash2, Medal, Star, Crown, Gem, Trophy, Award, Send, Ticket as TicketIcon, Upload, ImageOff } from 'lucide-react';
 import adminApi from '../../services/adminApi';
+import { EVENTS } from '../../config/events';
 import { useAdminAuth } from '../../context/AdminAuthContext';
 import Modal from '../../components/admin/Modal';
 import StatusBadge from '../../components/admin/StatusBadge';
@@ -168,13 +169,8 @@ function TransactionsTab() {
   );
 }
 
-const TICKET_TYPES = [
-  { value: 'regular', label: 'Regular' },
-  { value: 'vip', label: 'VIP' },
-  { value: 'child', label: 'Child' },
-];
-
 function ComplimentaryTicketsModal({ sponsorship, onClose, onSent }) {
+  const [eventSlug, setEventSlug] = useState('independence-day-2026');
   const [ticketType, setTicketType] = useState('vip');
   const [quantity, setQuantity] = useState(sponsorship.sponsorshipTier?.ticketCount || 1);
   const [error, setError] = useState('');
@@ -182,11 +178,16 @@ function ComplimentaryTicketsModal({ sponsorship, onClose, onSent }) {
 
   const alreadySent = sponsorship.complimentaryTickets?.reduce((sum, c) => sum + c.quantity, 0) || 0;
 
+  function updateEvent(slug) {
+    setEventSlug(slug);
+    setTicketType(EVENTS[slug]?.tickets.some((t) => t.id === 'vip') ? 'vip' : EVENTS[slug]?.tickets[0]?.id || '');
+  }
+
   async function handleSend(e) {
     e.preventDefault();
     setError(''); setSending(true);
     try {
-      const r = await adminApi.post(`/admin/sponsorships/${sponsorship._id}/complimentary-tickets`, { ticketType, quantity: Number(quantity) });
+      const r = await adminApi.post(`/admin/sponsorships/${sponsorship._id}/complimentary-tickets`, { eventSlug, ticketType, quantity: Number(quantity) });
       onSent(r.data.message);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to send complimentary tickets');
@@ -210,11 +211,17 @@ function ComplimentaryTicketsModal({ sponsorship, onClose, onSent }) {
         <p className="text-xs text-nia-text-faint mb-3">{alreadySent} complimentary ticket{alreadySent === 1 ? '' : 's'} already sent to this sponsor so far.</p>
       )}
       <form onSubmit={handleSend} className="flex flex-col gap-3">
+        <div>
+          <label className={label}>Event</label>
+          <select className={inputCls} value={eventSlug} onChange={(e) => updateEvent(e.target.value)}>
+            {Object.values(EVENTS).map((ev) => <option key={ev.slug} value={ev.slug}>{ev.name}</option>)}
+          </select>
+        </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className={label}>Ticket Type</label>
             <select className={inputCls} value={ticketType} onChange={(e) => setTicketType(e.target.value)}>
-              {TICKET_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+              {EVENTS[eventSlug]?.tickets.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
             </select>
           </div>
           <div>

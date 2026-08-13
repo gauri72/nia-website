@@ -1,19 +1,24 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  FaUser, FaChild, FaStar, FaShieldAlt, FaTag, FaIdCard,
+  FaUser, FaChild, FaStar, FaGlassCheers, FaShieldAlt, FaTag, FaIdCard,
   FaRobot, FaArrowRight, FaArrowLeft, FaLock, FaCheckCircle,
 } from 'react-icons/fa';
 import { startTicketPayment } from '../../services/paymentService';
 import api from '../../services/api';
 import { translateApiError } from '../../i18n/translateApiError';
+import { DEFAULT_EVENT_SLUG, EVENTS } from '../../config/events';
 import './BookTickets.css';
 
-const TICKETS = [
-  { id: 'regular', icon: <FaUser />,  price: 20, highlight: false, color: 'navy'   },
-  { id: 'vip',     icon: <FaStar />,  price: 45, highlight: true,  color: 'orange' },
-  { id: 'child',   icon: <FaChild />, price: 5,  highlight: false, color: 'green'  },
-];
+// Icon per ticket id — kept local (not in the shared config) since JSX
+// elements don't belong in plain data; falls back to a generic star for any
+// future ticket id that isn't listed here.
+const TICKET_ICONS = {
+  regular: <FaUser />,
+  vip: <FaStar />,
+  child: <FaChild />,
+  gala: <FaGlassCheers />,
+};
 
 // Same simple check the server enforces — catches stray spaces, missing @,
 // missing domain, etc. before the buyer ever leaves this page.
@@ -34,24 +39,29 @@ function StepBar({ step, steps }) {
   );
 }
 
+// `tr` is the caller's namespaced translator (see BookTickets' own `tr`),
+// passed in under the name `t` for brevity at call sites.
 function AIHint({ ticket, qty, discount, t }) {
   if (qty < 1) return null;
   const saved = discount > 0 ? Math.round(ticket.price * qty * discount) : 0;
   if (ticket.id === 'vip' && qty >= 2)
-    return <span className="bt-ai-hint"><FaRobot /> {t('events.booking.aiHints.vipMultiple', { qty })}</span>;
+    return <span className="bt-ai-hint"><FaRobot /> {t('booking.aiHints.vipMultiple', { qty })}</span>;
   if (ticket.id === 'regular' && qty >= 4)
-    return <span className="bt-ai-hint"><FaRobot /> {t('events.booking.aiHints.regularUpsell', { qty, diff: (45 - 20) * qty })}</span>;
+    return <span className="bt-ai-hint"><FaRobot /> {t('booking.aiHints.regularUpsell', { qty, diff: (45 - 20) * qty })}</span>;
   if (saved > 0)
-    return <span className="bt-ai-hint"><FaRobot /> {t('events.booking.aiHints.discountSaved', { amount: saved })}</span>;
+    return <span className="bt-ai-hint"><FaRobot /> {t('booking.aiHints.discountSaved', { amount: saved })}</span>;
   return null;
 }
 
-export default function BookTickets() {
+export default function BookTickets({ eventSlug = DEFAULT_EVENT_SLUG, i18nNamespace = 'events' }) {
   const { t, i18n } = useTranslation();
   const [step, setStep] = useState(0);
 
+  const TICKETS = EVENTS[eventSlug].tickets;
+  const tr = (key, opts) => t(`${i18nNamespace}.${key}`, opts);
+
   // Step 0 — ticket selection
-  const [qtys, setQtys]               = useState({ regular: 0, vip: 0, child: 0 });
+  const [qtys, setQtys] = useState(() => Object.fromEntries(TICKETS.map((tk) => [tk.id, 0])));
   const [membershipCode, setMembershipCode] = useState('');
 
   // Step 1 — attendee details + discount code (needs email, so validated here, not step 0)
@@ -66,10 +76,10 @@ export default function BookTickets() {
   const [freeSuccess, setFreeSuccess] = useState('');
 
   const STEPS = [
-    t('events.booking.steps.selectTickets'),
-    t('events.booking.steps.yourDetails'),
-    t('events.booking.steps.reviewOrder'),
-    t('events.booking.steps.payment'),
+    tr('booking.steps.selectTickets'),
+    tr('booking.steps.yourDetails'),
+    tr('booking.steps.reviewOrder'),
+    tr('booking.steps.payment'),
   ];
 
   // ── Derived totals ──
@@ -112,6 +122,7 @@ export default function BookTickets() {
           email: attendee.email.trim(),
           tickets: selectedTickets.map(tk => ({ ticket_type: tk.id, quantity: qtys[tk.id] })),
           discountCode: discountCode.trim() || undefined,
+          eventSlug,
         });
         if (data.finalAmount < data.subtotal) {
           setDiscount({ valid: true, discount_amount: data.discount_amount, finalAmount: data.finalAmount, source: data.source });
@@ -143,15 +154,16 @@ export default function BookTickets() {
         attendeeNames: totalTickets > 1 ? attendeeNames.trim() : undefined,
         tickets: ticketLines,
         discountCode: discountCode.trim() || undefined,
+        eventSlug,
       });
       // A fully-discounted order is finalized immediately server-side — there's no
       // Mollie checkout to redirect to. Anything else redirects the browser away.
       if (result.free) {
-        setFreeSuccess(result.message || t('events.booking.freeSuccessDefault'));
+        setFreeSuccess(result.message || tr('booking.freeSuccessDefault'));
         setPaying(false);
       }
     } catch (err) {
-      setPayError(translateApiError(err?.response?.data?.error, i18n.language) || t('events.booking.errors.paymentFailed'));
+      setPayError(translateApiError(err?.response?.data?.error, i18n.language) || tr('booking.errors.paymentFailed'));
       setPaying(false);
     }
   }
@@ -161,8 +173,8 @@ export default function BookTickets() {
       <div className="book-tickets__inner">
 
         <div className="book-tickets__header">
-          <h2 className="book-tickets__heading">{t('events.booking.heading')}</h2>
-          <p className="book-tickets__sub">{t('events.booking.sub')}</p>
+          <h2 className="book-tickets__heading">{tr('booking.heading')}</h2>
+          <p className="book-tickets__sub">{tr('booking.sub')}</p>
         </div>
 
         <StepBar step={step} steps={STEPS} />
@@ -175,17 +187,17 @@ export default function BookTickets() {
             {/* Shared codes */}
             <div className="bt-codes">
               <div className="bt-codes__field">
-                <label className="bt-field__label"><FaIdCard /> {t('events.booking.membershipCodeLabel')}</label>
+                <label className="bt-field__label"><FaIdCard /> {tr('booking.membershipCodeLabel')}</label>
                 <input className="bt-code-input bt-code-input--full" placeholder={t('membership.plans.memberCodePlaceholder')} value={membershipCode} onChange={e => setMembershipCode(e.target.value)} />
               </div>
               <div className="bt-codes__field">
-                <label className="bt-field__label"><FaTag /> {t('events.booking.discountCodeLabel')} <span className="bt-optional">{t('events.booking.details.optional')}</span></label>
+                <label className="bt-field__label"><FaTag /> {tr('booking.discountCodeLabel')} <span className="bt-optional">{tr('booking.details.optional')}</span></label>
                 <input
-                  className="bt-code-input bt-code-input--full" placeholder={t('events.booking.discountCodePlaceholder')}
+                  className="bt-code-input bt-code-input--full" placeholder={tr('booking.discountCodePlaceholder')}
                   value={discountCode}
                   onChange={e => { setDiscountCode(e.target.value); setDiscount(null); }}
                 />
-                <span className="bt-pfield__hint">{t('events.booking.discountValidateHint')}</span>
+                <span className="bt-pfield__hint">{tr('booking.discountValidateHint')}</span>
               </div>
             </div>
 
@@ -194,16 +206,16 @@ export default function BookTickets() {
               {TICKETS.map((tk) => {
                 const qty       = qtys[tk.id];
                 const lineTotal = tk.price * qty;
-                const type = t(`events.booking.tickets.${tk.id}.type`);
-                const perks = t(`events.booking.tickets.${tk.id}.perks`, { returnObjects: true });
-                const badge = tk.id === 'vip' ? t('events.booking.tickets.vip.badge') : null;
+                const type = tr(`booking.tickets.${tk.id}.type`);
+                const perks = tr(`booking.tickets.${tk.id}.perks`, { returnObjects: true });
+                const badge = tk.id === 'vip' ? tr('booking.tickets.vip.badge') : null;
 
                 return (
                   <div key={tk.id} className={`bt-row${tk.highlight ? ' bt-row--highlight' : ''}${qty > 0 ? ' bt-row--active' : ''}`}>
                     {badge && <span className="bt-row__badge">{badge}</span>}
 
                     <div className="bt-row__identity">
-                      <div className={`bt-row__icon-wrap bt-row__icon-wrap--${tk.color}`}>{tk.icon}</div>
+                      <div className={`bt-row__icon-wrap bt-row__icon-wrap--${tk.color}`}>{TICKET_ICONS[tk.id] || <FaStar />}</div>
                       <div>
                         <p className="bt-row__type">{type}</p>
                         <ul className="bt-row__perks">{perks.map(p => <li key={p}>{p}</li>)}</ul>
@@ -213,17 +225,17 @@ export default function BookTickets() {
                     <div className="bt-row__controls">
                       <div className="bt-row__price-wrap">
                         <span className={`bt-row__price bt-row__price--${tk.color}`}>€{tk.price}</span>
-                        <span className="bt-row__price-unit">{t('events.booking.perPerson')}</span>
+                        <span className="bt-row__price-unit">{tr('booking.perPerson')}</span>
                       </div>
                       <div className="bt-field bt-field--qty">
-                        <label className="bt-field__label">{t('events.booking.qtyLabel')}</label>
+                        <label className="bt-field__label">{tr('booking.qtyLabel')}</label>
                         <div className="bt-qty">
-                          <button className="bt-qty__btn" onClick={() => changeQty(tk.id, -1)} aria-label={t('events.booking.decreaseAria')}>−</button>
+                          <button className="bt-qty__btn" onClick={() => changeQty(tk.id, -1)} aria-label={tr('booking.decreaseAria')}>−</button>
                           <span className="bt-qty__num">{qty}</span>
-                          <button className="bt-qty__btn" onClick={() => changeQty(tk.id, 1)} aria-label={t('events.booking.increaseAria')}>+</button>
+                          <button className="bt-qty__btn" onClick={() => changeQty(tk.id, 1)} aria-label={tr('booking.increaseAria')}>+</button>
                         </div>
                       </div>
-                      <AIHint ticket={tk} qty={qty} discount={0} t={t} />
+                      <AIHint ticket={tk} qty={qty} discount={0} t={tr} />
                     </div>
 
                     <div className="bt-row__action">
@@ -238,13 +250,13 @@ export default function BookTickets() {
 
             <p className="book-tickets__note">
               <FaShieldAlt className="book-tickets__note-icon" />
-              {t('events.booking.secureBookingNote')} &nbsp;|&nbsp; {t('events.booking.limitedSeatsNote')}
+              {tr('booking.secureBookingNote')} &nbsp;|&nbsp; {tr('booking.limitedSeatsNote')}
             </p>
 
             <div className="bt-bottom">
               {hasTickets && (
                 <p className="bt-bottom__summary">
-                  {selectedTickets.map(tk => `${t(`events.booking.tickets.${tk.id}.type`)} × ${qtys[tk.id]}`).join(' + ')}
+                  {selectedTickets.map(tk => `${tr(`booking.tickets.${tk.id}.type`)} × ${qtys[tk.id]}`).join(' + ')}
                   {' '}&nbsp;=&nbsp; <strong>€{subtotal}</strong>
                 </p>
               )}
@@ -253,7 +265,7 @@ export default function BookTickets() {
                 disabled={!hasTickets}
                 onClick={() => setStep(1)}
               >
-                {t('events.booking.continue')} <FaArrowRight />
+                {tr('booking.continue')} <FaArrowRight />
               </button>
             </div>
           </>
@@ -264,47 +276,47 @@ export default function BookTickets() {
             ══════════════════════════════ */}
         {step === 1 && (
           <div className="bt-form-step">
-            <h3 className="bt-form-step__heading">{t('events.booking.details.heading')}</h3>
-            <p className="bt-form-step__sub">{t('events.booking.details.sub')}</p>
+            <h3 className="bt-form-step__heading">{tr('booking.details.heading')}</h3>
+            <p className="bt-form-step__sub">{tr('booking.details.sub')}</p>
 
             <div className="bt-pfield bt-pfield--full">
-              <label className="bt-pfield__label">{t('events.booking.details.fullName')} <span className="bt-required">*</span></label>
-              <input className="bt-pfield__input" name="name" type="text" placeholder={t('events.booking.details.fullName')} value={attendee.name} onChange={handleAttendeeField} required />
+              <label className="bt-pfield__label">{tr('booking.details.fullName')} <span className="bt-required">*</span></label>
+              <input className="bt-pfield__input" name="name" type="text" placeholder={tr('booking.details.fullName')} value={attendee.name} onChange={handleAttendeeField} required />
             </div>
 
             <div className="bt-pfield bt-pfield--full">
-              <label className="bt-pfield__label">{t('events.booking.details.emailAddress')} <span className="bt-required">*</span></label>
+              <label className="bt-pfield__label">{tr('booking.details.emailAddress')} <span className="bt-required">*</span></label>
               <input className="bt-pfield__input" name="email" type="email" placeholder="you@email.com" value={attendee.email} onChange={handleAttendeeField} required />
               {emailTouched && !emailValid && (
-                <span className="bt-pfield__hint" style={{ color: '#e74c3c' }}>{t('events.booking.details.emailInvalidHint')}</span>
+                <span className="bt-pfield__hint" style={{ color: '#e74c3c' }}>{tr('booking.details.emailInvalidHint')}</span>
               )}
             </div>
 
             <div className="bt-pfield bt-pfield--full">
-              <label className="bt-pfield__label">{t('events.booking.details.phoneNumber')} <span className="bt-optional">{t('events.booking.details.optional')}</span></label>
+              <label className="bt-pfield__label">{tr('booking.details.phoneNumber')} <span className="bt-optional">{tr('booking.details.optional')}</span></label>
               <input className="bt-pfield__input" name="phone" type="tel" placeholder="+31 6 12345678" value={attendee.phone} onChange={handleAttendeeField} />
             </div>
 
             {totalTickets > 1 && (
               <div className="bt-pfield bt-pfield--full">
                 <label className="bt-pfield__label">
-                  {t('events.booking.details.otherAttendeesLabel', { count: totalTickets - 1 })} <span className="bt-required">*</span>
+                  {tr('booking.details.otherAttendeesLabel', { count: totalTickets - 1 })} <span className="bt-required">*</span>
                 </label>
                 <textarea
                   className="bt-pfield__input bt-pfield__textarea"
-                  placeholder={Array.from({ length: totalTickets - 1 }, (_, i) => `${i + 1}. ${t('events.booking.details.fullName')}`).join('\n')}
+                  placeholder={Array.from({ length: totalTickets - 1 }, (_, i) => `${i + 1}. ${tr('booking.details.fullName')}`).join('\n')}
                   value={attendeeNames}
                   onChange={e => setAttendeeNames(e.target.value)}
                   rows={totalTickets}
                 />
-                <span className="bt-pfield__hint">{t('events.booking.details.otherAttendeesHint', { count: totalTickets - 1 })}</span>
+                <span className="bt-pfield__hint">{tr('booking.details.otherAttendeesHint', { count: totalTickets - 1 })}</span>
               </div>
             )}
 
             <div className="bt-nav">
-              <button className="bt-back-btn" onClick={() => setStep(0)}><FaArrowLeft /> {t('events.booking.back')}</button>
+              <button className="bt-back-btn" onClick={() => setStep(0)}><FaArrowLeft /> {tr('booking.back')}</button>
               <button className="bt-continue-btn" disabled={!canProceedStep1 || applyingDiscount} onClick={handleContinueToReview}>
-                {applyingDiscount ? t('events.booking.details.checking') : <>{t('events.booking.continue')} <FaArrowRight /></>}
+                {applyingDiscount ? tr('booking.details.checking') : <>{tr('booking.continue')} <FaArrowRight /></>}
               </button>
             </div>
           </div>
@@ -315,15 +327,15 @@ export default function BookTickets() {
             ══════════════════════════════ */}
         {step === 2 && (
           <div className="bt-review">
-            <h3 className="bt-form-step__heading">{t('events.booking.review.heading')}</h3>
-            <p className="bt-form-step__sub">{t('events.booking.review.sub')}</p>
+            <h3 className="bt-form-step__heading">{tr('booking.review.heading')}</h3>
+            <p className="bt-form-step__sub">{tr('booking.review.sub')}</p>
 
             <div className="bt-review__table">
               <div className="bt-review__thead">
-                <span>{t('events.booking.review.colTicket')}</span>
-                <span>{t('events.booking.review.colPrice')}</span>
-                <span>{t('events.booking.review.colQty')}</span>
-                <span>{t('events.booking.review.colTotal')}</span>
+                <span>{tr('booking.review.colTicket')}</span>
+                <span>{tr('booking.review.colPrice')}</span>
+                <span>{tr('booking.review.colQty')}</span>
+                <span>{tr('booking.review.colTotal')}</span>
               </div>
               {selectedTickets.map(tk => {
                 const lineTotal = tk.price * qtys[tk.id];
@@ -331,7 +343,7 @@ export default function BookTickets() {
                   <div key={tk.id} className="bt-review__row">
                     <span className="bt-review__ticket-name">
                       <span className={`bt-review__dot bt-review__dot--${tk.color}`} />
-                      {t(`events.booking.tickets.${tk.id}.type`)}
+                      {tr(`booking.tickets.${tk.id}.type`)}
                     </span>
                     <span>€{tk.price}</span>
                     <span>{qtys[tk.id]}</span>
@@ -341,7 +353,7 @@ export default function BookTickets() {
               })}
               {discount?.valid && (
                 <div className="bt-review__discount-row">
-                  <span>{discount.source === 'membership' ? t('events.booking.review.membershipDiscount') : t('events.booking.review.discountWithCode', { code: discountCode.trim().toUpperCase() })}</span>
+                  <span>{discount.source === 'membership' ? tr('booking.review.membershipDiscount') : tr('booking.review.discountWithCode', { code: discountCode.trim().toUpperCase() })}</span>
                   <span />
                   <span />
                   <span className="bt-review__saved-amt">−€{totalSaved}</span>
@@ -354,7 +366,7 @@ export default function BookTickets() {
                 </div>
               )}
               <div className="bt-review__total-row">
-                <span>{t('events.booking.review.totalPayable')}</span>
+                <span>{tr('booking.review.totalPayable')}</span>
                 <span />
                 <span />
                 <span className="bt-review__grand-total">€{grandTotal}</span>
@@ -362,7 +374,7 @@ export default function BookTickets() {
             </div>
 
             <div className="bt-review__attendee">
-              <p className="bt-review__attendee-label">{t('events.booking.review.ticketsFor')}</p>
+              <p className="bt-review__attendee-label">{tr('booking.review.ticketsFor')}</p>
               <p className="bt-review__attendee-name">{attendee.name}</p>
               <p className="bt-review__attendee-email">{attendee.email}</p>
               {attendee.phone && <p className="bt-review__attendee-email">{attendee.phone}</p>}
@@ -370,8 +382,8 @@ export default function BookTickets() {
 
             {totalTickets > 1 && attendeeNames.trim() && (
               <div className="bt-review__attendee">
-                <p className="bt-review__attendee-label">{t('events.booking.review.allAttendees', { count: totalTickets })}</p>
-                <p className="bt-review__attendee-email">1. {attendee.name} {t('events.booking.review.youSuffix')}</p>
+                <p className="bt-review__attendee-label">{tr('booking.review.allAttendees', { count: totalTickets })}</p>
+                <p className="bt-review__attendee-email">1. {attendee.name} {tr('booking.review.youSuffix')}</p>
                 {attendeeNames.trim().split('\n').filter(n => n.trim()).map((n, i) => (
                   <p key={i} className="bt-review__attendee-email">{i + 2}. {n.trim()}</p>
                 ))}
@@ -379,9 +391,9 @@ export default function BookTickets() {
             )}
 
             <div className="bt-nav">
-              <button className="bt-back-btn" onClick={() => setStep(1)}><FaArrowLeft /> {t('events.booking.back')}</button>
+              <button className="bt-back-btn" onClick={() => setStep(1)}><FaArrowLeft /> {tr('booking.back')}</button>
               <button className="bt-continue-btn" onClick={() => setStep(3)}>
-                {t('events.booking.review.pay', { amount: grandTotal })} <FaArrowRight />
+                {tr('booking.review.pay', { amount: grandTotal })} <FaArrowRight />
               </button>
             </div>
           </div>
@@ -392,19 +404,19 @@ export default function BookTickets() {
             ══════════════════════════════ */}
         {step === 3 && freeSuccess && (
           <div className="bt-payment-step">
-            <h3 className="bt-form-step__heading"><FaCheckCircle style={{ color: '#2ecc71' }} /> {t('events.booking.payment.allSet')}</h3>
+            <h3 className="bt-form-step__heading"><FaCheckCircle style={{ color: '#2ecc71' }} /> {tr('booking.payment.allSet')}</h3>
             <p className="bt-form-step__sub">{freeSuccess}</p>
-            <p className="bt-payment__disclaimer">{t('events.booking.payment.ticketsEmailed', { email: attendee.email })}</p>
+            <p className="bt-payment__disclaimer">{tr('booking.payment.ticketsEmailed', { email: attendee.email })}</p>
           </div>
         )}
 
         {step === 3 && !freeSuccess && (
           <div className="bt-payment-step">
-            <h3 className="bt-form-step__heading">{t('events.booking.payment.confirmPay')}</h3>
-            <p className="bt-form-step__sub">{t('events.booking.payment.redirectNotice', { amount: grandTotal })}</p>
+            <h3 className="bt-form-step__heading">{tr('booking.payment.confirmPay')}</h3>
+            <p className="bt-form-step__sub">{tr('booking.payment.redirectNotice', { amount: grandTotal })}</p>
 
             <p className="bt-payment__disclaimer">
-              <FaShieldAlt /> {t('events.booking.payment.secureNotice')}
+              <FaShieldAlt /> {tr('booking.payment.secureNotice')}
             </p>
 
             {payError && (
@@ -412,13 +424,13 @@ export default function BookTickets() {
             )}
 
             <div className="bt-nav">
-              <button className="bt-back-btn" onClick={() => setStep(2)} disabled={paying}><FaArrowLeft /> {t('events.booking.back')}</button>
+              <button className="bt-back-btn" onClick={() => setStep(2)} disabled={paying}><FaArrowLeft /> {tr('booking.back')}</button>
               <button
                 className="bt-continue-btn bt-continue-btn--pay"
                 disabled={paying}
                 onClick={handlePay}
               >
-                {paying ? t('events.booking.payment.processing') : <><FaLock /> {t('events.booking.payment.paySecurely', { amount: grandTotal })}</>}
+                {paying ? tr('booking.payment.processing') : <><FaLock /> {tr('booking.payment.paySecurely', { amount: grandTotal })}</>}
               </button>
             </div>
           </div>

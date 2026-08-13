@@ -8,3 +8,56 @@
   width: 100%;
   height: auto;
 }
+
+.event-hero--overlay {
+  position: relative;
+}
+
+.event-hero--overlay .event-hero__bg {
+  min-height: 340px;
+  object-fit: cover;
+  height: 100%;
+  position: absolute;
+  inset: 0;
+}
+
+.event-hero--overlay {
+  min-height: 340px;
+  display: flex;
+  align-items: center;
+}
+
+.event-hero__content {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: #fff;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.55);
+}
+
+.event-hero__date {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #E8641A;
+  margin: 0 0 0.75rem;
+}
+
+.event-hero__title {
+  font-size: clamp(1.75rem, 4vw, 3rem);
+  font-weight: 800;
+  line-height: 1.15;
+  margin: 0 0 0.75rem;
+}
+
+.event-hero__tagline {
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  font-weight: 500;
+  margin: 0;
+  opacity: 0.95;
+}

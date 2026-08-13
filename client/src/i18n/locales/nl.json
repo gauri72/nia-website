@@ -596,6 +596,113 @@
       "freeSuccessDefault": "Uw tickets worden volledig gedekt door de korting — geen betaling vereist."
     }
   },
+  "galaEvent": {
+    "hero": {
+      "dateLabel": "12 DECEMBER 2026",
+      "title": "NIA Kerst Gala Diner 2026",
+      "tagline": "Een December om te Onthouden. Dineren, Dansen, Vieren, op de NIA Manier!"
+    },
+    "info": {
+      "date": { "label": "DATUM", "primary": "12 DECEMBER 2026", "secondary": "ZATERDAG" },
+      "time": { "label": "TIJD", "primary": "18:00", "secondary": "EN VERDER" },
+      "venue": { "label": "LOCATIE", "primary": "DE DUINPAN", "secondary": "Sportlaan 34, 2191 XH De Zilk\nGemeente Noordwijk" },
+      "theme": { "label": "THEMA VAN HET EVENEMENT", "primary": "Een Avond van", "secondary": "Elegantie & Feest" },
+      "viewOnMap": "Bekijk op Kaart"
+    },
+    "about": {
+      "heading": "Over Het Gala",
+      "body1": "Een December om te Onthouden — sluit u bij ons aan voor NIA's eerste Kerst Gala Diner, een elegante avond om het jaar samen af te sluiten.",
+      "body2": "Dineer, dans en vier op de NIA manier, met een feestelijk driegangendiner, live muziek en een avond van saamhorigheid met de gemeenschap.",
+      "highlightsBtn": "HOOGTEPUNTEN VAN HET EVENEMENT",
+      "highlights": {
+        "performances": "Live Muziek &\nEntertainment",
+        "cuisine": "Feestelijk\nDriegangendiner",
+        "togetherness": "Saamhorigheid in de\nGemeenschap",
+        "surprises": "Dansen &\nOnvergetelijke Momenten"
+      }
+    },
+    "cta": {
+      "title": "Doe Deze December Mee!",
+      "sub": "Dineer, dans en vier\nop de NIA manier.",
+      "becomeMemberBtn": "WORD LID"
+    },
+    "booking": {
+      "heading": "Boek Uw Gala-ervaring",
+      "sub": "Verzeker uzelf van een plek bij de decemberviering in slechts een paar stappen.",
+      "steps": {
+        "selectTickets": "Selecteer Tickets",
+        "yourDetails": "Uw Gegevens",
+        "reviewOrder": "Bestelling Controleren",
+        "payment": "Betaling"
+      },
+      "membershipCodeLabel": "Lidmaatschapscode",
+      "discountCodeLabel": "Kortingscode",
+      "discountCodePlaceholder": "bijv. NIA10",
+      "discountValidateHint": "We controleren dit zodra u uw e-mailadres op de volgende stap invoert.",
+      "tickets": {
+        "gala": {
+          "type": "Gala-ervaring",
+          "perks": [
+            "Driegangendiner",
+            "Live muziek & dansen"
+          ]
+        }
+      },
+      "perPerson": "/ persoon",
+      "qtyLabel": "Aantal",
+      "decreaseAria": "Verlagen",
+      "increaseAria": "Verhogen",
+      "secureBookingNote": "Veilig Boeken",
+      "limitedSeatsNote": "Beperkt Aantal Plaatsen — Boek Snel!",
+      "continue": "Doorgaan",
+      "back": "Terug",
+      "aiHints": {
+        "discountSaved": "Korting toegepast — u bespaart €{{amount}}!"
+      },
+      "details": {
+        "heading": "Uw Gegevens",
+        "sub": "We sturen uw tickets naar het onderstaande e-mailadres.",
+        "fullName": "Volledige Naam",
+        "emailAddress": "E-mailadres",
+        "phoneNumber": "Telefoonnummer",
+        "optional": "(optioneel)",
+        "emailInvalidHint": "Voer een geldig e-mailadres in (bijv. u@email.com) — hier worden uw tickets naartoe gestuurd.",
+        "otherAttendeesLabel_one": "Namen van Overige Deelnemers ({{count}} persoon)",
+        "otherAttendeesLabel_other": "Namen van Overige Deelnemers ({{count}} personen)",
+        "otherAttendeesHint_one": "Vermeld de andere {{count}} deelnemer, één naam per regel.",
+        "otherAttendeesHint_other": "Vermeld de andere {{count}} deelnemers, één naam per regel.",
+        "checking": "Controleren…"
+      },
+      "review": {
+        "heading": "Controleer Uw Bestelling",
+        "sub": "Controleer uw tickets voordat u verdergaat naar de betaling.",
+        "colTicket": "Ticket",
+        "colPrice": "Prijs",
+        "colQty": "Aantal",
+        "colTotal": "Totaal",
+        "membershipDiscount": "Lidmaatschapskorting",
+        "discountWithCode": "Korting ({{code}})",
+        "totalPayable": "Te Betalen Bedrag",
+        "ticketsFor": "Tickets voor",
+        "allAttendees": "Alle Deelnemers ({{count}})",
+        "youSuffix": "(u)",
+        "pay": "Betaal €{{amount}}"
+      },
+      "payment": {
+        "allSet": "U bent helemaal klaar!",
+        "ticketsEmailed": "Uw tickets zijn verzonden naar {{email}}.",
+        "confirmPay": "Bevestigen & Betalen",
+        "redirectNotice": "U wordt doorgestuurd naar de beveiligde checkout van Mollie om de betaling van €{{amount}} te voltooien. Alle gangbare betaalmethoden worden geaccepteerd (iDEAL, kaart, PayPal en meer).",
+        "secureNotice": "Uw betaling is versleuteld en veilig. Tickets worden direct na betaling per e-mail verzonden.",
+        "processing": "Verwerken…",
+        "paySecurely": "Betaal €{{amount}} veilig"
+      },
+      "errors": {
+        "paymentFailed": "Betaling mislukt. Probeer het opnieuw."
+      },
+      "freeSuccessDefault": "Uw tickets worden volledig gedekt door de korting — geen betaling vereist."
+    }
+  },
   "dashboardAuth": {
     "memberPortal": "Ledenportaal",
     "login": {

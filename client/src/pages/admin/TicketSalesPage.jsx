@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Ticket, Euro, Users, FileText, QrCode, Send, Undo2, Search, Gift, Eye, Ban } from 'lucide-react';
 import adminApi from '../../services/adminApi';
+import { EVENTS } from '../../config/events';
 import StatusBadge from '../../components/admin/StatusBadge';
 import StatCard from '../../components/admin/StatCard';
 import Modal from '../../components/admin/Modal';
@@ -48,6 +49,7 @@ async function downloadBlob(path, filename) {
 export default function TicketSalesPage() {
   const [data, setData] = useState(null);
   const [search, setSearch] = useState('');
+  const [eventFilter, setEventFilter] = useState('');
   const [page, setPage] = useState(1);
   const [detail, setDetail] = useState(null);
   const [refundAmount, setRefundAmount] = useState('');
@@ -56,7 +58,7 @@ export default function TicketSalesPage() {
   const { toasts, push } = useToasts();
 
   const [vipOpen, setVipOpen] = useState(false);
-  const [vipForm, setVipForm] = useState({ name: '', email: '', quantity: 1, guestNamesText: '' });
+  const [vipForm, setVipForm] = useState({ name: '', email: '', quantity: 1, guestNamesText: '', eventSlug: 'independence-day-2026', ticketType: 'vip' });
   const [vipBusy, setVipBusy] = useState(false);
   const [vipResult, setVipResult] = useState(null);
 
@@ -64,11 +66,12 @@ export default function TicketSalesPage() {
   // to page 1 while a bare load() (after void/refund/resend) stays put.
   function load(targetPage = page) {
     setData(null);
-    adminApi.get('/admin/legacy-tickets', { params: { search: search || undefined, page: targetPage, limit: 25 } })
+    const eventId = eventFilter ? EVENTS[eventFilter]?.eventId : undefined;
+    adminApi.get('/admin/legacy-tickets', { params: { search: search || undefined, eventId, page: targetPage, limit: 25 } })
       .then((r) => { setData(r.data); setPage(targetPage); });
   }
 
-  useEffect(() => { load(1); }, []);
+  useEffect(() => { load(1); }, [eventFilter]);
 
   async function openDetail(id) {
     const r = await adminApi.get(`/admin/legacy-tickets/${id}`);
@@ -155,9 +158,14 @@ export default function TicketSalesPage() {
   }
 
   function openVipModal() {
-    setVipForm({ name: '', email: '', quantity: 1, guestNamesText: '' });
+    setVipForm({ name: '', email: '', quantity: 1, guestNamesText: '', eventSlug: 'independence-day-2026', ticketType: 'vip' });
     setVipResult(null);
     setVipOpen(true);
+  }
+
+  function updateVipEvent(eventSlug) {
+    const firstType = EVENTS[eventSlug]?.tickets[0]?.id || '';
+    setVipForm((f) => ({ ...f, eventSlug, ticketType: EVENTS[eventSlug]?.tickets.some((t) => t.id === 'vip') ? 'vip' : firstType }));
   }
 
   async function handleCreateVip() {
@@ -184,6 +192,8 @@ export default function TicketSalesPage() {
         email: vipForm.email.trim(),
         quantity,
         guestNames,
+        eventSlug: vipForm.eventSlug,
+        ticketType: vipForm.ticketType,
       });
       setVipResult(r.data.ticket);
       push(r.data.message);
@@ -224,6 +234,12 @@ export default function TicketSalesPage() {
           />
         </div>
         <Button variant="secondary" onClick={() => load(1)}>Search</Button>
+        <select className={inputCls} value={eventFilter} onChange={(e) => setEventFilter(e.target.value)}>
+          <option value="">All events</option>
+          {Object.values(EVENTS).map((e) => (
+            <option key={e.slug} value={e.slug}>{e.name}</option>
+          ))}
+        </select>
       </div>
 
       {!data && (
@@ -387,10 +403,22 @@ export default function TicketSalesPage() {
           {!vipResult ? (
             <div className="flex flex-col gap-3">
               <p className="text-sm text-nia-text-faint">
-                Issues one complimentary VIP entry (no charge) for the whole party, with a single consolidated PDF —
-                one personalised page per guest, all sharing one QR code scannable at the door.
+                Issues complimentary entry (no charge) for the whole party, as one consolidated PDF —
+                a personalised page per guest, each with their own individually scannable QR code.
               </p>
 
+              <div>
+                <label className="text-xs font-semibold text-nia-text-muted uppercase tracking-wide mb-1 block">Event</label>
+                <select className={`${inputCls} w-full`} value={vipForm.eventSlug} onChange={(e) => updateVipEvent(e.target.value)}>
+                  {Object.values(EVENTS).map((e) => <option key={e.slug} value={e.slug}>{e.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-nia-text-muted uppercase tracking-wide mb-1 block">Ticket Type</label>
+                <select className={`${inputCls} w-full`} value={vipForm.ticketType} onChange={(e) => setVipForm((f) => ({ ...f, ticketType: e.target.value }))}>
+                  {EVENTS[vipForm.eventSlug]?.tickets.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+                </select>
+              </div>
               <div>
                 <label className="text-xs font-semibold text-nia-text-muted uppercase tracking-wide mb-1 block">Primary Contact Name</label>
                 <input className={`${inputCls} w-full`} value={vipForm.name} onChange={(e) => setVipForm((f) => ({ ...f, name: e.target.value }))} placeholder="e.g. Ambassador Sharma" />
