@@ -68,6 +68,59 @@ async function generateQRDataURL(text) {
   return QRCode.toDataURL(text, { width: 200, margin: 1, color: { dark: '#0F1F4B', light: '#ffffff' } });
 }
 
+// ── Inline QR section, shared by every ticket-bearing email ───
+// One block + one CID-embedded image per unit, so the email body matches
+// the attached PDF exactly — each attendee's own QR is right there in the
+// email, not just in the attachment. Falls back to a single order-level
+// block for the rare doc that somehow still has no units.
+async function buildQrSection(ticket) {
+  const units = ticket.units?.length
+    ? ticket.units
+    : [{ unitNumber: ticket.ticketNumber, ticketType: null, attendeeName: null }];
+
+  const attachments = [];
+  const blocks = [];
+  for (let i = 0; i < units.length; i++) {
+    const unit = units[i];
+    const qrDataUrl = await generateQRDataURL(unit.unitNumber);
+    const qrBuffer = Buffer.from(qrDataUrl.replace(/^data:image\/png;base64,/, ''), 'base64');
+    const qrCid = `qr-${unit.unitNumber}@nia`;
+    attachments.push({ filename: `${unit.unitNumber}-QR.png`, content: qrBuffer, contentType: 'image/png', cid: qrCid });
+
+    const caption = units.length > 1
+      ? `Ticket ${i + 1} of ${units.length}${unit.attendeeName ? ` — ${escapeHtml(unit.attendeeName)}` : ''}${unit.ticketType ? ` (${escapeHtml(unit.ticketType)})` : ''} · ${unit.unitNumber}`
+      : `Scan at event entry — ${unit.unitNumber}`;
+    blocks.push(`
+      <div class="qr-block">
+        <img src="cid:${qrCid}" alt="QR Code" width="160" height="160" style="display:block;margin:0 auto;" />
+        <p>${caption}</p>
+      </div>`);
+  }
+  return { html: blocks.join(''), attachments };
+}
+
+// Preview-only counterpart — data: URLs inlined directly since there's no
+// real attachment to point a cid: reference at (used by the admin panel's
+// "Preview Email" action, which never sends anything).
+async function buildQrSectionPreview(ticket) {
+  const units = ticket.units?.length
+    ? ticket.units
+    : [{ unitNumber: ticket.ticketNumber, ticketType: null, attendeeName: null }];
+
+  const blocks = await Promise.all(units.map(async (unit, i) => {
+    const qrDataUrl = await generateQRDataURL(unit.unitNumber);
+    const caption = units.length > 1
+      ? `Ticket ${i + 1} of ${units.length}${unit.attendeeName ? ` — ${escapeHtml(unit.attendeeName)}` : ''}${unit.ticketType ? ` (${escapeHtml(unit.ticketType)})` : ''} · ${unit.unitNumber}`
+      : `Scan at event entry — ${unit.unitNumber}`;
+    return `
+      <div class="qr-block">
+        <img src="${qrDataUrl}" alt="QR Code" width="160" height="160" style="display:block;margin:0 auto;" />
+        <p>${caption}</p>
+      </div>`;
+  }));
+  return blocks.join('');
+}
+
 // ── PDF ticket generator ──────────────────────────────────────
 // One page per unit in ticket.units — each with its own QR encoding that
 // unit's unitNumber, so every attendee in a multi-quantity order can be
@@ -227,43 +280,38 @@ async function sendMembershipReceipt(membership) {
 // ── Event Ticket ──────────────────────────────────────────────
 const TICKET_CONFIRMATION_SUBJECT = (ticket) => `🎟️ NIA Event Tickets Confirmed — ${ticket.ticketNumber}`;
 
-// qrSrc is either `cid:...` (real send, referencing an attached image) or a
-// data: URL (preview, self-contained with no attachment involved) — kept as
-// one body builder so the preview can never drift from what actually sends.
-function buildTicketConfirmationBody(ticket, qrSrc) {
+// qrBlockHtml is pre-built by the caller — buildQrSection() (real send, CID
+// images) or buildQrSectionPreview() (preview, data: URLs) — kept as one
+// body builder either way so the preview can never drift from what actually
+// sends. One block per attendee, matching the attached PDF exactly.
+function buildTicketConfirmationBody(ticket, qrBlockHtml) {
   const ticketLines = ticket.tickets.map(t =>
     `<div class="detail-row"><span class="label">${t.ticket_type} × ${t.quantity}</span><span class="value">€${t.line_total.toFixed(2)}</span></div>`
   ).join('');
-
-  const qrBlock = `
-    <div class="qr-block">
-      <img src="${qrSrc}" alt="QR Code" width="160" height="160" style="display:block;margin:0 auto;" />
-      <p>Scan at event entry — ${ticket.ticketNumber}</p>
-    </div>`;
+  const multiUnit = (ticket.units?.length || 1) > 1;
 
   return `
     <p>Dear <strong>${escapeHtml(ticket.name)}</strong>,</p>
-    <p>🎟️ Your tickets for the NIA event have been confirmed! Your PDF ticket with QR code is attached.</p>
+    <p>🎟️ Your tickets for the NIA event have been confirmed! Your PDF ticket${multiUnit ? ' with one QR code per attendee' : ' with QR code'} is attached.</p>
     <div class="highlight"><strong>Ticket Number:</strong> ${ticket.ticketNumber}</div>
     <p><strong>Ticket Summary:</strong></p>
     ${ticketLines}
     ${ticket.discount_amount > 0 ? `<div class="detail-row"><span class="label">Discount Applied</span><span class="value" style="color:green;">−€${ticket.discount_amount.toFixed(2)}</span></div>` : ''}
     <div class="detail-row"><span class="label">Total Paid</span><span class="value amount">€${ticket.amount.toFixed(2)}</span></div>
     <div class="detail-row"><span class="label">Payment ID</span><span class="value">${ticket.mollie_payment_id}</span></div>
-    ${qrBlock}
-    <p style="margin-top:20px;">Please present your ticket (PDF or this email) at the event entrance. We look forward to seeing you! 🇮🇳🇳🇱</p>`;
+    ${qrBlockHtml}
+    <p style="margin-top:20px;">${multiUnit
+      ? 'Each attendee has their own ticket and QR code above (also in the attached PDF) — everyone can check in independently, so the group doesn’t need to arrive together.'
+      : 'Please present your ticket (PDF or this email) at the event entrance.'
+    } We look forward to seeing you! 🇮🇳🇳🇱</p>`;
 }
 
 async function sendTicketConfirmation(ticket) {
   const transporter = createTransporter();
 
-  // Generate QR as a buffer and embed as CID — data: URIs are blocked by most email clients
-  const qrDataUrl = await generateQRDataURL(ticket.ticketNumber);
-  const qrBuffer  = Buffer.from(qrDataUrl.replace(/^data:image\/png;base64,/, ''), 'base64');
-  const qrCid     = `qr-${ticket.ticketNumber}@nia`;
-
   const pdfBuffer = await generateTicketPDF(ticket);
-  const body = buildTicketConfirmationBody(ticket, `cid:${qrCid}`);
+  const { html: qrBlockHtml, attachments: qrAttachments } = await buildQrSection(ticket);
+  const body = buildTicketConfirmationBody(ticket, qrBlockHtml);
 
   await transporter.sendMail({
     from: FROM,
@@ -276,12 +324,7 @@ async function sendTicketConfirmation(ticket) {
         content: pdfBuffer,
         contentType: 'application/pdf',
       },
-      {
-        filename: 'ticket-qr.png',
-        content: qrBuffer,
-        contentType: 'image/png',
-        cid: qrCid,
-      },
+      ...qrAttachments,
     ],
   });
   console.log(`[Email] Ticket confirmation + PDF sent to ${ticket.email}`);
@@ -291,8 +334,8 @@ async function sendTicketConfirmation(ticket) {
 // markup sendTicketConfirmation sends, just with the QR inlined as a data
 // URL instead of a CID reference, since there's no attachment to point at.
 async function renderTicketConfirmationPreview(ticket) {
-  const qrDataUrl = await generateQRDataURL(ticket.ticketNumber);
-  const body = buildTicketConfirmationBody(ticket, qrDataUrl);
+  const qrBlockHtml = await buildQrSectionPreview(ticket);
+  const body = buildTicketConfirmationBody(ticket, qrBlockHtml);
   return { subject: TICKET_CONFIRMATION_SUBJECT(ticket), html: htmlWrap('Event Ticket Confirmation', body) };
 }
 
@@ -304,27 +347,20 @@ const VIP_PASS_SUBJECT = `Your VIP Passes for NIA's Historic Celebration`;
 // same ticket.ticketNumber/QR (one check-in for the whole group), so the
 // email lists all guest names but only shows one QR image. qrSrc mirrors
 // buildTicketConfirmationBody's cid:/data: split for send vs. preview.
-function buildVipPassBody(ticket, guestNames, qrSrc) {
+function buildVipPassBody(ticket, guestNames, qrBlockHtml) {
   const nameWithoutTitle = ticket.name.trim().replace(/^(mr|mrs|ms|miss|dr|prof|shri|smt|shrimati)\.?\s+/i, '');
   const firstName = escapeHtml(nameWithoutTitle.split(/\s+/)[0] || ticket.name.trim());
 
   const guestListHtml = guestNames.map((n) => `<div class="detail-row"><span class="label">Guest</span><span class="value">${escapeHtml(n)}</span></div>`).join('');
 
-  const qrBlock = `
-    <div class="qr-block">
-      <p style="margin-bottom:8px;"><strong>Entry QR Code</strong></p>
-      <img src="${qrSrc}" alt="QR Code" width="160" height="160" style="display:block;margin:0 auto;" />
-      <p>${ticket.ticketNumber}</p>
-    </div>`;
-
   return `
     <p>Dear ${firstName} Ji,</p>
     <p>It gives us great pleasure to welcome all of you as our Honoured VIP Guests at the celebration of India's 80th Independence Day and NIA's 75th Anniversary.</p>
     <p>Attached are the VIP Passes for all of you. No ticket purchase is required.</p>
-    <p>Simply present the attached PDF, either printed or on your phone, at the entrance, and our team will be delighted to welcome you.</p>
+    <p>Each guest below has their own QR code — everyone can be welcomed independently, so your party doesn't need to arrive together.</p>
     <p><strong>Invited Guests</strong></p>
     ${guestListHtml}
-    ${qrBlock}
+    ${qrBlockHtml}
     <p style="margin-top:20px;">We look forward to celebrating this historic occasion together and sharing an evening filled with culture, music, friendship, and community spirit.</p>
     <p>Thank you for being an important part of the NIA community. 🇮🇳🇳🇱</p>
     <p>Warm regards,<br>The Netherlands India Association</p>`;
@@ -333,11 +369,8 @@ function buildVipPassBody(ticket, guestNames, qrSrc) {
 async function sendVipPassEmail(ticket, guestNames, pdfBuffer) {
   const transporter = createTransporter();
 
-  const qrDataUrl = await generateQRDataURL(ticket.ticketNumber);
-  const qrBuffer  = Buffer.from(qrDataUrl.replace(/^data:image\/png;base64,/, ''), 'base64');
-  const qrCid     = `qr-${ticket.ticketNumber}@nia`;
-
-  const body = buildVipPassBody(ticket, guestNames, `cid:${qrCid}`);
+  const { html: qrBlockHtml, attachments: qrAttachments } = await buildQrSection(ticket);
+  const body = buildVipPassBody(ticket, guestNames, qrBlockHtml);
 
   await transporter.sendMail({
     from: FROM,
@@ -350,12 +383,7 @@ async function sendVipPassEmail(ticket, guestNames, pdfBuffer) {
         content: pdfBuffer,
         contentType: 'application/pdf',
       },
-      {
-        filename: 'vip-pass-qr.png',
-        content: qrBuffer,
-        contentType: 'image/png',
-        cid: qrCid,
-      },
+      ...qrAttachments,
     ],
   });
   console.log(`[Email] VIP pass PDF sent to ${ticket.email} (${guestNames.length} guest${guestNames.length === 1 ? '' : 's'})`);
@@ -363,8 +391,8 @@ async function sendVipPassEmail(ticket, guestNames, pdfBuffer) {
 
 // Read-only render for the admin panel's "Preview Email" action.
 async function renderVipPassPreview(ticket, guestNames) {
-  const qrDataUrl = await generateQRDataURL(ticket.ticketNumber);
-  const body = buildVipPassBody(ticket, guestNames, qrDataUrl);
+  const qrBlockHtml = await buildQrSectionPreview(ticket);
+  const body = buildVipPassBody(ticket, guestNames, qrBlockHtml);
   return { subject: VIP_PASS_SUBJECT, html: htmlWrap('Your VIP Pass', body) };
 }
 
@@ -832,20 +860,12 @@ async function sendBundleConfirmation(bundle) {
 
   const cardBuffer = await generateMembershipCardPDF(member, tier);
   const ticketPdfBuffer = await generateTicketPDF(ticket);
-
-  const qrDataUrl = await generateQRDataURL(ticket.ticketNumber);
-  const qrBuffer  = Buffer.from(qrDataUrl.replace(/^data:image\/png;base64,/, ''), 'base64');
-  const qrCid     = `qr-${ticket.ticketNumber}@nia`;
+  const { html: qrBlockHtml, attachments: qrAttachments } = await buildQrSection(ticket);
 
   const ticketLines = ticket.tickets.map((t) =>
     `<div class="detail-row"><span class="label">${escapeHtml(t.ticket_type)} × ${t.quantity}</span><span class="value">€${t.line_total.toFixed(2)}</span></div>`
   ).join('');
-
-  const qrBlock = `
-    <div class="qr-block">
-      <img src="cid:${qrCid}" alt="QR Code" width="160" height="160" style="display:block;margin:0 auto;" />
-      <p>Scan at event entry — ${ticket.ticketNumber}</p>
-    </div>`;
+  const multiUnit = (ticket.units?.length || 1) > 1;
 
   const body = `
     <p>Dear <strong>${escapeHtml(member.firstName)}</strong>,</p>
@@ -860,8 +880,11 @@ async function sendBundleConfirmation(bundle) {
     ${bundle.ticketDiscountAmount > 0 ? `<div class="detail-row"><span class="label">Membership Discount on Tickets</span><span class="value" style="color:green;">−€${bundle.ticketDiscountAmount.toFixed(2)}</span></div>` : ''}
     <div class="detail-row"><span class="label">Membership (${escapeHtml(tier.name)})</span><span class="value">€${bundle.membershipAmount.toFixed(2)}</span></div>
     <div class="detail-row"><span class="label">Total Paid</span><span class="value amount">€${bundle.amount.toFixed(2)}</span></div>
-    ${qrBlock}
-    <p style="margin-top:20px;">Your digital membership card and your event ticket are both attached as PDFs — each with its own QR code. Please present your ticket QR at the event entrance. We look forward to seeing you! 🇮🇳🇳🇱</p>`;
+    ${qrBlockHtml}
+    <p style="margin-top:20px;">Your digital membership card and your event ticket are both attached as PDFs. ${multiUnit
+      ? 'Each attendee above has their own QR code and can check in independently.'
+      : 'Please present your ticket QR at the event entrance.'
+    } We look forward to seeing you! 🇮🇳🇳🇱</p>`;
 
   await transporter.sendMail({
     from: FROM,
@@ -871,7 +894,7 @@ async function sendBundleConfirmation(bundle) {
     attachments: [
       { filename: `NIA-Membership-Card-${member.memberId}.pdf`, content: cardBuffer, contentType: 'application/pdf' },
       { filename: `NIA-Ticket-${ticket.ticketNumber}.pdf`, content: ticketPdfBuffer, contentType: 'application/pdf' },
-      { filename: 'ticket-qr.png', content: qrBuffer, contentType: 'image/png', cid: qrCid },
+      ...qrAttachments,
     ],
   });
   console.log(`[Email] Bundle confirmation (membership + ticket) sent to ${member.email}`);
