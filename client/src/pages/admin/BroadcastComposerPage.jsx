@@ -26,6 +26,7 @@ export default function BroadcastComposerPage() {
 
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [audience, setAudience] = useState({ type: 'all_members', tierIds: [], eventId: '' });
+  const [attachTicketPdf, setAttachTicketPdf] = useState(false);
   const [recipientCount, setRecipientCount] = useState(null);
   const [subject, setSubject] = useState('');
   const [previewText, setPreviewText] = useState('');
@@ -52,7 +53,7 @@ export default function BroadcastComposerPage() {
     try {
       const { data } = await adminApi.post('/broadcasts', {
         name: selectedTemplate.name, templateId: selectedTemplate._id,
-        subject: selectedTemplate.subject, audience,
+        subject: selectedTemplate.subject, audience, attachTicketPdf,
       });
       setBroadcastId(data._id);
       setSubject(selectedTemplate.subject);
@@ -67,7 +68,7 @@ export default function BroadcastComposerPage() {
   async function saveAudienceAndContinue() {
     setError(''); setBusy(true);
     try {
-      await adminApi.patch(`/broadcasts/${broadcastId}`, { audience });
+      await adminApi.patch(`/broadcasts/${broadcastId}`, { audience, attachTicketPdf });
       setStep(2);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to save audience');
@@ -193,10 +194,22 @@ export default function BroadcastComposerPage() {
             )}
 
             {audience.type === 'event_attendees' && (
-              <select className={inputCls + ' mb-4'} value={audience.eventId} onChange={(e) => setAudience((a) => ({ ...a, eventId: e.target.value }))}>
-                <option value="">Select an event…</option>
-                {events.map((e) => <option key={e._id} value={e._id}>{e.title}</option>)}
-              </select>
+              <>
+                <select className={inputCls + ' mb-3'} value={audience.eventId} onChange={(e) => setAudience((a) => ({ ...a, eventId: e.target.value }))}>
+                  <option value="">Select an event…</option>
+                  {events.map((e) => <option key={e._id} value={e._id}>{e.title}</option>)}
+                </select>
+                <label className="flex items-start gap-2 text-sm mb-4">
+                  <input
+                    type="checkbox" className="mt-0.5" checked={attachTicketPdf}
+                    onChange={(e) => setAttachTicketPdf(e.target.checked)}
+                  />
+                  <span>
+                    Attach each recipient's ticket PDF
+                    <span className="block text-xs text-nia-text-faint">Every guest gets their own PDF with their own QR code(s) — never a shared file.</span>
+                  </span>
+                </label>
+              </>
             )}
 
             {audience.type === 'custom_list' && (
@@ -297,6 +310,12 @@ export default function BroadcastComposerPage() {
               <dt className="text-nia-text-muted">Template</dt><dd className="font-semibold text-nia-navy-dark">{selectedTemplate?.name}</dd>
               <dt className="text-nia-text-muted">Audience Size</dt><dd className="font-semibold text-nia-navy-dark">{recipientCount} recipients</dd>
               <dt className="text-nia-text-muted">Subject</dt><dd className="font-semibold text-nia-navy-dark">{subject}</dd>
+              {audience.type === 'event_attendees' && (
+                <>
+                  <dt className="text-nia-text-muted">Ticket PDF Attachment</dt>
+                  <dd className="font-semibold text-nia-navy-dark">{attachTicketPdf ? 'Yes — per-recipient' : 'No'}</dd>
+                </>
+              )}
               <dt className="text-nia-text-muted">Timing</dt>
               <dd className="font-semibold text-nia-navy-dark">
                 {scheduleType === 'now' ? 'Send immediately' : `${new Date(scheduledAt).toLocaleString()} (${timezone})`}

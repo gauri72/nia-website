@@ -28,6 +28,11 @@ const BroadcastSchema = new mongoose.Schema({
     excludeEventAttendees: { type: Boolean, default: false },
   },
   personalizationVars: { type: mongoose.Schema.Types.Mixed },
+  // When true (only meaningful for audience.type === 'event_attendees'), each
+  // recipient's own paid Ticket PDF(s) — each with that guest's individual
+  // QR code(s) — are generated fresh and attached at send time. Per-recipient,
+  // never a shared file: see broadcastService.js::sendBroadcast.
+  attachTicketPdf: { type: Boolean, default: false },
   status: {
     type: String,
     enum: ['draft', 'scheduled', 'sending', 'sent', 'canceled', 'failed'],

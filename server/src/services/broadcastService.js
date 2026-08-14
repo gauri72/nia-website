@@ -7,6 +7,30 @@ const SuppressionList = require('../models/SuppressionList');
 const BroadcastRecipient = require('../models/BroadcastRecipient');
 const Broadcast = require('../models/Broadcast');
 const EmailTemplate = require('../models/EmailTemplate');
+const { generateTicketPDF } = require('./emailService');
+
+function escapeRegex(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Per-recipient PDF attachments for broadcast.attachTicketPdf — never a shared
+// file, since every guest's PDF carries their own personal QR code(s). Looked
+// up fresh at send time (case-insensitively, since BroadcastRecipient.email
+// is copied verbatim from whichever Ticket happened to resolve the audience,
+// and a buyer can hold more than one paid order under slightly different
+// casing) rather than carried through from audience resolution, so no schema
+// change to BroadcastRecipient is needed.
+async function buildTicketAttachments(email) {
+  const tickets = await Ticket.find({
+    email: { $regex: new RegExp(`^${escapeRegex(email)}$`, 'i') },
+    ticket_status: 'paid',
+  });
+  return Promise.all(tickets.map(async (t) => ({
+    filename: `NIA-Ticket-${t.ticketNumber}.pdf`,
+    content: await generateTicketPDF(t),
+    contentType: 'application/pdf',
+  })));
+}
 
 // Contacts aren't Members — most have no linked account at all — so they're
 // represented here as the lightest shape createRecipients/sendBroadcast need:
@@ -184,7 +208,7 @@ async function createRecipients(broadcastId, members) {
 // token to test against, this sends the same List-Unsubscribe header a real
 // send would, so Gmail/Outlook's native one-click unsubscribe can be verified
 // even for templates with no visible unsubscribe link in the body.
-async function sendTestEmail(to, subject, html, sampleVars = {}, unsubscribeUrl = null) {
+async function sendTestEmail(to, subject, html, sampleVars = {}, unsubscribeUrl = null, attachments = null) {
   const transporter = createTransporter();
   const rendered = renderPersonalized(html, { firstName: 'Test', lastName: 'Member', membershipTier: null, membershipExpiresAt: null }, sampleVars)
     .replaceAll('{{unsubscribe_url}}', unsubscribeUrl || '#');
@@ -192,6 +216,7 @@ async function sendTestEmail(to, subject, html, sampleVars = {}, unsubscribeUrl 
   if (unsubscribeUrl) {
     mailOptions.headers = { 'List-Unsubscribe': `<${unsubscribeUrl}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' };
   }
+  if (attachments?.length) mailOptions.attachments = attachments;
   await transporter.sendMail(mailOptions);
 }
 
@@ -254,10 +279,16 @@ async function sendBroadcast(broadcastId) {
         const finalHtml = injectTracking(personalized, recipient.trackingToken);
         const unsubscribeUrl = buildUnsubscribeUrl(recipient.trackingToken);
 
-        await transporter.sendMail({
+        const mailOptions = {
           from: FROM, to: recipient.email, subject: broadcast.subject, html: finalHtml,
           headers: { 'List-Unsubscribe': `<${unsubscribeUrl}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' },
-        });
+        };
+        if (broadcast.attachTicketPdf) {
+          const attachments = await buildTicketAttachments(recipient.email);
+          if (attachments.length) mailOptions.attachments = attachments;
+        }
+
+        await transporter.sendMail(mailOptions);
 
         recipient.status = 'sent';
         recipient.sentAt = new Date();
@@ -309,4 +340,5 @@ async function resendFailed(broadcastId) {
 module.exports = {
   resolveAudienceMembers, estimateAudienceCount, renderPersonalized, injectTracking,
   createRecipients, sendTestEmail, sendTemplateToMember, sendBroadcast, resendFailed, buildUnsubscribeUrl,
+  buildTicketAttachments,
 };

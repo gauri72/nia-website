@@ -1,8 +1,10 @@
 const Broadcast = require('../../models/Broadcast');
 const BroadcastRecipient = require('../../models/BroadcastRecipient');
 const EmailTemplate = require('../../models/EmailTemplate');
+const Ticket = require('../../models/Ticket');
 const {
   resolveAudienceMembers, estimateAudienceCount, createRecipients, sendTestEmail, sendBroadcast, resendFailed, buildUnsubscribeUrl,
+  buildTicketAttachments,
 } = require('../../services/broadcastService');
 const { scanForBounces } = require('../../services/bounceDetectionService');
 
@@ -67,7 +69,7 @@ async function estimateAudience(req, res, next) {
 // ── POST /api/broadcasts ──────────────────────────────────────────
 async function create(req, res, next) {
   try {
-    const { name, templateId, subject, previewText, audience, personalizationVars, scheduledAt, timezone } = req.body;
+    const { name, templateId, subject, previewText, audience, personalizationVars, scheduledAt, timezone, attachTicketPdf } = req.body;
     if (!name?.trim() || !templateId || !subject?.trim() || !audience?.type) {
       return res.status(400).json({ error: 'name, templateId, subject and audience are required' });
     }
@@ -81,6 +83,7 @@ async function create(req, res, next) {
     const broadcast = await Broadcast.create({
       name: name.trim(), template: template._id, subject: subject.trim(), previewText,
       audience: cleanAudience, personalizationVars,
+      attachTicketPdf: !!attachTicketPdf,
       scheduledAt: scheduledAt || undefined,
       timezone: timezone || 'Europe/Amsterdam',
       status: scheduledAt ? 'scheduled' : 'draft',
@@ -102,7 +105,7 @@ async function update(req, res, next) {
     if (!broadcast) return res.status(404).json({ error: 'Broadcast not found' });
     if (broadcast.status !== 'draft') return res.status(400).json({ error: 'Only draft broadcasts can be edited' });
 
-    const { name, templateId, subject, previewText, audience, personalizationVars } = req.body || {};
+    const { name, templateId, subject, previewText, audience, personalizationVars, attachTicketPdf } = req.body || {};
     if (name !== undefined) broadcast.name = name.trim();
     if (templateId !== undefined) broadcast.template = templateId;
     if (subject !== undefined) broadcast.subject = subject.trim();
@@ -113,6 +116,7 @@ async function update(req, res, next) {
       broadcast.stats.totalRecipients = await estimateAudienceCount(cleanAudience);
     }
     if (personalizationVars !== undefined) broadcast.personalizationVars = personalizationVars;
+    if (attachTicketPdf !== undefined) broadcast.attachTicketPdf = !!attachTicketPdf;
 
     await broadcast.save();
     return res.json(broadcast);
@@ -138,7 +142,15 @@ async function sendTest(req, res, next) {
     if (!recipient) recipient = await BroadcastRecipient.create({ broadcast: broadcast._id, email: normalizedEmail });
     const unsubscribeUrl = buildUnsubscribeUrl(recipient.trackingToken);
 
-    await sendTestEmail(email.trim(), broadcast.subject, broadcast.template.htmlContent, broadcast.personalizationVars, unsubscribeUrl);
+    // Attach a real sample ticket PDF so the test send shows exactly what a
+    // real recipient's attachment would look like — not a fabricated one.
+    let attachments = null;
+    if (broadcast.attachTicketPdf) {
+      const sample = await Ticket.findOne({ ticket_status: 'paid' });
+      if (sample) attachments = await buildTicketAttachments(sample.email);
+    }
+
+    await sendTestEmail(email.trim(), broadcast.subject, broadcast.template.htmlContent, broadcast.personalizationVars, unsubscribeUrl, attachments);
 
     await Broadcast.findByIdAndUpdate(req.params.id, { $addToSet: { testSendEmails: email.trim() } });
     return res.json({ message: `Test email sent to ${email}` });
@@ -244,7 +256,8 @@ async function duplicate(req, res, next) {
     const copy = await Broadcast.create({
       name: `${original.name} (Copy)`, template: original.template, subject: original.subject,
       previewText: original.previewText, audience: original.audience,
-      personalizationVars: original.personalizationVars, status: 'draft', createdBy: req.admin.id,
+      personalizationVars: original.personalizationVars, attachTicketPdf: original.attachTicketPdf,
+      status: 'draft', createdBy: req.admin.id,
     });
 
     return res.status(201).json(copy);
