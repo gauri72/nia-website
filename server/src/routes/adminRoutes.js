@@ -16,6 +16,7 @@ const bookingAdminController = require('../controllers/admin/bookingAdminControl
 const mollieImportController = require('../controllers/admin/mollieImportController');
 const legacyTicketController = require('../controllers/admin/legacyTicketController');
 const vipPassController = require('../controllers/admin/vipPassController');
+const guestListController = require('../controllers/admin/guestListController');
 const discountCodeController = require('../controllers/admin/discountCodeController');
 const sponsorshipAdminController = require('../controllers/admin/sponsorshipAdminController');
 const sponsorshipTierController = require('../controllers/admin/sponsorshipTierController');
@@ -137,6 +138,12 @@ router.get( '/legacy-tickets/:id/email-preview', legacyTicketController.emailPre
 router.post('/legacy-tickets/:id/refund',      requireRole(['super_admin']), legacyTicketController.refund);
 router.post('/legacy-tickets/:id/void',        requireRole(['super_admin']), legacyTicketController.voidTicket);
 router.post('/vip-passes',                     requireRole(['super_admin']), vipPassController.create);
+
+// ── Guest List (artists / invited guests / chief guests) ────────────
+router.get(   '/guest-list',                   guestListController.list);
+router.post(  '/guest-list',                   requireRole(['super_admin']), guestListController.create);
+router.post(  '/guest-list/:id/check-in',      guestListController.toggleCheckIn);
+router.delete('/guest-list/:id',               requireRole(['super_admin']), guestListController.remove);
 
 // ── Sponsorships ──────────────────────────────────────────────────
 router.get(   '/sponsorships',            sponsorshipAdminController.list);
