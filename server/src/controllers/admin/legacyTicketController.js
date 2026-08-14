@@ -61,12 +61,14 @@ function flattenAttendees(ticket) {
 // with implicit cursor movement, so this avoids that class of bug entirely.
 async function doorList(req, res, next) {
   try {
-    const { eventId } = req.query;
+    const { eventId, ticketType } = req.query;
     const filter = { ticket_status: 'paid' };
     if (eventId) filter.event_id = eventId;
+    if (ticketType) filter['tickets.ticket_type'] = ticketType;
 
     const tickets = await Ticket.find(filter);
-    const rows = tickets.flatMap(flattenAttendees);
+    let rows = tickets.flatMap(flattenAttendees);
+    if (ticketType) rows = rows.filter((r) => r.type === ticketType); // a mixed order can carry other line types too
 
     const byType = new Map();
     for (const r of rows) {
@@ -77,17 +79,19 @@ async function doorList(req, res, next) {
     for (const cat of categories) byType.get(cat).sort((a, b) => a.name.localeCompare(b.name));
 
     const eventName = eventId ? friendlyEvent(eventId) : 'All Events';
+    const titleSuffix = ticketType ? ` — ${typeLabel(ticketType)}` : '';
 
     const doc = new PDFDocument({ size: 'A4', margin: 40 });
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="NIA-Door-List-${eventId ? eventId : 'all-events'}.pdf"`);
+    const filenameParts = ['NIA-Door-List', eventId || 'all-events', ticketType || null].filter(Boolean);
+    res.setHeader('Content-Disposition', `attachment; filename="${filenameParts.join('-')}.pdf"`);
     doc.pipe(res);
 
     const left = doc.page.margins.left;
     const right = doc.page.width - doc.page.margins.right;
     const bottom = doc.page.height - doc.page.margins.bottom;
 
-    doc.fillColor('#0F1F4B').fontSize(18).font('Helvetica-Bold').text('Door List', left, doc.y);
+    doc.fillColor('#0F1F4B').fontSize(18).font('Helvetica-Bold').text(`Door List${titleSuffix}`, left, doc.y);
     doc.fontSize(11).font('Helvetica').fillColor('#555555').text(eventName, left, doc.y + 2);
     doc.fontSize(9).fillColor('#888888').text(
       `Generated ${new Date().toLocaleString('en-GB', { timeZone: 'Europe/Amsterdam' })} · ${rows.length} attendee${rows.length === 1 ? '' : 's'} total`,

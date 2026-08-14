@@ -51,6 +51,7 @@ export default function TicketSalesPage() {
   const [search, setSearch] = useState('');
   const [eventFilter, setEventFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
+  const [doorListCategory, setDoorListCategory] = useState('');
   const [page, setPage] = useState(1);
   const [detail, setDetail] = useState(null);
   const [refundAmount, setRefundAmount] = useState('');
@@ -81,10 +82,15 @@ export default function TicketSalesPage() {
 
   async function handleDownloadDoorList() {
     const eventId = eventFilter ? EVENTS[eventFilter]?.eventId : undefined;
+    const params = new URLSearchParams();
+    if (eventId) params.set('eventId', eventId);
+    if (doorListCategory) params.set('ticketType', doorListCategory);
+    const query = params.toString();
+    const filenameParts = ['NIA-Door-List', eventFilter || 'all-events', doorListCategory || null].filter(Boolean);
     try {
       await downloadBlob(
-        `/admin/legacy-tickets/door-list${eventId ? `?eventId=${encodeURIComponent(eventId)}` : ''}`,
-        `NIA-Door-List-${eventFilter || 'all-events'}.pdf`,
+        `/admin/legacy-tickets/door-list${query ? `?${query}` : ''}`,
+        `${filenameParts.join('-')}.pdf`,
       );
     } catch (err) {
       push(err.message, 'error');
@@ -231,6 +237,12 @@ export default function TicketSalesPage() {
         description="Paid tickets booked through the public website's event page (niaonline.org/events)."
         actions={
           <div className="flex gap-2">
+            <select className={inputCls} value={doorListCategory} onChange={(e) => setDoorListCategory(e.target.value)}>
+              <option value="">All Categories</option>
+              {data?.typeBreakdown?.map((t) => (
+                <option key={t.type} value={t.type}>{t.label} ({t.count})</option>
+              ))}
+            </select>
             <Button variant="secondary" onClick={handleDownloadDoorList}><Download /> Download Door List</Button>
             <Button variant="primary" onClick={openVipModal}><Gift /> Send VIP Passes</Button>
           </div>
