@@ -45,6 +45,8 @@ router.get('/dashboard', dashboardController.overview);
 // ── Ticket & Membership Scanning ────────────────────────────────
 router.post('/scan/lookup',   scanController.lookup);
 router.post('/scan/check-in', scanController.checkIn);
+router.post('/scan/undo',     scanController.undoCheckIn);
+router.get( '/scan/roster',   scanController.roster);
 router.get( '/scan/search',   scanController.search);
 router.get( '/scan/log',      scanController.log);
 router.get( '/scan/stats',    scanController.stats);

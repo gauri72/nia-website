@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Html5QrcodeScanner, Html5QrcodeScanType } from 'html5-qrcode';
-import { ScanLine, CheckCircle2, XCircle, AlertTriangle, Search, Ticket, IdCard, Clock } from 'lucide-react';
+import { ScanLine, CheckCircle2, XCircle, AlertTriangle, Search, Ticket, IdCard, Clock, Music, UserPlus, Crown } from 'lucide-react';
 import adminApi from '../../services/adminApi';
 import PageHeader from '../../components/admin/PageHeader';
 import Button from '../../components/admin/Button';
+import RosterModal from '../../components/admin/RosterModal';
 
 const READER_ID = 'nia-scan-reader';
 
@@ -14,6 +15,7 @@ export default function ScanPage() {
   const [stats, setStats] = useState(null);
   const [recentLog, setRecentLog] = useState([]);
   const [searchResults, setSearchResults] = useState([]);
+  const [openRoster, setOpenRoster] = useState(null); // { type, title } or null
   const scannerRef = useRef(null);
   const resultRef = useRef(null); // mirrors `result` so the scan callback (captured once) always sees the latest value
 
@@ -117,11 +119,26 @@ export default function ScanPage() {
     <div>
       <PageHeader title="Ticket & Membership Scanning" description="Scan a ticket QR code or member ID to check attendees in at the door." />
 
+      {openRoster && (
+        <RosterModal
+          title={openRoster.title} type={openRoster.type}
+          onClose={() => setOpenRoster(null)} onChanged={loadStats}
+        />
+      )}
+
       {stats && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-          <StatTile icon={Ticket} label="Attendees Checked In" value={`${stats.checkedInTickets} / ${stats.totalTickets}`} />
+          <StatTile icon={Ticket} label="Attendees Checked In" value={`${stats.checkedInTickets} / ${stats.totalTickets}`}
+            onClick={() => setOpenRoster({ type: 'attendees', title: 'Attendees' })} />
           <StatTile icon={CheckCircle2} label="Orders Fully Redeemed" value={`${stats.checkedInOrders} / ${stats.totalOrders}`} />
-          <StatTile icon={IdCard} label="Member Scans" value={stats.memberScans} />
+          <StatTile icon={IdCard} label="Patron Members" value={`${stats.patrons.checkedIn} / ${stats.patrons.total}`}
+            onClick={() => setOpenRoster({ type: 'patrons', title: 'Patron Members' })} />
+          <StatTile icon={Music} label="Artists" value={`${stats.guestList.artist.checkedIn} / ${stats.guestList.artist.total}`}
+            onClick={() => setOpenRoster({ type: 'artist', title: 'Artists' })} />
+          <StatTile icon={UserPlus} label="Invited Guests" value={`${stats.guestList.invited_guest.checkedIn} / ${stats.guestList.invited_guest.total}`}
+            onClick={() => setOpenRoster({ type: 'invited_guest', title: 'Invited Guests' })} />
+          <StatTile icon={Crown} label="Chief Guests" value={`${stats.guestList.chief_guest.checkedIn} / ${stats.guestList.chief_guest.total}`}
+            onClick={() => setOpenRoster({ type: 'chief_guest', title: 'Chief Guests' })} />
           <StatTile icon={Clock} label="Last Scan" value={recentLog[0] ? new Date(recentLog[0].scannedAt).toLocaleTimeString() : '—'} />
         </div>
       )}
@@ -197,9 +214,13 @@ export default function ScanPage() {
   );
 }
 
-function StatTile({ icon: Icon, label, value }) {
+function StatTile({ icon: Icon, label, value, onClick }) {
+  const Wrapper = onClick ? 'button' : 'div';
   return (
-    <div className="rounded-nia-card border border-nia-border bg-white p-4 flex items-center gap-3">
+    <Wrapper
+      onClick={onClick}
+      className={`w-full text-left rounded-nia-card border border-nia-border bg-white p-4 flex items-center gap-3 ${onClick ? 'hover:border-nia-orange transition-colors' : ''}`}
+    >
       <div className="w-10 h-10 rounded-xl bg-nia-orange/10 flex items-center justify-center flex-shrink-0">
         <Icon className="text-nia-orange text-base" />
       </div>
@@ -207,7 +228,7 @@ function StatTile({ icon: Icon, label, value }) {
         <p className="text-lg font-extrabold text-nia-navy-dark leading-tight truncate">{value}</p>
         <p className="text-xs text-nia-text-faint">{label}</p>
       </div>
-    </div>
+    </Wrapper>
   );
 }
 

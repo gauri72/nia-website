@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Html5QrcodeScanner, Html5QrcodeScanType } from 'html5-qrcode';
-import { ScanLine, CheckCircle2, XCircle, AlertTriangle, LogOut, Ticket, IdCard, Search, KeyRound } from 'lucide-react';
+import { ScanLine, CheckCircle2, XCircle, AlertTriangle, LogOut, Ticket, IdCard, Search, KeyRound, Music, UserPlus, Crown } from 'lucide-react';
 import adminApi from '../../services/adminApi';
 import Button from '../../components/admin/Button';
 import Modal from '../../components/admin/Modal';
+import RosterModal from '../../components/admin/RosterModal';
 import { useAdminAuth } from '../../context/AdminAuthContext';
 
 const READER_ID = 'nia-checkin-reader';
@@ -16,6 +17,7 @@ const READER_ID = 'nia-checkin-reader';
 export default function CheckinScanPage() {
   const { admin, logout } = useAdminAuth();
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [openRoster, setOpenRoster] = useState(null); // { type, title } or null
   const [manualCode, setManualCode] = useState('');
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null);
@@ -132,11 +134,25 @@ export default function CheckinScanPage() {
       </div>
 
       {showPasswordModal && <ChangePasswordModal onClose={() => setShowPasswordModal(false)} />}
+      {openRoster && (
+        <RosterModal
+          title={openRoster.title} type={openRoster.type}
+          onClose={() => setOpenRoster(null)} onChanged={loadStats}
+        />
+      )}
 
       {stats && (
         <div className="grid grid-cols-2 gap-2 px-3 pt-3 flex-shrink-0">
-          <StatTile icon={Ticket} label="Attendees In" value={`${stats.checkedInTickets} / ${stats.totalTickets}`} />
-          <StatTile icon={IdCard} label="Member Scans" value={stats.memberScans} />
+          <StatTile icon={Ticket} label="Attendees In" value={`${stats.checkedInTickets} / ${stats.totalTickets}`}
+            onClick={() => setOpenRoster({ type: 'attendees', title: 'Attendees' })} />
+          <StatTile icon={IdCard} label="Patron Members" value={`${stats.patrons.checkedIn} / ${stats.patrons.total}`}
+            onClick={() => setOpenRoster({ type: 'patrons', title: 'Patron Members' })} />
+          <StatTile icon={Music} label="Artists" value={`${stats.guestList.artist.checkedIn} / ${stats.guestList.artist.total}`}
+            onClick={() => setOpenRoster({ type: 'artist', title: 'Artists' })} />
+          <StatTile icon={UserPlus} label="Invited Guests" value={`${stats.guestList.invited_guest.checkedIn} / ${stats.guestList.invited_guest.total}`}
+            onClick={() => setOpenRoster({ type: 'invited_guest', title: 'Invited Guests' })} />
+          <StatTile icon={Crown} label="Chief Guests" value={`${stats.guestList.chief_guest.checkedIn} / ${stats.guestList.chief_guest.total}`}
+            onClick={() => setOpenRoster({ type: 'chief_guest', title: 'Chief Guests' })} />
         </div>
       )}
 
@@ -248,9 +264,12 @@ function ChangePasswordModal({ onClose }) {
   );
 }
 
-function StatTile({ icon: Icon, label, value }) {
+function StatTile({ icon: Icon, label, value, onClick }) {
   return (
-    <div className="rounded-nia-card border border-nia-border bg-white p-3 flex items-center gap-2.5">
+    <button
+      onClick={onClick}
+      className="text-left rounded-nia-card border border-nia-border bg-white p-3 flex items-center gap-2.5 hover:border-nia-orange transition-colors w-full"
+    >
       <div className="w-9 h-9 rounded-xl bg-nia-orange/10 flex items-center justify-center flex-shrink-0">
         <Icon className="text-nia-orange text-base" />
       </div>
@@ -258,7 +277,7 @@ function StatTile({ icon: Icon, label, value }) {
         <p className="text-base font-extrabold text-nia-navy-dark leading-tight truncate">{value}</p>
         <p className="text-[11px] text-nia-text-faint leading-tight">{label}</p>
       </div>
-    </div>
+    </button>
   );
 }
 

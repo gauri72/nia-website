@@ -1,6 +1,13 @@
 const Ticket = require('../../models/Ticket');
 const Member = require('../../models/Member');
+const MembershipTier = require('../../models/MembershipTier');
 const EventCheckIn = require('../../models/EventCheckIn');
+
+// Same tier-identification pattern as memberAdminController.js's Patron Pass
+// gate — Patron isn't a dedicated boolean, just a tier name/slug.
+function isPatronTier(member) {
+  return member.membershipTier?.slug === 'patron' || member.membershipTier?.name?.toLowerCase() === 'patron';
+}
 
 // Ticket/booking/member IDs all use distinct prefixes (NIA-TKT-, NIA-BKG-,
 // NIA-MBR-), so a single scan input can resolve to the right collection
@@ -99,11 +106,15 @@ async function lookup(req, res, next) {
     }
 
     // A member is "valid" if the account itself is usable (active, not
-    // suspended/deleted) — membershipStatus (active/none/expired/...) is
-    // shown but isn't a hard gate, since e.g. a 'none' member is still a
-    // legitimate account holder who should be waved through at the door.
-    const valid = record.status === 'active';
-    return res.json({ type, valid, reason: valid ? undefined : `Account status is "${record.status}"`, data: memberSummary(record) });
+    // suspended/deleted) AND their tier is Patron — this door-scan path is
+    // specifically for Patron members' free entry (everyone else already
+    // has a real ticket to check in instead). membershipStatus
+    // (active/none/expired/...) is shown but isn't a hard gate on its own.
+    let reason;
+    if (record.status !== 'active') reason = `Account status is "${record.status}"`;
+    else if (!isPatronTier(record)) reason = "This member's tier doesn't include free event entry — check in their ticket instead.";
+    const valid = !reason;
+    return res.json({ type, valid, reason, data: memberSummary(record) });
   } catch (err) {
     next(err);
   }
@@ -198,11 +209,119 @@ async function checkIn(req, res, next) {
     if (record.status !== 'active') {
       return res.status(400).json({ error: `Account status is "${record.status}"`, data: memberSummary(record) });
     }
+    if (!isPatronTier(record)) {
+      return res.status(400).json({ error: "This member's tier doesn't include free event entry — check in their ticket instead.", data: memberSummary(record) });
+    }
     await EventCheckIn.create({
       type: 'member', member: record._id, code: record.memberId,
       name: `${record.firstName} ${record.lastName}`, email: record.email, scannedBy: req.admin.id,
     });
     return res.json({ type, checkedIn: true, alreadyCheckedIn: false, data: memberSummary(record) });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// ── POST /api/admin/scan/undo ────────────────────────────────────────
+// Deliberately a separate endpoint from check-in, not a toggle — check-in
+// must stay idempotent/one-way for the camera-scan flow (a stray re-scan
+// must never silently un-admit someone). This is only ever reached
+// explicitly from the roster view, never from scanning.
+async function undoCheckIn(req, res, next) {
+  try {
+    const { code } = req.body;
+    if (!code?.trim()) return res.status(400).json({ error: 'code is required' });
+
+    const { type, record, unit } = await resolveCode(code);
+    if (!type) return res.status(404).json({ error: `Unrecognized code format: "${code.trim()}"` });
+    if (!record) return res.status(404).json({ error: `No ${type} found for code "${normalizeCode(code)}"` });
+
+    if (type === 'ticket') {
+      if (unit) {
+        // Clearing order-level checkedInAt unconditionally is safe even if it
+        // was never stamped (only set once every unit was checked in) — undoing
+        // one unit means the order is no longer fully redeemed either way.
+        await Ticket.updateOne(
+          { _id: record._id, 'units.unitNumber': unit.unitNumber },
+          { $set: { 'units.$.checkedInAt': null, 'units.$.checkedInBy': null }, $unset: { checkedInAt: '', checkedInBy: '' } },
+        );
+        await EventCheckIn.deleteOne({ ticket: record._id, code: unit.unitNumber });
+      } else if (record.units?.length) {
+        // Bare order code — undo the whole order, mirroring check-in's own bulk-admit behavior for the same code shape.
+        await Ticket.updateOne(
+          { _id: record._id },
+          { $set: { 'units.$[].checkedInAt': null, 'units.$[].checkedInBy': null }, $unset: { checkedInAt: '', checkedInBy: '' } },
+        );
+        await EventCheckIn.deleteMany({ ticket: record._id });
+      } else {
+        // True legacy doc, no units at all.
+        await Ticket.updateOne({ _id: record._id }, { $unset: { checkedInAt: '', checkedInBy: '' } });
+        await EventCheckIn.deleteOne({ ticket: record._id, code: record.ticketNumber });
+      }
+      const fresh = await Ticket.findById(record._id);
+      const freshUnit = unit ? fresh.units.find((u) => u.unitNumber === unit.unitNumber) : null;
+      return res.json({ type, checkedIn: false, data: ticketSummary(fresh, freshUnit) });
+    }
+
+    // Member scans aren't idempotent (a member can have multiple EventCheckIn
+    // rows) — undo clears all of them so the roster shows fully not-checked-in.
+    await EventCheckIn.deleteMany({ type: 'member', member: record._id });
+    return res.json({ type, checkedIn: false, data: memberSummary(record) });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// ── GET /api/admin/scan/roster?type= ─────────────────────────────────
+// Backs the clickable stat tiles — a flat list of who's in each bucket,
+// checked-in status included, so the UI can split into "Checked In" /
+// "Not Yet Checked In" sections. Each row's `code` feeds straight into
+// the existing check-in endpoint and the new undo endpoint above.
+const ROSTER_TYPES = ['attendees', 'patrons', 'artist', 'invited_guest', 'chief_guest'];
+async function roster(req, res, next) {
+  try {
+    const { type } = req.query;
+    if (!ROSTER_TYPES.includes(type)) return res.status(400).json({ error: `type must be one of: ${ROSTER_TYPES.join(', ')}` });
+
+    if (type === 'patrons') {
+      const patronTier = await MembershipTier.findOne({ $or: [{ slug: 'patron' }, { name: /^patron$/i }] });
+      if (!patronTier) return res.json([]);
+      const members = await Member.find({ status: 'active', membershipTier: patronTier._id }).sort('firstName');
+      const checkIns = await EventCheckIn.find({ type: 'member', member: { $in: members.map((m) => m._id) } }).sort('-scannedAt');
+      const checkedInAt = new Map();
+      for (const c of checkIns) {
+        const key = String(c.member);
+        if (!checkedInAt.has(key)) checkedInAt.set(key, c.scannedAt); // first hit per member = most recent, since sorted desc
+      }
+      return res.json(members.map((m) => ({
+        code: m.memberId, name: `${m.firstName} ${m.lastName}`, subtitle: m.email,
+        checkedInAt: checkedInAt.get(String(m._id)) || null,
+      })));
+    }
+
+    if (type === 'attendees') {
+      const tickets = await Ticket.find({ ticket_status: 'paid', payment_provider: { $ne: 'guest_list_complimentary' } });
+      const rows = [];
+      for (const t of tickets) {
+        if (t.units?.length) {
+          for (const u of t.units) {
+            rows.push({ code: u.unitNumber, name: u.attendeeName || t.name, subtitle: u.ticketType, checkedInAt: u.checkedInAt || null });
+          }
+        } else {
+          rows.push({ code: t.ticketNumber, name: t.name, subtitle: t.tickets?.[0]?.ticket_type, checkedInAt: t.checkedInAt || null });
+        }
+      }
+      rows.sort((a, b) => a.name.localeCompare(b.name));
+      return res.json(rows);
+    }
+
+    // Guest-list categories (artist / invited_guest / chief_guest).
+    const guests = await Ticket.find({ payment_provider: 'guest_list_complimentary', 'tickets.0.ticket_type': type }).sort('name');
+    return res.json(guests.map((g) => ({
+      code: g.ticketNumber, name: g.name,
+      subtitle: g.email?.endsWith('@nia.internal') ? undefined : g.email,
+      checkedInAt: g.checkedInAt || null,
+    })));
   } catch (err) {
     next(err);
   }
@@ -279,9 +398,12 @@ async function log(req, res, next) {
 // ── GET /api/admin/scan/stats ────────────────────────────────────────
 async function stats(req, res, next) {
   try {
-    const [ticketStats, memberScans] = await Promise.all([
+    const [ticketStats, patronStats, guestListStats] = await Promise.all([
       Ticket.aggregate([
-        { $match: { ticket_status: 'paid' } },
+        // Guest-list entries (artists/invited/chief guests) are real Ticket
+        // docs too, but they get their own breakdown below — excluded here
+        // so nobody is counted in two tiles at once.
+        { $match: { ticket_status: 'paid', payment_provider: { $ne: 'guest_list_complimentary' } } },
         {
           $project: {
             ticketsQty: { $sum: '$tickets.quantity' },
@@ -318,19 +440,42 @@ async function stats(req, res, next) {
           },
         },
       ]),
-      EventCheckIn.countDocuments({ type: 'member' }),
+      // Patron pool size + how many have been scanned in — not a flat scan
+      // count, so the tile can show "X / Y" like every other tile.
+      (async () => {
+        const patronTier = await MembershipTier.findOne({ $or: [{ slug: 'patron' }, { name: /^patron$/i }] });
+        if (!patronTier) return { total: 0, checkedIn: 0 };
+        const memberIds = await Member.find({ status: 'active', membershipTier: patronTier._id }).distinct('_id');
+        const checkedInIds = await EventCheckIn.distinct('member', { type: 'member', member: { $in: memberIds } });
+        return { total: memberIds.length, checkedIn: checkedInIds.length };
+      })(),
+      Ticket.aggregate([
+        { $match: { payment_provider: 'guest_list_complimentary' } },
+        {
+          $group: {
+            _id: { $arrayElemAt: ['$tickets.ticket_type', 0] },
+            total: { $sum: 1 },
+            checkedIn: { $sum: { $cond: [{ $ifNull: ['$checkedInAt', false] }, 1, 0] } },
+          },
+        },
+      ]),
     ]);
     const t = ticketStats[0] || { totalTickets: 0, totalOrders: 0, checkedInOrders: 0, checkedInTickets: 0 };
+    const guestList = { artist: { total: 0, checkedIn: 0 }, invited_guest: { total: 0, checkedIn: 0 }, chief_guest: { total: 0, checkedIn: 0 } };
+    for (const g of guestListStats) {
+      if (guestList[g._id]) guestList[g._id] = { total: g.total, checkedIn: g.checkedIn };
+    }
     return res.json({
       totalOrders: t.totalOrders,
       checkedInOrders: t.checkedInOrders,
       totalTickets: t.totalTickets,
       checkedInTickets: t.checkedInTickets,
-      memberScans,
+      patrons: patronStats,
+      guestList,
     });
   } catch (err) {
     next(err);
   }
 }
 
-module.exports = { lookup, checkIn, search, log, stats };
+module.exports = { lookup, checkIn, undoCheckIn, roster, search, log, stats };
