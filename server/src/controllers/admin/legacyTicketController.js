@@ -1,3 +1,4 @@
+const PDFDocument = require('pdfkit');
 const Ticket = require('../../models/Ticket');
 const { refundPayment } = require('../../services/mollieService');
 const {
@@ -25,6 +26,99 @@ function friendlyEvent(eventId) {
 const TYPE_LABELS = { regular: 'Regular', vip: 'VIP', child: 'Child', gala: 'Gala Experience', artist: 'Artist', invited_guest: 'Invited Guest', chief_guest: 'Chief Guest' };
 function typeLabel(type) {
   return TYPE_LABELS[type] || type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+// Expands one Ticket order into its individual attendees, same duality the
+// scan/roster/email code already handles: post-redesign orders have real
+// units[] (one per seat, with its own name); older orders fall back to
+// attendee_names (one name per line, matched positionally against each
+// ticket line's quantity) or, failing that, just the buyer's name repeated
+// per seat.
+function flattenAttendees(ticket) {
+  if (ticket.units?.length) {
+    return ticket.units.map((u) => ({ type: u.ticketType, name: (u.attendeeName || ticket.name).trim() }));
+  }
+  const names = ticket.attendee_names
+    ? ticket.attendee_names.split('\n').map((s) => s.trim()).filter(Boolean)
+    : [];
+  const rows = [];
+  let i = 0;
+  for (const line of ticket.tickets) {
+    for (let q = 0; q < line.quantity; q++) {
+      rows.push({ type: line.ticket_type, name: (names[i] || ticket.name).trim() });
+      i++;
+    }
+  }
+  return rows;
+}
+
+// ── GET /api/admin/legacy-tickets/door-list ────────────────────────
+// Print-ready PDF for Registration Desk staff — every paid attendee,
+// grouped by ticket category (alphabetical), alphabetical by name within
+// each group. Explicit Y-position tracking throughout rather than relying
+// on pdfkit's auto-flow cursor — the per-unit ticket PDF this codebase
+// generates elsewhere hit a real pagination bug from mixing manual draws
+// with implicit cursor movement, so this avoids that class of bug entirely.
+async function doorList(req, res, next) {
+  try {
+    const { eventId } = req.query;
+    const filter = { ticket_status: 'paid' };
+    if (eventId) filter.event_id = eventId;
+
+    const tickets = await Ticket.find(filter);
+    const rows = tickets.flatMap(flattenAttendees);
+
+    const byType = new Map();
+    for (const r of rows) {
+      if (!byType.has(r.type)) byType.set(r.type, []);
+      byType.get(r.type).push(r);
+    }
+    const categories = [...byType.keys()].sort((a, b) => typeLabel(a).localeCompare(typeLabel(b)));
+    for (const cat of categories) byType.get(cat).sort((a, b) => a.name.localeCompare(b.name));
+
+    const eventName = eventId ? friendlyEvent(eventId) : 'All Events';
+
+    const doc = new PDFDocument({ size: 'A4', margin: 40 });
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="NIA-Door-List-${eventId ? eventId : 'all-events'}.pdf"`);
+    doc.pipe(res);
+
+    const left = doc.page.margins.left;
+    const right = doc.page.width - doc.page.margins.right;
+    const bottom = doc.page.height - doc.page.margins.bottom;
+
+    doc.fillColor('#0F1F4B').fontSize(18).font('Helvetica-Bold').text('Door List', left, doc.y);
+    doc.fontSize(11).font('Helvetica').fillColor('#555555').text(eventName, left, doc.y + 2);
+    doc.fontSize(9).fillColor('#888888').text(
+      `Generated ${new Date().toLocaleString('en-GB', { timeZone: 'Europe/Amsterdam' })} · ${rows.length} attendee${rows.length === 1 ? '' : 's'} total`,
+      left, doc.y + 2,
+    );
+    doc.y += 16;
+
+    for (const cat of categories) {
+      const list = byType.get(cat);
+
+      if (doc.y > bottom - 90) doc.addPage();
+      doc.y += 10;
+      doc.fillColor('#E8641A').fontSize(14).font('Helvetica-Bold').text(`${typeLabel(cat)}  (${list.length})`, left, doc.y);
+      const ruleY = doc.y + 4;
+      doc.moveTo(left, ruleY).lineTo(right, ruleY).lineWidth(1).strokeColor('#E8641A').stroke();
+      doc.y = ruleY + 10;
+
+      const rowHeight = 18;
+      for (const person of list) {
+        if (doc.y + rowHeight > bottom) doc.addPage();
+        const y = doc.y;
+        doc.rect(left, y + 2, 9, 9).lineWidth(0.75).strokeColor('#999999').stroke();
+        doc.font('Helvetica').fontSize(11).fillColor('#222222').text(person.name, left + 16, y, { width: right - left - 16 });
+        doc.y = y + rowHeight;
+      }
+    }
+
+    doc.end();
+  } catch (err) {
+    next(err);
+  }
 }
 
 // ── GET /api/admin/legacy-tickets — paid bookings only ────────────
@@ -301,4 +395,4 @@ async function voidTicket(req, res, next) {
   }
 }
 
-module.exports = { list, getById, downloadPdf, downloadQr, resendEmail, emailPreview, updateTicket, refund, voidTicket };
+module.exports = { list, getById, downloadPdf, downloadQr, resendEmail, emailPreview, updateTicket, refund, voidTicket, doorList };

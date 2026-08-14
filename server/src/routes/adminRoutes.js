@@ -132,6 +132,7 @@ router.post( '/profile/change-password', adminProfileController.changePassword);
 
 // ── Ticket Sales (legacy public-site ticket flow) ────────────────
 router.get( '/legacy-tickets',                legacyTicketController.list);
+router.get( '/legacy-tickets/door-list',       legacyTicketController.doorList);
 router.get( '/legacy-tickets/:id',             legacyTicketController.getById);
 router.get( '/legacy-tickets/:id/pdf',         legacyTicketController.downloadPdf);
 router.get( '/legacy-tickets/:id/qr',          legacyTicketController.downloadQr);

@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Ticket, Euro, Users, FileText, QrCode, Send, Undo2, Search, Gift, Eye, Ban, Pencil } from 'lucide-react';
+import { Ticket, Euro, Users, FileText, QrCode, Send, Undo2, Search, Gift, Eye, Ban, Pencil, Download } from 'lucide-react';
 import adminApi from '../../services/adminApi';
 import { EVENTS } from '../../config/events';
 import StatusBadge from '../../components/admin/StatusBadge';
@@ -77,6 +77,18 @@ export default function TicketSalesPage() {
 
   function toggleTypeFilter(type) {
     setTypeFilter((current) => (current === type ? '' : type));
+  }
+
+  async function handleDownloadDoorList() {
+    const eventId = eventFilter ? EVENTS[eventFilter]?.eventId : undefined;
+    try {
+      await downloadBlob(
+        `/admin/legacy-tickets/door-list${eventId ? `?eventId=${encodeURIComponent(eventId)}` : ''}`,
+        `NIA-Door-List-${eventFilter || 'all-events'}.pdf`,
+      );
+    } catch (err) {
+      push(err.message, 'error');
+    }
   }
 
   async function openDetail(id) {
@@ -217,7 +229,12 @@ export default function TicketSalesPage() {
       <PageHeader
         title="Ticket Sales"
         description="Paid tickets booked through the public website's event page (niaonline.org/events)."
-        actions={<Button variant="primary" onClick={openVipModal}><Gift /> Send VIP Passes</Button>}
+        actions={
+          <div className="flex gap-2">
+            <Button variant="secondary" onClick={handleDownloadDoorList}><Download /> Download Door List</Button>
+            <Button variant="primary" onClick={openVipModal}><Gift /> Send VIP Passes</Button>
+          </div>
+        }
       />
 
       {data && (
