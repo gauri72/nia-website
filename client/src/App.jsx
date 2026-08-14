@@ -17,8 +17,12 @@ import { MemberAuthProvider } from './context/MemberAuthContext';
 import { CookieConsentProvider } from './context/CookieConsentContext';
 import ProtectedAdminRoute from './routes/ProtectedAdminRoute';
 import ProtectedMemberRoute from './routes/ProtectedMemberRoute';
+import ProtectedCheckinRoute from './routes/ProtectedCheckinRoute';
 import AdminLayout from './layouts/AdminLayout';
 import DashboardLayout from './layouts/DashboardLayout';
+
+import CheckinLoginPage from './pages/checkin/CheckinLoginPage';
+import CheckinScanPage  from './pages/checkin/CheckinScanPage';
 
 import AdminLoginPage          from './pages/admin/LoginPage';
 import AdminForgotPasswordPage from './pages/admin/ForgotPasswordPage';
@@ -84,6 +88,10 @@ export default function App() {
             <Route path="/payment/success"  element={<PaymentSuccessPage />} />
             <Route path="/payment/cancel"   element={<PaymentCancelPage />} />
             <Route path="/privacy-policy"   element={<PrivacyPolicyPage />} />
+
+            {/* ── Door-staff check-in PWA ─────────────────────── */}
+            <Route path="/checkin/login" element={<CheckinLoginPage />} />
+            <Route path="/checkin" element={<ProtectedCheckinRoute><CheckinScanPage /></ProtectedCheckinRoute>} />
 
             {/* ── Admin Panel ─────────────────────────────────── */}
             <Route path="/admin/login"           element={<AdminLoginPage />} />
