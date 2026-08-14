@@ -18,12 +18,22 @@ function friendlyEvent(eventId) {
   return EVENT_LABELS[eventId] || eventId;
 }
 
+// Friendly labels for ticket_type — covers both real purchase types and the
+// Guest List categories (server/src/controllers/admin/guestListController.js),
+// which are real Ticket docs too and already show up in this same list.
+// Anything unmapped just gets title-cased rather than breaking.
+const TYPE_LABELS = { regular: 'Regular', vip: 'VIP', child: 'Child', gala: 'Gala Experience', artist: 'Artist', invited_guest: 'Invited Guest', chief_guest: 'Chief Guest' };
+function typeLabel(type) {
+  return TYPE_LABELS[type] || type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 // ── GET /api/admin/legacy-tickets — paid bookings only ────────────
 async function list(req, res, next) {
   try {
-    const { search, page = 1, limit = 25, eventId } = req.query;
+    const { search, page = 1, limit = 25, eventId, ticketType } = req.query;
     const filter = { ticket_status: 'paid' };
     if (eventId) filter.event_id = eventId;
+    if (ticketType) filter['tickets.ticket_type'] = ticketType;
     if (search) {
       filter.$or = [
         { name: new RegExp(search, 'i') },
@@ -32,21 +42,34 @@ async function list(req, res, next) {
       ];
     }
 
-    const [tickets, total, stats] = await Promise.all([
+    // Type breakdown deliberately ignores `ticketType` itself (so every tile
+    // stays visible to click, not just the currently-selected one) but does
+    // respect the event filter, matching the summary stats below.
+    const baseMatch = eventId ? { ticket_status: 'paid', event_id: eventId } : { ticket_status: 'paid' };
+
+    const [tickets, total, stats, typeStats] = await Promise.all([
       Ticket.find(filter).sort('-createdAt').skip((page - 1) * limit).limit(Number(limit)),
       Ticket.countDocuments(filter),
       Ticket.aggregate([
-        { $match: eventId ? { ticket_status: 'paid', event_id: eventId } : { ticket_status: 'paid' } },
+        { $match: baseMatch },
         { $group: { _id: null, count: { $sum: 1 }, revenue: { $sum: '$amount' }, seats: { $sum: { $sum: '$tickets.quantity' } } } },
+      ]),
+      Ticket.aggregate([
+        { $match: baseMatch },
+        { $unwind: '$tickets' },
+        { $group: { _id: '$tickets.ticket_type', count: { $sum: '$tickets.quantity' } } },
+        { $sort: { count: -1 } },
       ]),
     ]);
 
     const items = tickets.map((t) => ({ ...t.toObject(), eventLabel: friendlyEvent(t.event_id) }));
     const summary = stats[0] || { count: 0, revenue: 0, seats: 0 };
+    const typeBreakdown = typeStats.map((t) => ({ type: t._id, label: typeLabel(t._id), count: t.count }));
 
     return res.json({
       items, total, page: Number(page), pages: Math.ceil(total / limit),
       summary: { paidCount: summary.count, revenue: summary.revenue, seats: summary.seats },
+      typeBreakdown,
       events: EVENT_LABELS,
     });
   } catch (err) {

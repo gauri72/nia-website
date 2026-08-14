@@ -50,6 +50,7 @@ export default function TicketSalesPage() {
   const [data, setData] = useState(null);
   const [search, setSearch] = useState('');
   const [eventFilter, setEventFilter] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
   const [page, setPage] = useState(1);
   const [detail, setDetail] = useState(null);
   const [refundAmount, setRefundAmount] = useState('');
@@ -68,11 +69,15 @@ export default function TicketSalesPage() {
   function load(targetPage = page) {
     setData(null);
     const eventId = eventFilter ? EVENTS[eventFilter]?.eventId : undefined;
-    adminApi.get('/admin/legacy-tickets', { params: { search: search || undefined, eventId, page: targetPage, limit: 25 } })
+    adminApi.get('/admin/legacy-tickets', { params: { search: search || undefined, eventId, ticketType: typeFilter || undefined, page: targetPage, limit: 25 } })
       .then((r) => { setData(r.data); setPage(targetPage); });
   }
 
-  useEffect(() => { load(1); }, [eventFilter]);
+  useEffect(() => { load(1); }, [eventFilter, typeFilter]);
+
+  function toggleTypeFilter(type) {
+    setTypeFilter((current) => (current === type ? '' : type));
+  }
 
   async function openDetail(id) {
     const r = await adminApi.get(`/admin/legacy-tickets/${id}`);
@@ -223,6 +228,20 @@ export default function TicketSalesPage() {
         </div>
       )}
 
+      {data?.typeBreakdown?.length > 0 && (
+        <div className="mb-5">
+          <p className="text-xs font-semibold text-nia-text-muted uppercase tracking-wide mb-2">By Ticket Type — click to filter the list below</p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
+            {data.typeBreakdown.map((t) => (
+              <StatCard
+                key={t.type} icon={Ticket} label={t.label} value={t.count} tone="gold"
+                active={typeFilter === t.type} onClick={() => toggleTypeFilter(t.type)}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center gap-2 mb-4">
         <div className="relative flex-1 min-w-[220px] max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-nia-text-faint text-xs" />
@@ -241,6 +260,14 @@ export default function TicketSalesPage() {
             <option key={e.slug} value={e.slug}>{e.name}</option>
           ))}
         </select>
+        {typeFilter && (
+          <button
+            onClick={() => setTypeFilter('')}
+            className="border-0 bg-nia-orange/10 text-nia-orange text-sm font-semibold rounded-nia-btn px-3 py-2 flex items-center gap-1.5 hover:bg-nia-orange/20"
+          >
+            {data?.typeBreakdown?.find((t) => t.type === typeFilter)?.label || typeFilter} <span aria-hidden="true">×</span>
+          </button>
+        )}
       </div>
 
       {!data && (
