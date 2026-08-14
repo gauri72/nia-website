@@ -149,6 +149,69 @@ async function emailPreview(req, res, next) {
   }
 }
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// ── PATCH /api/admin/legacy-tickets/:id ────────────────────────────
+// Buyer/attendee identity edits — lets an admin transfer a ticket to
+// someone else who's actually attending instead of the original buyer.
+// The QR code itself (unitNumber) never changes, only who it belongs to.
+async function updateTicket(req, res, next) {
+  try {
+    const ticket = await Ticket.findById(req.params.id);
+    if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
+
+    const { name, email, phone, unitAttendeeNames, attendeeNames, resend } = req.body || {};
+
+    if (name !== undefined) {
+      if (!name.trim()) return res.status(400).json({ error: 'name cannot be empty' });
+      ticket.name = name.trim();
+    }
+    if (email !== undefined) {
+      if (!EMAIL_RE.test(email.trim())) return res.status(400).json({ error: 'Please provide a valid email address' });
+      ticket.email = email.trim().toLowerCase();
+    }
+    if (phone !== undefined) ticket.phone = phone.trim();
+
+    // units[] is the real per-seat field once it exists (PDF + check-in both
+    // read it) — attendee_names is only authoritative for pre-redesign orders
+    // that never got one, but kept in sync either way for display/back-compat.
+    if (ticket.units?.length && unitAttendeeNames) {
+      for (const u of ticket.units) {
+        if (unitAttendeeNames[u.unitNumber] !== undefined) u.attendeeName = unitAttendeeNames[u.unitNumber].trim();
+      }
+      ticket.attendee_names = ticket.units.map((u) => u.attendeeName || ticket.name).join('\n');
+    } else if (attendeeNames !== undefined) {
+      ticket.attendee_names = attendeeNames;
+    }
+
+    await ticket.save();
+
+    // The edit itself has already been saved at this point — a resend that
+    // can't happen (wrong status) shouldn't make the whole request look
+    // failed, or the caller may assume nothing was saved and retry. Report
+    // it as a non-fatal `resendError` alongside the successfully-saved ticket.
+    let emailResent = false;
+    let resendError;
+    if (resend) {
+      if (ticket.ticket_status !== 'paid') {
+        resendError = 'Only paid tickets can be re-sent';
+      } else if (ticket.payment_provider === 'vip_complimentary') {
+        const guestNames = (ticket.attendee_names || ticket.name).split('\n').filter(Boolean);
+        const pdfBuffer = await generateVipPassBatchPDF(ticket);
+        await sendVipPassEmail(ticket, guestNames, pdfBuffer);
+        emailResent = true;
+      } else {
+        await sendTicketConfirmation(ticket);
+        emailResent = true;
+      }
+    }
+
+    return res.json({ ...ticket.toObject(), eventLabel: friendlyEvent(ticket.event_id), emailResent, resendError });
+  } catch (err) {
+    next(err);
+  }
+}
+
 // ── POST /api/admin/legacy-tickets/:id/refund ─────────────────────
 async function refund(req, res, next) {
   try {
@@ -215,4 +278,4 @@ async function voidTicket(req, res, next) {
   }
 }
 
-module.exports = { list, getById, downloadPdf, downloadQr, resendEmail, emailPreview, refund, voidTicket };
+module.exports = { list, getById, downloadPdf, downloadQr, resendEmail, emailPreview, updateTicket, refund, voidTicket };

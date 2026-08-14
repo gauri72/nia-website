@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Ticket, Euro, Users, FileText, QrCode, Send, Undo2, Search, Gift, Eye, Ban } from 'lucide-react';
+import { Ticket, Euro, Users, FileText, QrCode, Send, Undo2, Search, Gift, Eye, Ban, Pencil } from 'lucide-react';
 import adminApi from '../../services/adminApi';
 import { EVENTS } from '../../config/events';
 import StatusBadge from '../../components/admin/StatusBadge';
@@ -55,6 +55,7 @@ export default function TicketSalesPage() {
   const [refundAmount, setRefundAmount] = useState('');
   const [busy, setBusy] = useState(false);
   const [emailPreview, setEmailPreview] = useState(null);
+  const [editOpen, setEditOpen] = useState(false);
   const { toasts, push } = useToasts();
 
   const [vipOpen, setVipOpen] = useState(false);
@@ -373,6 +374,7 @@ export default function TicketSalesPage() {
               )}
               <Button variant="secondary" size="sm" disabled={busy} onClick={() => handleResendEmail(detail)}><Send /> Resend Email</Button>
               <Button variant="secondary" size="sm" onClick={() => handlePreviewEmail(detail)}><Eye /> Preview Email</Button>
+              <Button variant="secondary" size="sm" onClick={() => setEditOpen(true)}><Pencil /> Edit / Transfer</Button>
               {detail.ticket_status === 'paid' && (
                 <Button variant="danger" size="sm" disabled={busy} onClick={() => handleVoid(detail)}><Ban /> Void Ticket</Button>
               )}
@@ -396,6 +398,20 @@ export default function TicketSalesPage() {
             )}
           </div>
         </Modal>
+      )}
+
+      {editOpen && detail && (
+        <EditTicketModal
+          ticket={detail}
+          onClose={() => setEditOpen(false)}
+          onSaved={(updated) => {
+            setEditOpen(false); setDetail(updated); load();
+            if (updated.emailResent) push(`Saved and re-sent to ${updated.email}`);
+            else if (updated.resendError) push(`Ticket updated, but couldn't resend: ${updated.resendError}`, 'error');
+            else push('Ticket updated');
+          }}
+          onError={(msg) => push(msg, 'error')}
+        />
       )}
 
       {vipOpen && (
@@ -481,5 +497,106 @@ export default function TicketSalesPage() {
         </Modal>
       )}
     </div>
+  );
+}
+
+// Buyer/attendee identity edit — for transferring a ticket to whoever's
+// actually attending. Attendee-name editing adapts to what the ticket
+// actually has: one input per unit (the real per-seat field the PDF and
+// check-in both read) for post-redesign orders, else a plain textarea for
+// the legacy attendee_names string on older orders with no units[] at all.
+function EditTicketModal({ ticket, onClose, onSaved, onError }) {
+  const hasUnits = ticket.units?.length > 0;
+  const [name, setName] = useState(ticket.name || '');
+  const [email, setEmail] = useState(ticket.email || '');
+  const [phone, setPhone] = useState(ticket.phone || '');
+  const [unitNames, setUnitNames] = useState(
+    hasUnits ? Object.fromEntries(ticket.units.map((u) => [u.unitNumber, u.attendeeName || ''])) : {}
+  );
+  const [attendeeNamesText, setAttendeeNamesText] = useState(ticket.attendee_names || '');
+  const [resend, setResend] = useState(ticket.ticket_status === 'paid');
+  const [saving, setSaving] = useState(false);
+
+  async function handleSave() {
+    if (!name.trim() || !email.trim()) {
+      onError('Name and email are required');
+      return;
+    }
+    setSaving(true);
+    try {
+      const body = { name, email, phone, resend };
+      if (hasUnits) body.unitAttendeeNames = unitNames;
+      else body.attendeeNames = attendeeNamesText;
+
+      const { data } = await adminApi.patch(`/admin/legacy-tickets/${ticket._id}`, body);
+      onSaved(data);
+    } catch (err) {
+      onError(err.response?.data?.error || 'Failed to save ticket');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Modal title="Edit / Transfer Ticket" onClose={onClose}>
+      <div className="flex flex-col gap-3">
+        <p className="text-sm text-nia-text-faint">
+          Change the buyer or attendee details to transfer this ticket to someone else. The QR code(s) stay the same — only who they belong to changes.
+        </p>
+
+        <div>
+          <label className="text-xs font-semibold text-nia-text-muted uppercase tracking-wide mb-1 block">Buyer Name</label>
+          <input className={`${inputCls} w-full`} value={name} onChange={(e) => setName(e.target.value)} />
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-nia-text-muted uppercase tracking-wide mb-1 block">Buyer Email</label>
+          <input type="email" className={`${inputCls} w-full`} value={email} onChange={(e) => setEmail(e.target.value)} />
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-nia-text-muted uppercase tracking-wide mb-1 block">Phone</label>
+          <input className={`${inputCls} w-full`} value={phone} onChange={(e) => setPhone(e.target.value)} />
+        </div>
+
+        {hasUnits ? (
+          <div>
+            <label className="text-xs font-semibold text-nia-text-muted uppercase tracking-wide mb-1 block">Attendee Names</label>
+            <div className="flex flex-col gap-1.5">
+              {ticket.units.map((u) => (
+                <div key={u.unitNumber} className="flex items-center gap-2">
+                  <span className="text-xs text-nia-text-faint capitalize w-16 flex-shrink-0">{u.ticketType}</span>
+                  <input
+                    className={`${inputCls} w-full`}
+                    value={unitNames[u.unitNumber] ?? ''}
+                    onChange={(e) => setUnitNames((n) => ({ ...n, [u.unitNumber]: e.target.value }))}
+                    placeholder="Attendee name"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div>
+            <label className="text-xs font-semibold text-nia-text-muted uppercase tracking-wide mb-1 block">Attendee Names (one per line)</label>
+            <textarea
+              className={`${inputCls} w-full`} rows={3}
+              value={attendeeNamesText} onChange={(e) => setAttendeeNamesText(e.target.value)}
+            />
+          </div>
+        )}
+
+        <label className="flex items-center gap-2 text-sm text-nia-text-muted">
+          <input type="checkbox" checked={resend} onChange={(e) => setResend(e.target.checked)} disabled={ticket.ticket_status !== 'paid'} />
+          Also resend the updated ticket to this email
+        </label>
+        {ticket.ticket_status !== 'paid' && (
+          <p className="text-[11px] text-nia-text-faint -mt-2">Can't resend — this ticket is {ticket.ticket_status}.</p>
+        )}
+
+        <div className="flex justify-end gap-2 mt-2">
+          <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
+          <Button type="button" variant="primary" disabled={saving} onClick={handleSave}>{saving ? 'Saving…' : 'Save Changes'}</Button>
+        </div>
+      </div>
+    </Modal>
   );
 }
