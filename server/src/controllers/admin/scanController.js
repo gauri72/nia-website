@@ -9,6 +9,13 @@ function isPatronTier(member) {
   return member.membershipTier?.slug === 'patron' || member.membershipTier?.name?.toLowerCase() === 'patron';
 }
 
+// A Patron membership covers 2 people — one Member ID scan admits both, so
+// headcount reporting (stats + roster) multiplies by this rather than
+// counting Patron accounts. Deliberately a single scan/check-in action per
+// couple (not 2 separate tickets) — one source of truth for whether they've
+// arrived, instead of two parallel check-in paths for the same people.
+const PATRON_HEADCOUNT = 2;
+
 // Ticket/booking/member IDs all use distinct prefixes (NIA-TKT-, NIA-BKG-,
 // NIA-MBR-), so a single scan input can resolve to the right collection
 // without the scanner needing to know in advance what kind of code it is.
@@ -293,9 +300,13 @@ async function roster(req, res, next) {
         const key = String(c.member);
         if (!checkedInAt.has(key)) checkedInAt.set(key, c.scannedAt); // first hit per member = most recent, since sorted desc
       }
+      // Each row is one Patron account, but represents PATRON_HEADCOUNT
+      // people admitted together on that one scan — flagged here so the
+      // roster UI can label it, even though the row itself isn't duplicated.
       return res.json(members.map((m) => ({
-        code: m.memberId, name: `${m.firstName} ${m.lastName}`, subtitle: m.email,
+        code: m.memberId, name: `${m.firstName} ${m.lastName}`, subtitle: `${m.email} · ${PATRON_HEADCOUNT} people`,
         checkedInAt: checkedInAt.get(String(m._id)) || null,
+        headcount: PATRON_HEADCOUNT,
       })));
     }
 
@@ -440,14 +451,14 @@ async function stats(req, res, next) {
           },
         },
       ]),
-      // Patron pool size + how many have been scanned in — not a flat scan
-      // count, so the tile can show "X / Y" like every other tile.
+      // Patron pool size + how many have been scanned in, in PEOPLE (not
+      // accounts) — each Patron membership is 2 people admitted by one scan.
       (async () => {
         const patronTier = await MembershipTier.findOne({ $or: [{ slug: 'patron' }, { name: /^patron$/i }] });
         if (!patronTier) return { total: 0, checkedIn: 0 };
         const memberIds = await Member.find({ status: 'active', membershipTier: patronTier._id }).distinct('_id');
         const checkedInIds = await EventCheckIn.distinct('member', { type: 'member', member: { $in: memberIds } });
-        return { total: memberIds.length, checkedIn: checkedInIds.length };
+        return { total: memberIds.length * PATRON_HEADCOUNT, checkedIn: checkedInIds.length * PATRON_HEADCOUNT };
       })(),
       Ticket.aggregate([
         { $match: { payment_provider: 'guest_list_complimentary' } },
