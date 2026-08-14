@@ -122,10 +122,10 @@ export default function CheckinScanPage() {
           <p className="text-xs text-white/70 leading-tight">{admin?.email}</p>
         </div>
         <div className="flex items-center">
-          <button onClick={() => setShowPasswordModal(true)} className="text-white/80 hover:text-white p-2" aria-label="Change password">
+          <button onClick={() => setShowPasswordModal(true)} className="border-0 bg-transparent text-white/80 hover:text-white p-2" aria-label="Change password">
             <KeyRound />
           </button>
-          <button onClick={logout} className="text-white/80 hover:text-white p-2" aria-label="Log out">
+          <button onClick={logout} className="border-0 bg-transparent text-white/80 hover:text-white p-2" aria-label="Log out">
             <LogOut />
           </button>
         </div>
