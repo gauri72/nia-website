@@ -17,11 +17,15 @@ async function overview(req, res, next) {
 
     // Legacy guest-checkout tickets (email-matched, not member-linked) count
     // toward "upcoming events" too — see memberBookingController.js's listMine
-    // for why this second, separate ticket system exists.
-    const legacyEvent = await getLegacyEventDisplay();
-    if (legacyEvent && new Date(legacyEvent.startDate) >= new Date()) {
-      const legacyCount = await Ticket.countDocuments({ email: member.email, ticket_status: 'paid' });
-      if (legacyCount > 0) filtered.push({ _id: 'legacy-event', event: legacyEvent });
+    // for why this second, separate ticket system exists. A member can hold
+    // paid tickets for more than one legacy event, so this checks each one
+    // they've bought into rather than a single hardcoded event.
+    const legacyEventIds = await Ticket.distinct('event_id', { email: member.email, ticket_status: 'paid' });
+    for (const eventId of legacyEventIds) {
+      const legacyEvent = await getLegacyEventDisplay(eventId);
+      if (legacyEvent && new Date(legacyEvent.startDate) >= new Date()) {
+        filtered.push({ _id: `legacy-event-${eventId}`, event: legacyEvent });
+      }
     }
 
     return res.json({

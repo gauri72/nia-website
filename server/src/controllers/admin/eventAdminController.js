@@ -1,7 +1,28 @@
 const Event = require('../../models/Event');
 const TicketType = require('../../models/TicketType');
 const Booking = require('../../models/Booking');
+const Ticket = require('../../models/Ticket');
 const { notifyAllActiveMembers } = require('../../services/notificationService');
+
+// Real sold counts/attendees for an event whose actual sales run through
+// the legacy Ticket model (guest checkout, VIP passes, sponsor comps —
+// see Event.legacyEventId) rather than this admin panel's own Booking
+// flow. `byType` keys are Ticket.tickets[].ticket_type values.
+async function getLegacyTicketStats(legacyEventId) {
+  const paid = await Ticket.find({ event_id: legacyEventId, ticket_status: 'paid' })
+    .select('tickets amount');
+  const byType = {};
+  let totalSold = 0;
+  let revenue = 0;
+  for (const t of paid) {
+    revenue += t.amount || 0;
+    for (const line of t.tickets) {
+      byType[line.ticket_type] = (byType[line.ticket_type] || 0) + line.quantity;
+      totalSold += line.quantity;
+    }
+  }
+  return { byType, totalSold, revenue };
+}
 
 function slugify(title) {
   return title.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -54,8 +75,18 @@ async function list(req, res, next) {
       byEvent[key].sold += tt.quantitySold;
     }
 
+    // Events whose real sales run through the legacy Ticket model (see
+    // Event.legacyEventId) — sold count comes from there instead, since
+    // TicketType.quantitySold never moves for them.
+    const legacyIds = events.map((e) => e.legacyEventId).filter(Boolean);
+    const legacyStatsList = await Promise.all(legacyIds.map((id) => getLegacyTicketStats(id)));
+    const legacyStatsById = Object.fromEntries(legacyIds.map((id, i) => [id, legacyStatsList[i]]));
+
     const result = events.map((e) => {
       const agg = byEvent[String(e._id)] || { total: 0, sold: 0 };
+      if (e.legacyEventId && legacyStatsById[e.legacyEventId]) {
+        agg.sold = legacyStatsById[e.legacyEventId].totalSold;
+      }
       const isSoldOut = agg.total > 0 && agg.sold >= agg.total;
       const isPast = e.startDate < new Date();
       let displayStatus = e.status;
@@ -76,6 +107,16 @@ async function getById(req, res, next) {
     const event = await Event.findById(req.params.id);
     if (!event) return res.status(404).json({ error: 'Event not found' });
     const ticketTypes = await TicketType.find({ event: event._id }).sort('sortOrder');
+
+    if (event.legacyEventId) {
+      const { byType } = await getLegacyTicketStats(event.legacyEventId);
+      for (const tt of ticketTypes) {
+        if (tt.legacyTicketTypeKey && byType[tt.legacyTicketTypeKey] !== undefined) {
+          tt.quantitySold = byType[tt.legacyTicketTypeKey];
+        }
+      }
+    }
+
     return res.json({ ...event.toObject(), ticketTypes });
   } catch (err) {
     next(err);
@@ -226,12 +267,34 @@ async function remove(req, res, next) {
 }
 
 // ── GET /api/admin/events/:id/attendees ───────────────────────────
+// One row per paid legacy Ticket order (not per attendee/unit) — matches
+// Booking granularity, so the two sources merge into one consistent list.
+async function legacyTicketAttendees(legacyEventId) {
+  const tickets = await Ticket.find({ event_id: legacyEventId, ticket_status: 'paid' }).sort('-createdAt');
+  return tickets.map((t) => ({
+    _id: t._id,
+    bookingNumber: t.ticketNumber,
+    member: { firstName: t.name, lastName: '', email: t.email },
+    lines: t.tickets.map((l) => ({ quantity: l.quantity, name: l.ticket_type })),
+    amount: t.amount,
+    status: t.ticket_status,
+    createdAt: t.createdAt,
+    source: 'legacy',
+  }));
+}
+
 async function attendees(req, res, next) {
   try {
+    const event = await Event.findById(req.params.id);
+    if (!event) return res.status(404).json({ error: 'Event not found' });
+
     const bookings = await Booking.find({ event: req.params.id, status: { $ne: 'pending_payment' } })
       .populate('member', 'firstName lastName email memberId')
       .sort('-createdAt');
-    return res.json(bookings);
+
+    const legacy = event.legacyEventId ? await legacyTicketAttendees(event.legacyEventId) : [];
+
+    return res.json([...bookings, ...legacy]);
   } catch (err) {
     next(err);
   }
@@ -245,14 +308,20 @@ async function attendeesExportCsv(req, res, next) {
 
     const bookings = await Booking.find({ event: req.params.id, status: { $ne: 'pending_payment' } })
       .populate('member', 'firstName lastName email');
+    const legacy = event.legacyEventId ? await legacyTicketAttendees(event.legacyEventId) : [];
 
     const header = ['Booking Reference', 'Name', 'Email', 'Tickets', 'Total Paid', 'Status', 'Booked On'];
-    const rows = bookings.map((b) => [
+    const bookingRows = bookings.map((b) => [
       b.bookingNumber, `${b.member?.firstName || ''} ${b.member?.lastName || ''}`.trim(), b.member?.email || '',
       b.lines.map((l) => `${l.quantity}x ${l.name}`).join('; '), b.amount.toFixed(2), b.status,
       b.createdAt.toISOString().slice(0, 10),
     ]);
-    const csv = [header, ...rows].map((row) => row.map(csvEscape).join(',')).join('\n');
+    const legacyRows = legacy.map((t) => [
+      t.bookingNumber, t.member.firstName, t.member.email,
+      t.lines.map((l) => `${l.quantity}x ${l.name}`).join('; '), t.amount.toFixed(2), t.status,
+      t.createdAt.toISOString().slice(0, 10),
+    ]);
+    const csv = [header, ...bookingRows, ...legacyRows].map((row) => row.map(csvEscape).join(',')).join('\n');
 
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', `attachment; filename="attendees-${event.slug}.csv"`);

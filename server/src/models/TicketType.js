@@ -13,6 +13,10 @@ const TicketTypeSchema = new mongoose.Schema({
   membershipDiscount: { type: Boolean, default: false },
   isActive: { type: Boolean, default: true },
   sortOrder: { type: Number, default: 0 },
+  // Matching Ticket.tickets[].ticket_type key (e.g. 'vip', 'gala') when this
+  // type's parent Event has a legacyEventId set — lets quantitySold be
+  // overridden with the real per-type count instead of staying at 0.
+  legacyTicketTypeKey: { type: String },
 }, { timestamps: true });
 
 module.exports = mongoose.model('TicketType', TicketTypeSchema);

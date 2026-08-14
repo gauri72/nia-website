@@ -32,6 +32,11 @@ const EventSchema = new mongoose.Schema({
   },
   memberDiscountPct: { type: Number, default: 0 },
   isFeatured: { type: Boolean, default: false },
+  // Set only for events whose real sales run through the legacy Ticket
+  // model (guest checkout/VIP passes/sponsor comps) instead of this Event's
+  // own Booking flow — holds that Ticket.event_id so eventAdminController
+  // can blend in the real sold counts/attendees. Unset for a normal event.
+  legacyEventId: { type: String },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'AdminUser' },
   publishedAt: { type: Date },
 }, { timestamps: true });

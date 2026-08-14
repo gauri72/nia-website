@@ -8,24 +8,23 @@ const { createPayment, refundPayment } = require('../../services/mollieService')
 const { generateBookingPDF, generateTicketPDF } = require('../../services/emailService');
 const { validateDiscountCode, applyDiscount } = require('../../services/discountService');
 const { finalizeFreeOrder } = require('../../services/databaseService');
+const { getEventByEventId } = require('../../config/events');
 
 // The public guest-checkout flow (ticketController.js) predates the Event/Booking
-// system and still runs against one fixed, hardcoded event rather than a real
-// Event document — so a member who bought a ticket there (matched only by email,
-// no Member link) would otherwise be invisible on their own dashboard. The two
-// systems aren't linked by ID; this derives the display info for that one legacy
-// event by matching on its known date, which is the only correspondence that exists.
-const LEGACY_EVENT_ID = 'NIA-EVENT-20260815';
-let legacyEventCache;
-async function getLegacyEventDisplay() {
-  if (legacyEventCache !== undefined) return legacyEventCache;
-  const y = LEGACY_EVENT_ID.slice(-8, -4), m = LEGACY_EVENT_ID.slice(-4, -2), d = LEGACY_EVENT_ID.slice(-2);
-  const dayStart = new Date(`${y}-${m}-${d}T00:00:00.000Z`);
-  const dayEnd = new Date(`${y}-${m}-${d}T23:59:59.999Z`);
-  const event = await Event.findOne({ startDate: { $gte: dayStart, $lte: dayEnd } })
-    .select('title startDate venueName venueCity').lean();
-  legacyEventCache = event || null;
-  return legacyEventCache;
+// system and still runs against fixed, hardcoded events rather than real Event
+// documents — so a member who bought a ticket there (matched only by email, no
+// Member link) would otherwise be invisible on their own dashboard. The two
+// systems aren't linked by ID directly, but each legacy event's admin-visibility
+// Event doc carries a `legacyEventId` back-reference (see linkLegacyEventSales.js),
+// which is what this looks up — keyed per legacy event, not a single shared one,
+// since a member can hold tickets for more than one legacy event.
+const legacyEventCache = new Map();
+async function getLegacyEventDisplay(legacyEventId) {
+  if (!legacyEventId) return null;
+  if (legacyEventCache.has(legacyEventId)) return legacyEventCache.get(legacyEventId);
+  const event = await Event.findOne({ legacyEventId }).select('title startDate venueName venueCity').lean();
+  legacyEventCache.set(legacyEventId, event || null);
+  return event || null;
 }
 
 function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
@@ -255,23 +254,23 @@ async function previewDiscount(req, res, next) {
 async function listMine(req, res, next) {
   try {
     const member = await Member.findById(req.member.id);
-    const [bookings, legacyTickets, legacyEvent] = await Promise.all([
+    const [bookings, legacyTickets] = await Promise.all([
       Booking.find({ member: req.member.id, status: { $ne: 'pending_payment' } })
         .populate('event', 'title startDate venueName venueCity coverImageUrl')
         .lean(),
       Ticket.find({ email: member.email, ticket_status: { $ne: 'pending_payment' } }).lean(),
-      getLegacyEventDisplay(),
     ]);
 
-    const normalizedLegacy = legacyTickets.map((t) => ({
+    const normalizedLegacy = await Promise.all(legacyTickets.map(async (t) => ({
       _id: t._id,
       source: 'legacy_ticket',
       bookingNumber: t.ticketNumber,
       status: t.ticket_status,
-      event: legacyEvent,
+      event: await getLegacyEventDisplay(t.event_id),
+      eventSlug: getEventByEventId(t.event_id)?.slug,
       lines: t.tickets.map((l) => ({ quantity: l.quantity, name: capitalize(l.ticket_type) })),
       createdAt: t.createdAt,
-    }));
+    })));
 
     const combined = [...bookings, ...normalizedLegacy]
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));

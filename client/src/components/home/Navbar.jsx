@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { FaBars, FaTimes, FaUserPlus, FaTicketAlt, FaSignInAlt } from 'react-icons/fa';
 import navbarLogo from '../../assets/home/NavbarLogo.png';
+import { isGalaLive } from '../../config/events';
 import './Navbar.css';
 
 const NAV_LINK_HREFS = [
@@ -13,15 +14,22 @@ const NAV_LINK_HREFS = [
   { key: 'about',       href: '/about' },
 ];
 
-const EVENT_LINKS = [
-  { key: 'independenceDay', href: '/events', label: 'Independence Day' },
-  { key: 'christmasGala',   href: '/events/christmas-gala-2026', label: 'Christmas Gala' },
-];
+const INDEPENDENCE_DAY_LINK = { key: 'independenceDay', href: '/events', label: 'Independence Day' };
+const CHRISTMAS_GALA_LINK = { key: 'christmasGala', href: '/events/christmas-gala-2026', label: 'Christmas Gala' };
+
+// Before cutover: Gala isn't discoverable yet (direct URL still works, for
+// testing) — only Independence Day shows. At/after cutover: both show,
+// Gala first.
+function getEventLinks() {
+  return isGalaLive() ? [CHRISTMAS_GALA_LINK, INDEPENDENCE_DAY_LINK] : [INDEPENDENCE_DAY_LINK];
+}
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { pathname } = useLocation();
   const { t, i18n } = useTranslation();
+  const galaLive = isGalaLive();
+  const eventLinks = getEventLinks();
 
   function toggleLanguage() {
     i18n.changeLanguage(i18n.resolvedLanguage === 'nl' ? 'en' : 'nl');
@@ -38,9 +46,9 @@ export default function Navbar() {
           <span className="navbar__tagline-sub">{t('navbar.tagline.sub')}</span>
         </div>
         <div className="navbar__event-pill">
-          <span className="navbar__event-pill__label">{t('navbar.eventPill.label')}</span>
-          <span className="navbar__event-pill__date">{t('navbar.eventPill.date')}</span>
-          <span className="navbar__event-pill__name">{t('navbar.eventPill.name')}</span>
+          <span className="navbar__event-pill__label">{t(galaLive ? 'navbar.eventPill.gala.label' : 'navbar.eventPill.label')}</span>
+          <span className="navbar__event-pill__date">{t(galaLive ? 'navbar.eventPill.gala.date' : 'navbar.eventPill.date')}</span>
+          <span className="navbar__event-pill__name">{t(galaLive ? 'navbar.eventPill.gala.name' : 'navbar.eventPill.name')}</span>
         </div>
       </div>
 
@@ -65,13 +73,13 @@ export default function Navbar() {
           <div className="nav-dropdown">
             <a
               href="/events"
-              className={`nav-link${EVENT_LINKS.some((l) => pathname === l.href) ? ' active' : ''}`}
+              className={`nav-link${eventLinks.some((l) => pathname === l.href) ? ' active' : ''}`}
               onClick={() => setMenuOpen(false)}
             >
               {t('navbar.links.events')}
             </a>
             <div className="nav-dropdown__menu">
-              {EVENT_LINKS.map((link) => (
+              {eventLinks.map((link) => (
                 <a
                   key={link.key}
                   href={link.href}
@@ -97,7 +105,7 @@ export default function Navbar() {
         </nav>
 
         <div className="navbar__actions">
-          <a href="/events#tickets" className="navbar__cta" aria-label={t('navbar.cta.buyTickets')}>
+          <a href={galaLive ? '/events/christmas-gala-2026#tickets' : '/events#tickets'} className="navbar__cta" aria-label={t('navbar.cta.buyTickets')}>
             <FaTicketAlt />
             <span>{t('navbar.cta.buyTickets')}</span>
           </a>

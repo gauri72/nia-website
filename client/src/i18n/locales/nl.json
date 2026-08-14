@@ -15,7 +15,12 @@
     "eventPill": {
       "label": "🎉 VOLGEND EVENEMENT",
       "date": "15 aug 2026",
-      "name": "Indiase Onafhankelijkheidsdag"
+      "name": "Indiase Onafhankelijkheidsdag",
+      "gala": {
+        "label": "🎉 VOLGEND EVENEMENT",
+        "date": "12 dec 2026",
+        "name": "NIA Kerst Gala Diner"
+      }
     },
     "cta": {
       "buyTickets": "Tickets Kopen",

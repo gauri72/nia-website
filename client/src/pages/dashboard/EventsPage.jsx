@@ -3,6 +3,7 @@ import { Calendar, ArrowRight } from 'lucide-react';
 import PageHeader from '../../components/admin/PageHeader';
 import Card from '../../components/admin/Card';
 import Button from '../../components/admin/Button';
+import { isGalaLive } from '../../config/events';
 
 // Landing hub for /dashboard/events — one card per bookable event, linking
 // to its own booking page (EventBookingPage, parameterized per event). Kept
@@ -24,11 +25,16 @@ const EVENT_CARDS = [
 ];
 
 export default function EventsPage() {
+  // Once the Gala goes live, Independence Day booking is closed — the hub
+  // shows only the Gala card (the Independence Day booking page still
+  // resolves directly, it just shows the closed-state).
+  const cards = isGalaLive() ? EVENT_CARDS.filter((e) => e.to !== '/dashboard/events/independence-day') : EVENT_CARDS;
+
   return (
     <div>
       <PageHeader title="Events" />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {EVENT_CARDS.map((e) => (
+        {cards.map((e) => (
           <Card key={e.to} className="flex flex-col gap-2">
             <div className="flex items-center gap-2 text-nia-orange text-xs font-bold uppercase tracking-wide">
               <Calendar size={14} /> {e.date}

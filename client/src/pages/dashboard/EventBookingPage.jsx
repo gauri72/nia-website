@@ -4,6 +4,7 @@ import api from '../../services/api';
 import memberApi from '../../services/memberApi';
 import { startTicketPayment } from '../../services/paymentService';
 import { useMemberAuth } from '../../context/MemberAuthContext';
+import { isGalaLive } from '../../config/events';
 import PageHeader from '../../components/admin/PageHeader';
 import Card from '../../components/admin/Card';
 import Button from '../../components/admin/Button';
@@ -189,6 +190,19 @@ export default function EventBookingPage({ event, content }) {
   }
 
   const bundleTotal = bundlePreview?.amount ?? null;
+  const bookingClosed = event.slug === 'independence-day-2026' && isGalaLive();
+
+  if (bookingClosed) {
+    return (
+      <div>
+        <PageHeader title="Events" />
+        <Card className="text-center py-10">
+          <h2 className="font-bold text-nia-navy-dark text-lg mb-2">Booking for this event has closed</h2>
+          <p className="text-sm text-nia-text-muted">Thank you to everyone who joined us — we hope to see you at our next event!</p>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div>

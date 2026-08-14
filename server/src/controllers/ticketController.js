@@ -4,7 +4,14 @@ const { createPayment } = require('../services/mollieService');
 const { validateDiscountCode, applyDiscount } = require('../services/discountService');
 const { finalizeFreeOrder } = require('../services/databaseService');
 const { buildTicketUnits, parseAttendeeNamePool } = require('../services/ticketUnitService');
-const { getEvent, DEFAULT_EVENT_SLUG } = require('../config/events');
+const { getEvent, DEFAULT_EVENT_SLUG, isGalaLive } = require('../config/events');
+
+// Independence Day stops accepting new bookings once the Gala goes live —
+// the frontend hides the booking widget for this same condition, this is
+// the actual enforcement. No other event is ever closed this way today.
+function isBookingClosed(event) {
+  return event.slug === 'independence-day-2026' && isGalaLive();
+}
 
 // Deliberately simple (not full RFC 5322) — just enough to catch the actual
 // garbage this flow has let through with no format check at all: stray
@@ -96,6 +103,7 @@ async function create(req, res, next) {
 
     const event = resolveEvent(eventSlug);
     if (!event) return res.status(400).json({ error: `Unknown event: "${eventSlug}"` });
+    if (isBookingClosed(event)) return res.status(400).json({ error: 'Booking for this event has closed.' });
 
     if (!name?.trim() || !email?.trim()) {
       return res.status(400).json({ error: 'name and email are required' });

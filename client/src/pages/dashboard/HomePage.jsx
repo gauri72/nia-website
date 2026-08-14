@@ -7,10 +7,12 @@ import StatusBadge from '../../components/admin/StatusBadge';
 import PageHeader from '../../components/admin/PageHeader';
 import Card from '../../components/admin/Card';
 import Button from '../../components/admin/Button';
+import { isGalaLive } from '../../config/events';
 
 export default function DashboardHomePage() {
   const { member } = useMemberAuth();
   const [data, setData] = useState(null);
+  const galaLive = isGalaLive();
 
   useEffect(() => { memberApi.get('/member/dashboard').then((r) => setData(r.data)); }, []);
 
@@ -71,11 +73,23 @@ export default function DashboardHomePage() {
         <div className="p-5 flex flex-col sm:flex-row sm:items-center gap-4">
           <div className="flex-1">
             <span className="inline-block text-[10px] font-bold uppercase tracking-wide bg-nia-orange text-white rounded-full px-2.5 py-1 mb-2">Upcoming Event</span>
-            <h2 className="text-lg font-extrabold">80th India Independence Day Celebration &amp; NIA 75th Anniversary</h2>
-            <div className="flex flex-wrap gap-4 text-sm text-white/80 mt-2">
-              <span className="flex items-center gap-1.5"><Calendar size={14} />15 August 2026</span>
-              <span className="flex items-center gap-1.5"><MapPin size={14} />De Duinpan, Noordwijk</span>
-            </div>
+            {galaLive ? (
+              <>
+                <h2 className="text-lg font-extrabold">NIA Christmas Gala Dinner 2026</h2>
+                <div className="flex flex-wrap gap-4 text-sm text-white/80 mt-2">
+                  <span className="flex items-center gap-1.5"><Calendar size={14} />12 December 2026</span>
+                  <span className="flex items-center gap-1.5"><MapPin size={14} />De Duinpan, Noordwijk</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <h2 className="text-lg font-extrabold">80th India Independence Day Celebration &amp; NIA 75th Anniversary</h2>
+                <div className="flex flex-wrap gap-4 text-sm text-white/80 mt-2">
+                  <span className="flex items-center gap-1.5"><Calendar size={14} />15 August 2026</span>
+                  <span className="flex items-center gap-1.5"><MapPin size={14} />De Duinpan, Noordwijk</span>
+                </div>
+              </>
+            )}
           </div>
           <Button as={Link} to="/dashboard/events" variant="primary" className="flex-shrink-0">
             Book Now <ArrowRight size={16} />

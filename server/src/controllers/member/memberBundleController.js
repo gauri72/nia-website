@@ -5,10 +5,16 @@ const MembershipTicketBundle = require('../../models/MembershipTicketBundle');
 const { createPayment } = require('../../services/mollieService');
 const { finalizeFreeOrder } = require('../../services/databaseService');
 const { applyDiscount } = require('../../services/discountService');
-const { getEvent, DEFAULT_EVENT_SLUG } = require('../../config/events');
+const { getEvent, DEFAULT_EVENT_SLUG, isGalaLive } = require('../../config/events');
 
 function resolveEvent(eventSlug) {
   return getEvent(eventSlug?.trim() || DEFAULT_EVENT_SLUG);
+}
+
+// Same rule as ticketController.js::isBookingClosed — kept in this shared
+// computeBreakdown() so both preview() and create() reject consistently.
+function isBookingClosed(event) {
+  return event.slug === 'independence-day-2026' && isGalaLive();
 }
 
 function validateTicketLines(tickets, ticketPrices) {
@@ -66,6 +72,7 @@ async function computeTicketDiscountForTier(tier, email, ticketLines, eventId) {
 async function computeBreakdown(member, tierId, tickets, eventSlug) {
   const event = resolveEvent(eventSlug);
   if (!event) throw new Error(`Unknown event: "${eventSlug}"`);
+  if (isBookingClosed(event)) throw new Error('Booking for this event has closed.');
 
   const tier = await MembershipTier.findById(tierId);
   if (!tier || !tier.isActive) throw new Error('Invalid or inactive membership tier');
@@ -103,7 +110,7 @@ async function preview(req, res, next) {
       tier: { id: breakdown.tier._id, name: breakdown.tier.name },
     });
   } catch (err) {
-    if (err.message.startsWith('Invalid') || err.message.startsWith('Unknown') || err.message.includes('required')) {
+    if (err.message.startsWith('Invalid') || err.message.startsWith('Unknown') || err.message.includes('required') || err.message.includes('closed')) {
       return res.status(400).json({ error: err.message });
     }
     next(err);
@@ -156,7 +163,7 @@ async function create(req, res, next) {
 
     return res.status(201).json({ paymentId: result.paymentId, checkoutUrl: result.checkoutUrl });
   } catch (err) {
-    if (err.message.startsWith('Invalid') || err.message.includes('required')) {
+    if (err.message.startsWith('Invalid') || err.message.includes('required') || err.message.includes('closed')) {
       return res.status(400).json({ error: err.message });
     }
     next(err);

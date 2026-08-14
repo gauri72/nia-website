@@ -22,6 +22,15 @@ const EVENTS = {
 
 const DEFAULT_EVENT_SLUG = 'independence-day-2026';
 
+// The single scheduled cutover moment: Independence Day → Gala. Drives the
+// Gala's public discoverability (nav, dashboard), Independence Day's booking
+// closure, and My Tickets' current/past grouping — all read this one flag
+// rather than tracking separate on/off state per surface.
+const GALA_LAUNCH_AT = new Date('2026-08-15T16:15:00.000Z'); // 18:15 Europe/Amsterdam (CEST, UTC+2)
+function isGalaLive() {
+  return new Date() >= GALA_LAUNCH_AT;
+}
+
 function getEvent(slug) {
   return EVENTS[slug] || null;
 }
@@ -30,4 +39,4 @@ function getEventByEventId(eventId) {
   return Object.values(EVENTS).find((e) => e.eventId === eventId) || null;
 }
 
-module.exports = { EVENTS, getEvent, getEventByEventId, DEFAULT_EVENT_SLUG };
+module.exports = { EVENTS, getEvent, getEventByEventId, DEFAULT_EVENT_SLUG, GALA_LAUNCH_AT, isGalaLive };

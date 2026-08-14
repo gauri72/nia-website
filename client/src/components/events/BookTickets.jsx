@@ -7,7 +7,7 @@ import {
 import { startTicketPayment } from '../../services/paymentService';
 import api from '../../services/api';
 import { translateApiError } from '../../i18n/translateApiError';
-import { DEFAULT_EVENT_SLUG, EVENTS } from '../../config/events';
+import { DEFAULT_EVENT_SLUG, EVENTS, isGalaLive } from '../../config/events';
 import './BookTickets.css';
 
 // Icon per ticket id — kept local (not in the shared config) since JSX
@@ -59,6 +59,10 @@ export default function BookTickets({ eventSlug = DEFAULT_EVENT_SLUG, i18nNamesp
 
   const TICKETS = EVENTS[eventSlug].tickets;
   const tr = (key, opts) => t(`${i18nNamespace}.${key}`, opts);
+
+  // Independence Day stops accepting new bookings once the Gala goes live —
+  // mirrors the real enforcement in ticketController.js::isBookingClosed.
+  const bookingClosed = eventSlug === 'independence-day-2026' && isGalaLive();
 
   // Step 0 — ticket selection
   const [qtys, setQtys] = useState(() => Object.fromEntries(TICKETS.map((tk) => [tk.id, 0])));
@@ -166,6 +170,22 @@ export default function BookTickets({ eventSlug = DEFAULT_EVENT_SLUG, i18nNamesp
       setPayError(translateApiError(err?.response?.data?.error, i18n.language) || tr('booking.errors.paymentFailed'));
       setPaying(false);
     }
+  }
+
+  if (bookingClosed) {
+    return (
+      <section className="book-tickets" id="tickets">
+        <div className="book-tickets__inner">
+          <div className="book-tickets__header">
+            <h2 className="book-tickets__heading">{tr('booking.heading')}</h2>
+          </div>
+          <div className="bt-review__attendee" style={{ textAlign: 'center', padding: '2rem 1rem' }}>
+            <p className="bt-form-step__heading" style={{ marginBottom: '0.5rem' }}>Booking for this event has closed</p>
+            <p className="bt-form-step__sub">Thank you to everyone who joined us — we hope to see you at our next event!</p>
+          </div>
+        </div>
+      </section>
+    );
   }
 
   return (
