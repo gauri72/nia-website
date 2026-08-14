@@ -17,8 +17,8 @@ export default function AdminLoginPage() {
     setError('');
     setLoading(true);
     try {
-      await login(email, password);
-      navigate(location.state?.from || '/admin', { replace: true });
+      const loggedInAdmin = await login(email, password);
+      navigate(loggedInAdmin.role === 'door_staff' ? '/checkin' : (location.state?.from || '/admin'), { replace: true });
     } catch (err) {
       setError(err.response?.data?.error || 'Login failed. Please try again.');
     } finally {

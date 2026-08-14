@@ -7,7 +7,11 @@ const AdminUserSchema = new mongoose.Schema({
   passwordHash: { type: String, required: true },
   role: {
     type: String,
-    enum: ['super_admin', 'content_manager'],
+    // door_staff is deliberately least-privilege: denied by default at the
+    // top of adminRoutes.js except the /scan/* endpoints, and redirected
+    // away from the admin panel entirely on the frontend (see
+    // ProtectedAdminRoute.jsx) — a login that can only reach the check-in app.
+    enum: ['super_admin', 'content_manager', 'door_staff'],
     default: 'content_manager',
   },
   isActive: { type: Boolean, default: true },

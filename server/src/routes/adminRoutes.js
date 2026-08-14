@@ -28,6 +28,16 @@ const { mollieSyncLimiter } = require('../middleware/rateLimiter');
 
 router.use(requireAdminAuth);
 
+// door_staff accounts are scan-only — denied by default here rather than
+// requiring every other route in this router to remember an explicit
+// requireRole call. Any future route added below this line is safe by
+// default too, since it isn't under /scan/ unless deliberately placed there.
+router.use((req, res, next) => {
+  if (req.admin.role !== 'door_staff') return next();
+  if (req.path.startsWith('/scan/')) return next();
+  return res.status(403).json({ error: 'This account can only be used for check-in scanning.' });
+});
+
 // ── Dashboard ─────────────────────────────────────────────────
 router.get('/dashboard', dashboardController.overview);
 
