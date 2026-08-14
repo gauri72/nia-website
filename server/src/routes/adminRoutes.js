@@ -34,7 +34,7 @@ router.use(requireAdminAuth);
 // default too, since it isn't under /scan/ unless deliberately placed there.
 router.use((req, res, next) => {
   if (req.admin.role !== 'door_staff') return next();
-  if (req.path.startsWith('/scan/')) return next();
+  if (req.path.startsWith('/scan/') || req.path === '/profile/change-password') return next();
   return res.status(403).json({ error: 'This account can only be used for check-in scanning.' });
 });
 

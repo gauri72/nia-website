@@ -39,8 +39,17 @@ export function AdminAuthProvider({ children }) {
     setAdmin(null);
   }
 
+  // Changing your own password bumps tokenVersion server-side (invalidating
+  // every other token, including the one this very request used) — the
+  // response carries a freshly signed replacement so the current session
+  // keeps working without forcing a re-login.
+  async function changePassword(currentPassword, newPassword) {
+    const { data } = await adminApi.post('/admin/profile/change-password', { currentPassword, newPassword });
+    localStorage.setItem(ADMIN_TOKEN_KEY, data.token);
+  }
+
   return (
-    <AdminAuthContext.Provider value={{ admin, setAdmin, loading, login, logout, refresh: loadMe }}>
+    <AdminAuthContext.Provider value={{ admin, setAdmin, loading, login, logout, changePassword, refresh: loadMe }}>
       {children}
     </AdminAuthContext.Provider>
   );

@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Html5QrcodeScanner, Html5QrcodeScanType } from 'html5-qrcode';
-import { ScanLine, CheckCircle2, XCircle, AlertTriangle, LogOut, Ticket, IdCard, Search } from 'lucide-react';
+import { ScanLine, CheckCircle2, XCircle, AlertTriangle, LogOut, Ticket, IdCard, Search, KeyRound } from 'lucide-react';
 import adminApi from '../../services/adminApi';
 import Button from '../../components/admin/Button';
+import Modal from '../../components/admin/Modal';
 import { useAdminAuth } from '../../context/AdminAuthContext';
 
 const READER_ID = 'nia-checkin-reader';
@@ -14,6 +15,7 @@ const READER_ID = 'nia-checkin-reader';
 // this was ported from.
 export default function CheckinScanPage() {
   const { admin, logout } = useAdminAuth();
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [manualCode, setManualCode] = useState('');
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null);
@@ -119,10 +121,17 @@ export default function CheckinScanPage() {
           <p className="font-bold text-sm leading-tight">NIA Check-In</p>
           <p className="text-xs text-white/70 leading-tight">{admin?.email}</p>
         </div>
-        <button onClick={logout} className="text-white/80 hover:text-white p-2" aria-label="Log out">
-          <LogOut />
-        </button>
+        <div className="flex items-center">
+          <button onClick={() => setShowPasswordModal(true)} className="text-white/80 hover:text-white p-2" aria-label="Change password">
+            <KeyRound />
+          </button>
+          <button onClick={logout} className="text-white/80 hover:text-white p-2" aria-label="Log out">
+            <LogOut />
+          </button>
+        </div>
       </div>
+
+      {showPasswordModal && <ChangePasswordModal onClose={() => setShowPasswordModal(false)} />}
 
       {stats && (
         <div className="grid grid-cols-2 gap-2 px-3 pt-3 flex-shrink-0">
@@ -177,6 +186,65 @@ export default function CheckinScanPage() {
         )}
       </div>
     </div>
+  );
+}
+
+function ChangePasswordModal({ onClose }) {
+  const { changePassword } = useAdminAuth();
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [done, setDone] = useState(false);
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError('');
+    setSaving(true);
+    try {
+      await changePassword(currentPassword, newPassword);
+      setDone(true);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to change password');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Modal title="Change Password" onClose={onClose} width="max-w-sm">
+      {done ? (
+        <div className="flex flex-col items-center gap-3 text-center py-2">
+          <CheckCircle2 className="text-nia-success text-3xl" />
+          <p className="text-sm text-nia-text-muted">Your password has been changed.</p>
+          <Button variant="primary" onClick={onClose} className="w-full">Done</Button>
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+          {error && <div className="text-sm text-nia-error bg-nia-error/10 rounded-nia-btn px-3 py-2">{error}</div>}
+          <div>
+            <label className="text-xs font-semibold text-nia-text-muted uppercase tracking-wide mb-1 block">Current Password</label>
+            <input
+              type="password" required
+              className="w-full rounded-nia-btn border border-nia-border py-2.5 px-3 text-sm focus:border-nia-orange focus:outline-none focus:ring-2 focus:ring-nia-orange/20"
+              value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-nia-text-muted uppercase tracking-wide mb-1 block">New Password</label>
+            <input
+              type="password" required minLength={8}
+              className="w-full rounded-nia-btn border border-nia-border py-2.5 px-3 text-sm focus:border-nia-orange focus:outline-none focus:ring-2 focus:ring-nia-orange/20"
+              value={newPassword} onChange={(e) => setNewPassword(e.target.value)}
+            />
+            <p className="text-xs text-nia-text-faint mt-1">At least 8 characters.</p>
+          </div>
+          <Button type="submit" variant="primary" disabled={saving} className="w-full mt-1">
+            {saving ? 'Changing…' : 'Change Password'}
+          </Button>
+        </form>
+      )}
+    </Modal>
   );
 }
 
