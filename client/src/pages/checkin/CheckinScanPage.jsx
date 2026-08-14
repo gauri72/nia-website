@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Html5QrcodeScanner, Html5QrcodeScanType } from 'html5-qrcode';
-import { ScanLine, CheckCircle2, XCircle, AlertTriangle, LogOut, Ticket, IdCard } from 'lucide-react';
+import { ScanLine, CheckCircle2, XCircle, AlertTriangle, LogOut, Ticket, IdCard, Search } from 'lucide-react';
 import adminApi from '../../services/adminApi';
 import Button from '../../components/admin/Button';
 import { useAdminAuth } from '../../context/AdminAuthContext';
@@ -18,10 +18,27 @@ export default function CheckinScanPage() {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null);
   const [stats, setStats] = useState(null);
+  const [searchResults, setSearchResults] = useState([]);
   const scannerRef = useRef(null);
   const resultRef = useRef(null);
 
   useEffect(() => { resultRef.current = result; }, [result]);
+
+  // Name-search fallback for when a QR won't scan — debounced as-you-type,
+  // only while no result is already on screen.
+  useEffect(() => {
+    if (result || manualCode.trim().length < 2) {
+      setSearchResults([]);
+      return;
+    }
+    const q = manualCode.trim();
+    const timer = setTimeout(() => {
+      adminApi.get('/admin/scan/search', { params: { q } })
+        .then((r) => setSearchResults(r.data))
+        .catch(() => setSearchResults([]));
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [manualCode, result]);
 
   const loadStats = useCallback(() => {
     adminApi.get('/admin/scan/stats').then((r) => setStats(r.data)).catch(() => {});
@@ -65,6 +82,7 @@ export default function CheckinScanPage() {
 
   async function handleManualSubmit(e) {
     e.preventDefault();
+    setSearchResults([]);
     await handleCode(manualCode);
     setManualCode('');
   }
@@ -85,6 +103,13 @@ export default function CheckinScanPage() {
 
   function scanNext() {
     setResult(null);
+    setManualCode('');
+    setSearchResults([]);
+  }
+
+  function selectSearchResult(entry) {
+    setSearchResults([]);
+    handleCode(entry.code);
   }
 
   return (
@@ -116,15 +141,38 @@ export default function CheckinScanPage() {
               <div id={READER_ID} />
             </div>
 
-            <form onSubmit={handleManualSubmit} className="rounded-nia-card border border-nia-border bg-white p-3 flex gap-2">
-              <input
-                className="w-full rounded-nia-btn border border-nia-border py-2.5 px-3 text-sm focus:border-nia-orange focus:outline-none focus:ring-2 focus:ring-nia-orange/20"
-                placeholder="Or type ticket # / member ID"
-                value={manualCode}
-                onChange={(e) => setManualCode(e.target.value)}
-              />
-              <Button type="submit" variant="secondary" disabled={busy || !manualCode.trim()}>Go</Button>
-            </form>
+            <div className="rounded-nia-card border border-nia-border bg-white p-3">
+              <form onSubmit={handleManualSubmit} className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-nia-text-faint text-xs" />
+                  <input
+                    className="w-full rounded-nia-btn border border-nia-border py-2.5 pl-8 pr-3 text-sm focus:border-nia-orange focus:outline-none focus:ring-2 focus:ring-nia-orange/20"
+                    placeholder="Ticket #, member ID, or a name"
+                    value={manualCode}
+                    onChange={(e) => setManualCode(e.target.value)}
+                  />
+                </div>
+                <Button type="submit" variant="secondary" disabled={busy || !manualCode.trim()}>Go</Button>
+              </form>
+
+              {searchResults.length > 0 && (
+                <div className="mt-2 flex flex-col gap-1 max-h-64 overflow-y-auto">
+                  {searchResults.map((entry) => (
+                    <button
+                      key={entry.code}
+                      onClick={() => selectSearchResult(entry)}
+                      className="flex items-center justify-between gap-2 text-left px-3 py-2 rounded-nia-btn border border-nia-border hover:bg-nia-panel"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-nia-navy-dark truncate">{entry.name}</p>
+                        <p className="text-xs text-nia-text-faint truncate">{entry.subtitle}</p>
+                      </div>
+                      {entry.alreadyCheckedIn && <span className="text-[10px] font-semibold text-nia-warning whitespace-nowrap">Checked in</span>}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </>
         )}
       </div>

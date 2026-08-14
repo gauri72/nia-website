@@ -56,6 +56,10 @@ function ticketSummary(ticket, unit) {
   };
 }
 
+function escapeRegex(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function memberSummary(member) {
   return {
     id: member._id,
@@ -204,6 +208,60 @@ async function checkIn(req, res, next) {
   }
 }
 
+// ── GET /api/admin/scan/search?q= ────────────────────────────────────
+// Name-lookup fallback for when a QR won't scan or a guest has no phone
+// handy — matches buyer/attendee names & emails, and member names/email.
+// Each hit resolves to the same `code` a scan would produce, so tapping a
+// result just feeds straight into the existing lookup/check-in flow.
+async function search(req, res, next) {
+  try {
+    const q = (req.query.q || '').trim();
+    if (q.length < 2) return res.json([]);
+
+    const re = new RegExp(escapeRegex(q), 'i');
+    const results = [];
+
+    const tickets = await Ticket.find({
+      ticket_status: 'paid',
+      $or: [{ name: re }, { email: re }, { 'units.attendeeName': re }],
+    }).limit(20);
+
+    for (const t of tickets) {
+      if (t.units?.length) {
+        for (const u of t.units) {
+          const label = u.attendeeName || t.name;
+          if (re.test(label) || re.test(t.name) || re.test(t.email)) {
+            results.push({
+              code: u.unitNumber, type: 'ticket', name: label,
+              subtitle: `${t.email} · ${u.ticketType}`, alreadyCheckedIn: !!u.checkedInAt,
+            });
+          }
+        }
+      } else {
+        results.push({
+          code: t.ticketNumber, type: 'ticket', name: t.name,
+          subtitle: t.email, alreadyCheckedIn: !!t.checkedInAt,
+        });
+      }
+    }
+
+    const members = await Member.find({
+      status: 'active',
+      $or: [{ firstName: re }, { lastName: re }, { email: re }],
+    }).limit(10);
+    for (const m of members) {
+      results.push({
+        code: m.memberId, type: 'member', name: `${m.firstName} ${m.lastName}`,
+        subtitle: m.email, alreadyCheckedIn: false,
+      });
+    }
+
+    return res.json(results.slice(0, 25));
+  } catch (err) {
+    next(err);
+  }
+}
+
 // ── GET /api/admin/scan/log ──────────────────────────────────────────
 async function log(req, res, next) {
   try {
@@ -275,4 +333,4 @@ async function stats(req, res, next) {
   }
 }
 
-module.exports = { lookup, checkIn, log, stats };
+module.exports = { lookup, checkIn, search, log, stats };
