@@ -26,7 +26,7 @@ const DEFAULT_EVENT_SLUG = 'independence-day-2026';
 // Gala's public discoverability (nav, dashboard), Independence Day's booking
 // closure, and My Tickets' current/past grouping — all read this one flag
 // rather than tracking separate on/off state per surface.
-const GALA_LAUNCH_AT = new Date('2026-08-15T16:15:00.000Z'); // 18:15 Europe/Amsterdam (CEST, UTC+2)
+const GALA_LAUNCH_AT = new Date('2026-08-15T15:00:00.000Z'); // 17:00 Europe/Amsterdam (CEST, UTC+2)
 function isGalaLive() {
   return new Date() >= GALA_LAUNCH_AT;
 }

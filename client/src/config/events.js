@@ -28,7 +28,7 @@ export const DEFAULT_EVENT_SLUG = 'independence-day-2026';
 
 // Mirrors server/src/config/events.js's GALA_LAUNCH_AT exactly — the single
 // scheduled cutover moment every nav/dashboard/booking surface reads.
-export const GALA_LAUNCH_AT = new Date('2026-08-15T16:15:00.000Z'); // 18:15 Europe/Amsterdam (CEST, UTC+2)
+export const GALA_LAUNCH_AT = new Date('2026-08-15T15:00:00.000Z'); // 17:00 Europe/Amsterdam (CEST, UTC+2)
 export function isGalaLive() {
   return new Date() >= GALA_LAUNCH_AT;
 }
