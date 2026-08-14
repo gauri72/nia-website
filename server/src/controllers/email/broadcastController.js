@@ -2,9 +2,10 @@ const Broadcast = require('../../models/Broadcast');
 const BroadcastRecipient = require('../../models/BroadcastRecipient');
 const EmailTemplate = require('../../models/EmailTemplate');
 const Ticket = require('../../models/Ticket');
+const Member = require('../../models/Member');
 const {
   resolveAudienceMembers, estimateAudienceCount, createRecipients, sendTestEmail, sendBroadcast, resendFailed, buildUnsubscribeUrl,
-  buildTicketAttachments,
+  buildTicketAttachments, buildMembershipCardAttachment,
 } = require('../../services/broadcastService');
 const { scanForBounces } = require('../../services/bounceDetectionService');
 
@@ -69,7 +70,7 @@ async function estimateAudience(req, res, next) {
 // ── POST /api/broadcasts ──────────────────────────────────────────
 async function create(req, res, next) {
   try {
-    const { name, templateId, subject, previewText, audience, personalizationVars, scheduledAt, timezone, attachTicketPdf } = req.body;
+    const { name, templateId, subject, previewText, audience, personalizationVars, scheduledAt, timezone, attachTicketPdf, attachMembershipCard } = req.body;
     if (!name?.trim() || !templateId || !subject?.trim() || !audience?.type) {
       return res.status(400).json({ error: 'name, templateId, subject and audience are required' });
     }
@@ -84,6 +85,7 @@ async function create(req, res, next) {
       name: name.trim(), template: template._id, subject: subject.trim(), previewText,
       audience: cleanAudience, personalizationVars,
       attachTicketPdf: !!attachTicketPdf,
+      attachMembershipCard: !!attachMembershipCard,
       scheduledAt: scheduledAt || undefined,
       timezone: timezone || 'Europe/Amsterdam',
       status: scheduledAt ? 'scheduled' : 'draft',
@@ -105,7 +107,7 @@ async function update(req, res, next) {
     if (!broadcast) return res.status(404).json({ error: 'Broadcast not found' });
     if (broadcast.status !== 'draft') return res.status(400).json({ error: 'Only draft broadcasts can be edited' });
 
-    const { name, templateId, subject, previewText, audience, personalizationVars, attachTicketPdf } = req.body || {};
+    const { name, templateId, subject, previewText, audience, personalizationVars, attachTicketPdf, attachMembershipCard } = req.body || {};
     if (name !== undefined) broadcast.name = name.trim();
     if (templateId !== undefined) broadcast.template = templateId;
     if (subject !== undefined) broadcast.subject = subject.trim();
@@ -117,6 +119,7 @@ async function update(req, res, next) {
     }
     if (personalizationVars !== undefined) broadcast.personalizationVars = personalizationVars;
     if (attachTicketPdf !== undefined) broadcast.attachTicketPdf = !!attachTicketPdf;
+    if (attachMembershipCard !== undefined) broadcast.attachMembershipCard = !!attachMembershipCard;
 
     await broadcast.save();
     return res.json(broadcast);
@@ -142,13 +145,18 @@ async function sendTest(req, res, next) {
     if (!recipient) recipient = await BroadcastRecipient.create({ broadcast: broadcast._id, email: normalizedEmail });
     const unsubscribeUrl = buildUnsubscribeUrl(recipient.trackingToken);
 
-    // Attach a real sample ticket PDF so the test send shows exactly what a
-    // real recipient's attachment would look like — not a fabricated one.
-    let attachments = null;
+    // Attach real sample attachment(s) so the test send shows exactly what a
+    // real recipient's would look like — not a fabricated one.
+    let attachments = [];
     if (broadcast.attachTicketPdf) {
       const sample = await Ticket.findOne({ ticket_status: 'paid' });
-      if (sample) attachments = await buildTicketAttachments(sample.email);
+      if (sample) attachments = attachments.concat(await buildTicketAttachments(sample.email));
     }
+    if (broadcast.attachMembershipCard) {
+      const sample = await Member.findOne({ status: 'active' });
+      if (sample) attachments = attachments.concat(await buildMembershipCardAttachment(sample.email));
+    }
+    if (!attachments.length) attachments = null;
 
     await sendTestEmail(email.trim(), broadcast.subject, broadcast.template.htmlContent, broadcast.personalizationVars, unsubscribeUrl, attachments);
 
@@ -257,6 +265,7 @@ async function duplicate(req, res, next) {
       name: `${original.name} (Copy)`, template: original.template, subject: original.subject,
       previewText: original.previewText, audience: original.audience,
       personalizationVars: original.personalizationVars, attachTicketPdf: original.attachTicketPdf,
+      attachMembershipCard: original.attachMembershipCard,
       status: 'draft', createdBy: req.admin.id,
     });
 

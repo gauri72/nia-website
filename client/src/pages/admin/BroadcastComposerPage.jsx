@@ -27,6 +27,7 @@ export default function BroadcastComposerPage() {
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [audience, setAudience] = useState({ type: 'all_members', tierIds: [], eventId: '' });
   const [attachTicketPdf, setAttachTicketPdf] = useState(false);
+  const [attachMembershipCard, setAttachMembershipCard] = useState(false);
   const [recipientCount, setRecipientCount] = useState(null);
   const [subject, setSubject] = useState('');
   const [previewText, setPreviewText] = useState('');
@@ -53,7 +54,7 @@ export default function BroadcastComposerPage() {
     try {
       const { data } = await adminApi.post('/broadcasts', {
         name: selectedTemplate.name, templateId: selectedTemplate._id,
-        subject: selectedTemplate.subject, audience, attachTicketPdf,
+        subject: selectedTemplate.subject, audience, attachTicketPdf, attachMembershipCard,
       });
       setBroadcastId(data._id);
       setSubject(selectedTemplate.subject);
@@ -68,7 +69,7 @@ export default function BroadcastComposerPage() {
   async function saveAudienceAndContinue() {
     setError(''); setBusy(true);
     try {
-      await adminApi.patch(`/broadcasts/${broadcastId}`, { audience, attachTicketPdf });
+      await adminApi.patch(`/broadcasts/${broadcastId}`, { audience, attachTicketPdf, attachMembershipCard });
       setStep(2);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to save audience');
@@ -193,6 +194,19 @@ export default function BroadcastComposerPage() {
               </div>
             )}
 
+            {['all_members', 'tier', 'custom_list'].includes(audience.type) && (
+              <label className="flex items-start gap-2 text-sm mb-4">
+                <input
+                  type="checkbox" className="mt-0.5" checked={attachMembershipCard}
+                  onChange={(e) => setAttachMembershipCard(e.target.checked)}
+                />
+                <span>
+                  Attach each recipient's Membership Card
+                  <span className="block text-xs text-nia-text-faint">A PDF with their own scannable Member ID QR code — same one used for door check-in.</span>
+                </span>
+              </label>
+            )}
+
             {audience.type === 'event_attendees' && (
               <>
                 <select className={inputCls + ' mb-3'} value={audience.eventId} onChange={(e) => setAudience((a) => ({ ...a, eventId: e.target.value }))}>
@@ -314,6 +328,12 @@ export default function BroadcastComposerPage() {
                 <>
                   <dt className="text-nia-text-muted">Ticket PDF Attachment</dt>
                   <dd className="font-semibold text-nia-navy-dark">{attachTicketPdf ? 'Yes — per-recipient' : 'No'}</dd>
+                </>
+              )}
+              {['all_members', 'tier', 'custom_list'].includes(audience.type) && (
+                <>
+                  <dt className="text-nia-text-muted">Membership Card Attachment</dt>
+                  <dd className="font-semibold text-nia-navy-dark">{attachMembershipCard ? 'Yes — per-recipient' : 'No'}</dd>
                 </>
               )}
               <dt className="text-nia-text-muted">Timing</dt>

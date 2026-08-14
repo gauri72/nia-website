@@ -7,7 +7,7 @@ const SuppressionList = require('../models/SuppressionList');
 const BroadcastRecipient = require('../models/BroadcastRecipient');
 const Broadcast = require('../models/Broadcast');
 const EmailTemplate = require('../models/EmailTemplate');
-const { generateTicketPDF } = require('./emailService');
+const { generateTicketPDF, generateMembershipCardPDF } = require('./emailService');
 
 function escapeRegex(s) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -30,6 +30,25 @@ async function buildTicketAttachments(email) {
     content: await generateTicketPDF(t),
     contentType: 'application/pdf',
   })));
+}
+
+// Per-recipient membership card attachment for broadcast.attachMembershipCard
+// — same reasoning as buildTicketAttachments (never a shared file, every
+// card carries that member's own scannable memberId QR). A member only ever
+// has one card, but returns an array for consistency with the ticket
+// attachment helper and so both can just be concatenated in the send loop.
+async function buildMembershipCardAttachment(email) {
+  const member = await Member.findOne({
+    email: { $regex: new RegExp(`^${escapeRegex(email)}$`, 'i') },
+    status: 'active',
+  }).populate('membershipTier');
+  if (!member) return [];
+  const cardBuffer = await generateMembershipCardPDF(member, member.membershipTier);
+  return [{
+    filename: `NIA-Membership-Card-${member.memberId}.pdf`,
+    content: cardBuffer,
+    contentType: 'application/pdf',
+  }];
 }
 
 // Contacts aren't Members — most have no linked account at all — so they're
@@ -283,10 +302,11 @@ async function sendBroadcast(broadcastId) {
           from: FROM, to: recipient.email, subject: broadcast.subject, html: finalHtml,
           headers: { 'List-Unsubscribe': `<${unsubscribeUrl}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' },
         };
-        if (broadcast.attachTicketPdf) {
-          const attachments = await buildTicketAttachments(recipient.email);
-          if (attachments.length) mailOptions.attachments = attachments;
-        }
+        const attachments = [
+          ...(broadcast.attachTicketPdf ? await buildTicketAttachments(recipient.email) : []),
+          ...(broadcast.attachMembershipCard ? await buildMembershipCardAttachment(recipient.email) : []),
+        ];
+        if (attachments.length) mailOptions.attachments = attachments;
 
         await transporter.sendMail(mailOptions);
 
@@ -340,5 +360,5 @@ async function resendFailed(broadcastId) {
 module.exports = {
   resolveAudienceMembers, estimateAudienceCount, renderPersonalized, injectTracking,
   createRecipients, sendTestEmail, sendTemplateToMember, sendBroadcast, resendFailed, buildUnsubscribeUrl,
-  buildTicketAttachments,
+  buildTicketAttachments, buildMembershipCardAttachment,
 };

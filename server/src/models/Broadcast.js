@@ -33,6 +33,10 @@ const BroadcastSchema = new mongoose.Schema({
   // QR code(s) — are generated fresh and attached at send time. Per-recipient,
   // never a shared file: see broadcastService.js::sendBroadcast.
   attachTicketPdf: { type: Boolean, default: false },
+  // Same idea, for Member-based audiences (all_members/tier/custom_list) —
+  // attaches each recipient's own Membership Card PDF (their scannable
+  // memberId QR), generated fresh at send time. See buildMembershipCardAttachment.
+  attachMembershipCard: { type: Boolean, default: false },
   status: {
     type: String,
     enum: ['draft', 'scheduled', 'sending', 'sent', 'canceled', 'failed'],
