@@ -17,8 +17,7 @@ export default function VenueOrganizer() {
             <h3 className="venue-org__heading">{t('events.venue.venueHeading')}</h3>
             <p className="venue-org__name">DE DUINPAN</p>
             <p className="venue-org__address">
-              Sportlaan 34, 2191 XH De Zilk<br />
-              Gemeente Noordwijk
+              Sportlaan 34, 2191 XH De Zilk
             </p>
             <a href="https://maps.app.goo.gl/qSfRXG5iMBcR6exs8" target="_blank" rel="noopener noreferrer" className="venue-org__map-btn">
               <FaMapMarkerAlt /> {t('events.venue.viewOnMap')}

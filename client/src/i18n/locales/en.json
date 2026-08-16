@@ -498,7 +498,7 @@
     "info": {
       "date": { "label": "DATE", "primary": "15TH AUGUST 2026", "secondary": "SATURDAY" },
       "time": { "label": "TIME", "primary": "18:00", "secondary": "ONWARDS" },
-      "venue": { "label": "VENUE", "primary": "DE DUINPAN", "secondary": "Sportlaan 34, 2191 XH De Zilk\nGemeente Noordwijk" },
+      "venue": { "label": "VENUE", "primary": "DE DUINPAN", "secondary": "Sportlaan 34, 2191 XH De Zilk" },
       "theme": { "label": "EVENT THEME", "primary": "India, Netherlands", "secondary": "and Water" },
       "viewOnMap": "View on Map"
     },
@@ -610,7 +610,7 @@
     "info": {
       "date": { "label": "DATE", "primary": "12TH DECEMBER 2026", "secondary": "SATURDAY" },
       "time": { "label": "TIME", "primary": "18:00", "secondary": "ONWARDS" },
-      "venue": { "label": "VENUE", "primary": "DE DUINPAN", "secondary": "Sportlaan 34, 2191 XH De Zilk\nGemeente Noordwijk" },
+      "venue": { "label": "VENUE", "primary": "DE DUINPAN", "secondary": "Sportlaan 34, 2191 XH De Zilk" },
       "theme": { "label": "EVENT THEME", "primary": "An Evening of", "secondary": "Elegance & Celebration" },
       "viewOnMap": "View on Map"
     },
