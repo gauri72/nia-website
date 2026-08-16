@@ -78,7 +78,7 @@ export default function DashboardHomePage() {
                 <h2 className="text-lg font-extrabold">NIA Christmas Gala Dinner 2026</h2>
                 <div className="flex flex-wrap gap-4 text-sm text-white/80 mt-2">
                   <span className="flex items-center gap-1.5"><Calendar size={14} />12 December 2026</span>
-                  <span className="flex items-center gap-1.5"><MapPin size={14} />De Duinpan, Noordwijk</span>
+                  <span className="flex items-center gap-1.5"><MapPin size={14} />De Duinpan, De Zilk</span>
                 </div>
               </>
             ) : (
@@ -86,7 +86,7 @@ export default function DashboardHomePage() {
                 <h2 className="text-lg font-extrabold">80th India Independence Day Celebration &amp; NIA 75th Anniversary</h2>
                 <div className="flex flex-wrap gap-4 text-sm text-white/80 mt-2">
                   <span className="flex items-center gap-1.5"><Calendar size={14} />15 August 2026</span>
-                  <span className="flex items-center gap-1.5"><MapPin size={14} />De Duinpan, Noordwijk</span>
+                  <span className="flex items-center gap-1.5"><MapPin size={14} />De Duinpan, De Zilk</span>
                 </div>
               </>
             )}

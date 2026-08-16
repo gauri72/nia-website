@@ -153,7 +153,7 @@ export default function App() {
                   description: "Join us for a historic celebration as we mark India's 80th Independence Day and the 75th Anniversary of NIA — an evening of cultural performances, great food and togetherness. Theme: India, Netherlands and Water.",
                   date: '15 August 2026', day: 'Saturday',
                   time: '18:00', timeSub: 'Onwards',
-                  venueName: 'De Duinpan', venueAddress: 'Sportlaan 34, 2191 XH De Zilk, Noordwijk',
+                  venueName: 'De Duinpan', venueAddress: 'Sportlaan 34, 2191 XH De Zilk',
                   mapUrl: 'https://maps.app.goo.gl/qSfRXG5iMBcR6exs8',
                 }}
               />} />
@@ -165,7 +165,7 @@ export default function App() {
                   description: 'A December to Remember. Dine, Dance, Celebrate, The NIA Way! Join us for an elegant evening with a festive three-course dinner, live music and dancing.',
                   date: '12 December 2026', day: 'Saturday',
                   time: '18:00', timeSub: 'Onwards',
-                  venueName: 'De Duinpan', venueAddress: 'Sportlaan 34, 2191 XH De Zilk, Noordwijk',
+                  venueName: 'De Duinpan', venueAddress: 'Sportlaan 34, 2191 XH De Zilk',
                   mapUrl: 'https://maps.app.goo.gl/qSfRXG5iMBcR6exs8',
                 }}
               />} />
