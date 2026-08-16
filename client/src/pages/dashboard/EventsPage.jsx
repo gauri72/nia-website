@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Calendar, ArrowRight } from 'lucide-react';
+import { Calendar, ArrowRight, Camera } from 'lucide-react';
 import PageHeader from '../../components/admin/PageHeader';
 import Card from '../../components/admin/Card';
 import Button from '../../components/admin/Button';
@@ -21,6 +21,19 @@ const EVENT_CARDS = [
     name: 'NIA Christmas Gala Dinner 2026',
     date: '12 December 2026',
     blurb: 'A December to Remember — dine, dance and celebrate the NIA way.',
+  },
+];
+
+// Shown once an event's own booking window has closed — same isGalaLive()
+// flag that drives removing Independence Day from the upcoming cards below
+// also reveals it here, so the two stay in sync automatically. No gallery
+// content wired up yet (see the "coming soon" note) — this is the section
+// the Thank You broadcast email points members to once photos are ready.
+const PAST_EVENTS = [
+  {
+    name: "India's 80th Independence Day & NIA's 75th Anniversary",
+    date: '15 August 2026',
+    blurb: "Cultural performances, food and togetherness — theme: India, Netherlands and Water.",
   },
 ];
 
@@ -47,6 +60,26 @@ export default function EventsPage() {
           </Card>
         ))}
       </div>
+
+      {isGalaLive() && (
+        <div className="mt-8">
+          <h2 className="text-lg font-extrabold text-nia-navy-dark mb-4">Past Events &amp; Memories</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {PAST_EVENTS.map((e) => (
+              <Card key={e.name} className="flex flex-col gap-2 opacity-80">
+                <div className="flex items-center gap-2 text-nia-text-faint text-xs font-bold uppercase tracking-wide">
+                  <Calendar size={14} /> {e.date}
+                </div>
+                <h3 className="text-lg font-extrabold text-nia-navy-dark">{e.name}</h3>
+                <p className="text-sm text-nia-text-muted flex-1">{e.blurb}</p>
+                <div className="flex items-center gap-1.5 text-xs text-nia-text-faint mt-2">
+                  <Camera size={14} /> Photos &amp; memories coming soon
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
